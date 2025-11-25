@@ -1,0 +1,163 @@
+@font-face {
+  font-family: "iconfont"; /* Project id 4934695 */
+  src: url('iconfont.woff2?t=1748413933873') format('woff2'),
+       url('iconfont.woff?t=1748413933873') format('woff'),
+       url('iconfont.ttf?t=1748413933873') format('truetype');
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-laptop:before {
+  content: "\e61c";
+}
+
+.icon-unpublish:before {
+  content: "\e601";
+}
+
+.icon-quanping:before {
+  content: "\e63a";
+}
+
+.icon-addAfter_chicun_14:before {
+  content: "\e600";
+}
+
+.icon-arrow-left:before {
+  content: "\e60e";
+}
+
+.icon-backtop-rectangle:before {
+  content: "\e611";
+}
+
+.icon-upload:before {
+  content: "\e614";
+}
+
+.icon-delete:before {
+  content: "\e613";
+}
+
+.icon-edit:before {
+  content: "\e616";
+}
+
+.icon-Frame:before {
+  content: "\e618";
+}
+
+.icon-Frame_2:before {
+  content: "\e619";
+}
+
+.icon-Frame_3:before {
+  content: "\e61a";
+}
+
+.icon-fullscreen-exit:before {
+  content: "\e61d";
+}
+
+.icon-Frame_1:before {
+  content: "\e61e";
+}
+
+.icon-play-circle:before {
+  content: "\e61f";
+}
+
+.icon-remove:before {
+  content: "\e620";
+}
+
+.icon-rollback:before {
+  content: "\e621";
+}
+
+.icon-rollfront:before {
+  content: "\e622";
+}
+
+.icon-time:before {
+  content: "\e623";
+}
+
+.icon-send:before {
+  content: "\e633";
+}
+
+.icon-tools:before {
+  content: "\e632";
+}
+
+.icon-beeline:before {
+  content: "\e62b";
+}
+
+.icon-curve:before {
+  content: "\e62a";
+}
+
+.icon-chat-img:before {
+  content: "\e62f";
+}
+
+.icon-icon-close:before {
+  content: "\e635";
+}
+
+.icon-setting:before {
+  content: "\e637";
+}
+
+.icon-interactive-button_more:before {
+  content: "\e638";
+}
+
+.icon-fullsreen:before {
+  content: "\e639";
+}
+
+.icon-browse:before {
+  content: "\e63e";
+}
+
+.icon-browse-off:before {
+  content: "\e63f";
+}
+
+.icon-delete1:before {
+  content: "\e647";
+}
+
+.icon-edit1:before {
+  content: "\e641";
+}
+
+.icon-API:before {
+  content: "\e665";
+}
+
+.icon-lujing:before {
+  content: "\e64d";
+}
+
+.icon-zhishitupu:before {
+  content: "\e64c";
+}
+
+.icon-plus-circle-fill:before {
+  content: "\e64e";
+}
+
+.icon-zhishitupu-copy:before {
+  content: "\e9d8";
+}
+
