@@ -5,6 +5,7 @@ from fastapi import FastAPI
 import uvicorn
 import json
 from python.api.services import user
+from python.api.services import graph
 
 
 if __name__ == '__main__':
@@ -28,6 +29,7 @@ if __name__ == '__main__':
     )
 
     app.include_router(user.router, prefix="/user")
+    app.include_router(graph.router, prefix="/graph")
 
     uvicorn.run(app, host="0.0.0.0", port=8088)
 
