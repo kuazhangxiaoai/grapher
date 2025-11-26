@@ -26,7 +26,6 @@ class AddSourceToNode(BaseModel):
     new_source: str
     new_article: str
 
-
 @router.get("/test")
 async def test():
     return "hello"
