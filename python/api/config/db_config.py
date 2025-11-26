@@ -2,6 +2,8 @@
 # time: 2025/11/25
 # Description: This file is designed for database configuration
 
+key = 'BISM'
+
 class DB_Config:
     # Database configuration including host, port, user, password, databasename
     def __init__(self):
@@ -9,10 +11,10 @@ class DB_Config:
             initial function to define database link parameter
         """
         self.host = "localhost"
-        self.port = 6432
+        self.port = 5432
         self.user = "postgres"
         self.password = "ZGCATT"
-        self.databasename = "grapher_db"
+        self.databasename = "graph_db"
 
     def load(self, host, port, user, password, databasename):
         """
