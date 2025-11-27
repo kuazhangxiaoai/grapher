@@ -1,6 +1,6 @@
-from api.utils.logger import LOGGER
-from api.config.db_config import key, DB_Config
-from api.db.postgre_helper import PostgreHelper
+from python.api.utils.logger import LOGGER
+from python.api.config.db_config import key, DB_Config
+from python.api.db.postgre_helper import PostgreHelper
 from fastapi import APIRouter
 from pydantic import BaseModel
 import uuid
