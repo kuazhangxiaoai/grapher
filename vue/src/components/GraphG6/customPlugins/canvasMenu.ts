@@ -6,6 +6,32 @@ import {
   register,
 } from "@antv/g6";
 
+// 从localStorage获取节点类型配置
+const getNodeTypeColor = (entityType: string): string => {
+  try {
+    const stored = localStorage.getItem('nodeTypes');
+    if (stored) {
+      const nodeTypes = JSON.parse(stored);
+      const type = nodeTypes.find((t: any) => t.name === entityType);
+      if (type) {
+        return type.color;
+      }
+    }
+    // 默认颜色或根据类型返回不同颜色
+    const defaultColors: Record<string, string> = {
+      '默认': '#1783FF',
+      '人物': '#F53F3F',
+      '组织': '#722ED1',
+      '概念': '#52C41A',
+      '事件': '#FAAD14'
+    };
+    return defaultColors[entityType] || '#1783FF';
+  } catch (error) {
+    console.error('获取节点类型颜色失败:', error);
+    return '#1783FF';
+  }
+};
+
 interface RemoteDataSourceOptions extends BasePluginOptions {}
 interface CanvasMenuPluginOptions {
   // 节点默认填充色
@@ -202,12 +228,12 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
           data: {
             name: nodeData.name,
             description: nodeData.description || "",
-            nodeType: nodeData.nodeType || "concept",
+            entityType: nodeData.entityType || "默认",
           },
           style: {
             labelText: nodeData.name,
             // 根据节点类型设置不同样式
-            fill: this.options.nodeFill,
+            fill: getNodeTypeColor(nodeData.entityType || "默认"),
           },
         },
       ]);

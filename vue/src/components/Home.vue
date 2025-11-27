@@ -1,38 +1,45 @@
 <template>
-  <div class="graph-container relative w-full h-full px-0">
-    <GraphG6
-      ref="graphG6"
-      :data="graphData"
-      :layout-config="layoutConfig"
-      @elementClick="handleElementClick"
-      @ready="handleGraphReady"
-      @shortestPath="handleShortestPath"
-      @exportGraphCsv="handleExportGraphCsv"
-      @addNodeSuccess="handleAddNode"
-      @addEdgeSuccess="handleAddEdge"
-      @deleteElementSuccess="handleDeleteElement"
-    />
+  <div class="home-container relative w-full h-full flex">
+    <!-- 左侧文档区域 -->
+    <DocumentPanel />
 
-    <!-- 节点信息面板 -->
-    <graph-element-info
-      v-if="activePanel === 'elementInfo'"
-      v-model="expandElementInfoPanel"
-      :graph-instance="graphInstance"
-      :element-info="elementInfo"
-      :element-target-type="elementTargetType"
-      @updateElementInfo="handleUpdateElementInfo"
-    >
-    </graph-element-info>
 
-    <!-- 最短路径 -->
-    <graph-shortest-path
-      v-if="activePanel === 'shortestPath'"
-      v-model:visible="showShortestPath"
-      :nodeList="allNodeList"
-      :newGraphData="newGraphData"
-      :graph-instance="graphInstance"
-      @close="activePanel = null"
-    />
+    <!-- 右侧图谱画布区域 -->
+    <div class="graph-container relative w-2/3 h-full">
+      <GraphG6
+        ref="graphG6"
+        :data="graphData"
+        :layout-config="layoutConfig"
+        @elementClick="handleElementClick"
+        @ready="handleGraphReady"
+        @shortestPath="handleShortestPath"
+        @exportGraphCsv="handleExportGraphCsv"
+        @addNodeSuccess="handleAddNode"
+        @addEdgeSuccess="handleAddEdge"
+        @deleteElementSuccess="handleDeleteElement"
+      />
+
+      <!-- 节点信息面板 -->
+      <graph-element-info
+        v-if="activePanel === 'elementInfo'"
+        v-model="expandElementInfoPanel"
+        :graph-instance="graphInstance"
+        :element-info="elementInfo"
+        :element-target-type="elementTargetType"
+        @updateElementInfo="handleUpdateElementInfo"
+      >
+      </graph-element-info>
+
+      <!-- 最短路径 -->
+      <graph-shortest-path
+        v-if="activePanel === 'shortestPath'"
+        v-model:visible="showShortestPath"
+        :nodeList="allNodeList"
+        :newGraphData="newGraphData"
+        :graph-instance="graphInstance"
+        @close="activePanel = null"
+      />
+    </div>
   </div>
 </template>
 
@@ -46,8 +53,9 @@ import {
 } from "@/components/GraphG6/mock";
 import GraphElementInfo from "@/components/GraphG6/components/graphElementInfo.vue";
 import GraphShortestPath from "@/components/GraphG6/components/graphShortestPath.vue";
+import DocumentPanel from "./DocumentPanel.vue";
 import { Message } from "@arco-design/web-vue";
-import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
+// import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
 
 const route = useRoute();
 // 图数据
@@ -111,11 +119,11 @@ const handleUpdateElementInfo = async (updatedData) => {
   const updateMethod = elementTargetType.value === 'node' ? 'updateNodeData' : 'updateEdgeData';
   try {
     // 调用API更新到后端
-    if (elementTargetType.value === 'node') {
-      await updateNode(updatedData.id, updatedData);
-    } else {
-      await updateEdge(updatedData.id, updatedData);
-    }
+    // if (elementTargetType.value === 'node') {
+    //   await updateNode(updatedData.id, updatedData);
+    // } else {
+    //   await updateEdge(updatedData.id, updatedData);
+    // }
 
     graphInstance.value[updateMethod]([updatedData]);
     Message.success('更新成功');
@@ -244,7 +252,7 @@ onMounted(() => {
 });
 const handleAddNode = async (nodeData) => {
   try {
-    await createNode(nodeData);
+    // await createNode(nodeData);
     Message.success('节点创建成功');
     getAllNodeList();
   } catch (error) {
@@ -253,7 +261,7 @@ const handleAddNode = async (nodeData) => {
 };
 const handleAddEdge = async (edgeData) => {
   try {
-    await createEdge(edgeData);
+    // await createEdge(edgeData);
     Message.success('边创建成功');
     getAllNodeList();
   } catch (error) {
@@ -262,16 +270,29 @@ const handleAddEdge = async (edgeData) => {
 };
 const handleDeleteElement = async (elementId, type) => {
   try {
-    await deleteElement(elementId, type);
+    // await deleteElement(elementId, type);
     Message.success(`${type === 'node' ? '节点' : '边'}删除成功`);
     getAllNodeList();
   } catch (error) {
     Message.error(error.message);
   }
 };
+
 </script>
 
 <style scoped>
+.home-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #f5f7fa;
+}
+
 .graph-container {
+  width: 66.666%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 </style>

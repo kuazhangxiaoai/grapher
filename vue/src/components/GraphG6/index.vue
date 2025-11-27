@@ -165,6 +165,32 @@ const initGraph = () => {
         labelWordWrap: true,
         labelMaxWidth: 200,
         labelMaxLines: 4,
+        // 根据节点类型动态设置颜色
+        fill: (d) => {
+          try {
+            const stored = localStorage.getItem('nodeTypes');
+            if (stored) {
+              const nodeTypes = JSON.parse(stored);
+              const entityType = d.data.entityType || '默认';
+              const type = nodeTypes.find((t: any) => t.name === entityType);
+              if (type) {
+                return type.color;
+              }
+            }
+            // 默认颜色映射
+            const defaultColors: Record<string, string> = {
+              '默认': '#1783FF',
+              '人物': '#F53F3F',
+              '组织': '#722ED1',
+              '概念': '#52C41A',
+              '事件': '#FAAD14'
+            };
+            return defaultColors[d.data.entityType || '默认'] || '#1783FF';
+          } catch (error) {
+            console.error('获取节点颜色失败:', error);
+            return '#1783FF';
+          }
+        },
       },
       palette: {
         type: "group",

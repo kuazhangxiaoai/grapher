@@ -128,3 +128,37 @@ export const deleteElement = async (elementId, type) => {
     throw new Error(`删除${type}失败，请重试`);
   }
 };
+
+/**
+ * 上传文档并获取内容
+ * @param {File} file - 要上传的文件
+ */
+export const uploadDocument = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('上传文档失败:', error);
+    throw new Error('上传文档失败，请重试');
+  }
+};
+
+/**
+ * 获取文档内容
+ * @param {string} documentId - 文档ID
+ */
+export const getDocumentContent = async (documentId) => {
+  try {
+    const response = await apiClient.get(`/documents/${documentId}/content`);
+    return response.data;
+  } catch (error) {
+    console.error('获取文档内容失败:', error);
+    throw new Error('获取文档内容失败，请重试');
+  }
+};
