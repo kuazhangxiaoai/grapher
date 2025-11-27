@@ -12,8 +12,11 @@
     "@antv/algorithm": "^0.1.26",
     "@antv/g6": "^5.0.48",
     "@tailwindcss/vite": "^4.1.7",
+    "mammoth": "^1.11.0",
+    "pdfjs-dist": "^5.4.394",
     "tailwindcss": "^4.1.7",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "vue-router": "^4.6.3"
   },
   "devDependencies": {
     "@arco-design/web-vue": "^2.57.0",
