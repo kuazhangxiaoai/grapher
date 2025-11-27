@@ -33,9 +33,9 @@ async def test():
 @router.post("/createnode")
 async def create_node(node: Node):
     """
-    新增节点(同时为graph db和 postgre db 添加数据)
-    :param node: 节点类
-    :return: None
+        新增节点(同时为graph db和 postgre db 添加数据)
+        :param node: 节点类
+        :return: None
     """
     try:
         _gdb = Neo4jHelper(Graph_Config().host,
@@ -55,6 +55,31 @@ async def create_node(node: Node):
 
     except Exception as e:
         return e
+
+@router.post("/getgraph")
+async def get_graph():
+    """
+        获取知识图谱
+        :return: Graph
+    """
+    _gdb = Neo4jHelper(Graph_Config().host,
+                       Graph_Config().user,
+                       Graph_Config().password,
+                       Graph_Config().databasename,
+                       Graph_Config().port)
+
+    #获取所有节点
+    all_nodes = _gdb.query_all_nodes()
+
+    #获取所有关系
+    all_predicate = _gdb.query_all_predicate()
+
+    res = {
+        "nodes": all_nodes,
+        "predicate": all_predicate
+    }
+
+    return res
 
 @router.post("/addsourcetonode")
 async def add_source_to_node(n:AddSourceToNode):

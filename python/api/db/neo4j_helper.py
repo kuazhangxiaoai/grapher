@@ -15,7 +15,7 @@ class Neo4jHelper:
     # 执行查询node，返回node
     def query_node(self, node_label, node_name):
         query = '''MATCH (n:%s{name: "%s"})''' % (node_label, node_name)
-        nodes = self.graph.run(query)
+        nodes = self.graph.run(query).data()
         return nodes
 
     # 创建node, 返回node
@@ -27,16 +27,8 @@ class Neo4jHelper:
     def delete_node(self, node_label, node_name):
         self.graph.nodes.match(node_label, name=node_name)
 
-        # 插入一条数据
-    def create_one(self, sql, params):
-        with self.connection.connect() as conn:
-            execute = conn.exec_driver_sql(sql, params)
-            conn.commit()
-        execute.close()
+    def query_all_nodes(self):
+        return self.graph.run('''MATCH (n) RETURN n''').data()
 
-        # 修改
-    def updateById(self, sql, params):
-        with self.connection.connect() as conn:
-            execute = conn.exec_driver_sql(sql, params)
-            conn.commit()
-        execute.close()
+    def query_all_predicate(self):
+        return self.graph.run('''MATCH (a)-[r]->(b) RETURN r''').data()
