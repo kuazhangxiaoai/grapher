@@ -4,8 +4,8 @@ from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 import uvicorn
 import json
-from python.api.services import user
-from python.api.services import graph
+from api.services import user
+from api.services import graph
 
 
 if __name__ == '__main__':
