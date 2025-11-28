@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     app.include_router(user.router, prefix="/user")
     app.include_router(graph.router, prefix="/graph")
-    app.include_router(text.router, prefix="/graph")
+    app.include_router(text.router, prefix="/text")
 
     uvicorn.run(app, host="0.0.0.0", port=8088)
 

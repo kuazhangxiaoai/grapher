@@ -49,7 +49,7 @@ async def create_node(node: Node):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        query = '''INSERT INTO t_user (node_name, node_label, source, article, create_time) VALUES ('%s', '%s', '%s', '%s', '%s')'''
+        query = '''INSERT INTO t_user (node_name, node_label, source, article, create_time) VALUES (%s, %s, %s, %s, %s)'''
         _gdb.create_node(node.label, node.name)
         _db.create_one(query, (node.name, node.label, node.source, node.article, datetime.now()))
 
@@ -94,7 +94,7 @@ async def add_source_to_node(n:AddSourceToNode):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        query = '''INSERT INTO t_user (node_name, node_label, source, article, create_time) VALUES ('%s', '%s', '%s', '%s', '%s')'''
+        query = '''INSERT INTO t_user (node_name, node_label, source, article, create_time) VALUES (%s, %s, %s, %s, %s)'''
         _db.create_one(query, (n.name, n.label, n.new_source, n.new_article, datetime.now()))
     except Exception as e:
         return e
