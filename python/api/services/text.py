@@ -26,21 +26,20 @@ async def test():
     return "hello"
 
 @router.post("/upload")
-async def upload(file: UploadFile=File(...)):
+async def upload(file: UploadFile=File(...), title: str='', publishtime: str=''):
     try:
         ext = Path(file.filename).suffix.lower()
         assert ext in [".docx", ".txt", ".doc", ".pdf"]
         savepath = UploadDir / file.filename
         with open(savepath, 'wb') as buffer:
             shutil.copyfileobj(file.file, buffer)
-        #query = '''INSERT INTO t_article (title, create_time, publish_time, filename) VALUES (%s, %s, %s, %s)'''
-        #_db = PostgreHelper(DB_Config().host,
-        #                    DB_Config().user,
-        #                    DB_Config().password,
-        #                    DB_Config().databasename,
-        #                    DB_Config().port)
-        #_db.create_one(query, (title, datetime.now(), publishtime, file.filename))
-        bytes_doc = await file.read()
+        query = '''INSERT INTO t_article (title, create_time, publish_time, filename) VALUES (%s, %s, %s, %s)'''
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                           DB_Config().port)
+        _db.create_one(query, (title, datetime.now(), datetime.strptime(publishtime, "%Y-%m-%d"), file.filename))
         if ext in ['.docx', '.doc']:
             html = mammoth.convert_to_html(file.file)
         return {"filename": file.filename, "html": html}
