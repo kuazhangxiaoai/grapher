@@ -252,16 +252,16 @@ const customToolbarData = ref([
       });
     },
   },
-  {
-    id: "fullScreen",
-    icon: isFullScreen.value ? "icon-fullscreen-exit" : "icon-Frame_1",
-    title: isFullScreen.value ? "取消全屏" : "全屏",
-    onClick: () => {
-      const fullscreenPlugin = props.graph.getPluginInstance("fullscreen");
-      isFullScreen.value = !isFullScreen.value;
-      fullscreenPlugin[isFullScreen.value ? "request" : "exit"]();
-    },
-  },
+  // {
+  //   id: "fullScreen",
+  //   icon: isFullScreen.value ? "icon-fullscreen-exit" : "icon-Frame_1",
+  //   title: isFullScreen.value ? "取消全屏" : "全屏",
+  //   onClick: () => {
+  //     const fullscreenPlugin = props.graph.getPluginInstance("fullscreen");
+  //     isFullScreen.value = !isFullScreen.value;
+  //     fullscreenPlugin[isFullScreen.value ? "request" : "exit"]();
+  //   },
+  // },
 
   {
     id: "shortestPath",

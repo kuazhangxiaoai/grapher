@@ -205,6 +205,7 @@ const handleCopyToOpenModal = async (e: ClipboardEvent) => {
 
   setTimeout(async () => {
     const text = await readClipboardText();
+    console.log(text);
     if (text) {
       nodeForm.value.originalText = text;
       nodeForm.value.name = text.substring(0, 20);
