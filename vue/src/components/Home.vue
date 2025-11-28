@@ -1,11 +1,11 @@
 <template>
   <div class="home-container relative w-full h-full flex">
     <!-- 左侧文档区域 -->
-    <DocumentPanel />
+    <DocumentPanel @addNode="handleAddNodeFromDocument" />
 
 
     <!-- 右侧图谱画布区域 -->
-    <div class="graph-container relative w-2/3 h-full">
+    <div class="graph-container relative w-3/5 h-full">
       <GraphG6
         ref="graphG6"
         :data="graphData"
@@ -53,7 +53,7 @@ import {
 } from "@/components/GraphG6/mock";
 import GraphElementInfo from "@/components/GraphG6/components/graphElementInfo.vue";
 import GraphShortestPath from "@/components/GraphG6/components/graphShortestPath.vue";
-import DocumentPanel from "./DocumentPanel.vue";
+import DocumentPanel from "./Pdf/DocumentPanel.vue";
 import { Message } from "@arco-design/web-vue";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
 
@@ -278,6 +278,33 @@ const handleDeleteElement = async (elementId, type) => {
   }
 };
 
+// 处理从文档添加节点到图谱
+const handleAddNodeFromDocument = (nodeData) => {
+  // 确保graphData有nodes数组
+  if (!graphData.value.nodes) {
+    graphData.value.nodes = [];
+  }
+  if (!graphData.value.edges) {
+    graphData.value.edges = [];
+  }
+  
+  // 添加新节点
+  graphData.value.nodes.push(nodeData);
+  
+  // 更新节点列表
+  allNodeList.value.push(nodeData);
+  
+  // 如果是第一个节点，初始化图谱数据
+  if (graphData.value.nodes.length === 1) {
+    newGraphData.value = { ...graphData.value };
+  }
+  
+  // 更新图谱数据
+  newGraphData.value = { ...graphData.value };
+  
+  console.log('从文档添加节点到图谱:', nodeData);
+};
+
 </script>
 
 <style scoped>
@@ -290,7 +317,7 @@ const handleDeleteElement = async (elementId, type) => {
 }
 
 .graph-container {
-  width: 66.666%;
+  /* width: 100%; */
   height: 100%;
   position: relative;
   overflow: hidden;
