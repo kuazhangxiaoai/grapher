@@ -137,12 +137,9 @@ export const uploadDocument = async (file) => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await apiClient.post('/documents/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
+    // 注意：使用FormData时，浏览器会自动设置正确的Content-Type（包括boundary），不需要手动设置
+    const response = await apiClient.post('/documents/upload', formData);
+    return response;
   } catch (error) {
     console.error('上传文档失败:', error);
     throw new Error('上传文档失败，请重试');
