@@ -45,7 +45,23 @@
       </div>
     </div>
   </div>
-
+  <!--上传文件信息模态框-->
+  <a-modal
+    v-model:visible="showFileModel"
+    title="上传文档"
+    @ok="hanleFileUploadOk"
+    @cancel="hanleFileUploadCancel"
+    width="500px"
+  >
+    <a-form layout="vertical">
+      <a-form-item label="文章标题:">
+        <a-input v-model="FileUploadForm.title" placeholder="请输入文章标题"></a-input>
+      </a-form-item>
+      <a-form-item label="发表时间:">
+        <a-date-picker v-model="FileUploadForm.publishTime" style="width: 100%;"></a-date-picker>
+      </a-form-item>
+    </a-form>
+  </a-modal>
   <!-- 节点信息设置模态框 -->
   <a-modal
     v-model:visible="showNodeModal"
@@ -86,6 +102,7 @@
 </template>
 
 <script setup lang="ts">
+import axios from "axios";
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { Message } from "@arco-design/web-vue";
 import PdfViewer from "./PdfViewer.vue";
@@ -105,12 +122,39 @@ const nodeForm = ref({
   originalText: "",
 });
 
+// 文件上传模态框相关
+const showFileModel = ref(false);
+const FileUploadForm = ref({
+  title: "",
+  publishTime: ""
+})
+
 // 定义emit事件
 const emit = defineEmits(["addNode"]);
 
 // 生成唯一ID
 const generateId = () =>
   "node_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+
+//上传文件信息-确认
+const hanleFileUploadOk = ()=>{
+  const formData = new FormData();
+  const title = FileUploadForm.value.title
+  const publishTime = FileUploadForm.value.publishTime;
+  axios.post('/api/text/upload',
+      {"title": title, "publishtime": publishTime})
+  .then(res => {
+    Message.success(res);
+    return true
+  })
+}
+
+//上传文件信息-取消
+const hanleFileUploadCancel = ()=>{
+  showFileModel.value = false;
+  resetUploadFileForm()
+  return false
+}
 
 // 处理节点模态框确认
 const handleNodeModalOk = () => {
@@ -157,6 +201,7 @@ const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
 
+  showFileModel.value = true;
   if (file) {
     if (
       file.type !== "application/pdf" &&
@@ -179,6 +224,12 @@ const handleFileUpload = (event: Event) => {
     }
   }
 };
+
+//Reset
+const resetUploadFileForm = () => {
+  FileUploadForm.value.title = ''
+  FileUploadForm.value.publishTime = ''
+}
 
 // 读取剪贴板文本
 const readClipboardText = async () => {
