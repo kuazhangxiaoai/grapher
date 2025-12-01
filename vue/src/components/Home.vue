@@ -2,14 +2,13 @@
   <div class="home-container relative w-full h-full flex">
     <!-- 左侧文档区域 -->
     <DocumentPanel @addNode="handleAddNodeFromDocument" />
-
-
     <!-- 右侧图谱画布区域 -->
     <div class="graph-container relative w-3/5 h-full">
       <GraphG6
         ref="graphG6"
         :data="graphData"
         :layout-config="layoutConfig"
+        :enableObject="enableObj"
         @elementClick="handleElementClick"
         @ready="handleGraphReady"
         @shortestPath="handleShortestPath"
@@ -40,6 +39,10 @@
         @close="activePanel = null"
       />
     </div>
+    <!--中间编辑区-->
+    <div v-if="editGraph" class="graph-editor">
+      <Editor></Editor>
+    </div>
   </div>
 </template>
 
@@ -55,13 +58,33 @@ import GraphElementInfo from "@/components/GraphG6/components/graphElementInfo.v
 import GraphShortestPath from "@/components/GraphG6/components/graphShortestPath.vue";
 import DocumentPanel from "./Pdf/DocumentPanel.vue";
 import { Message } from "@arco-design/web-vue";
+import Editor from "./Editor.vue";
+import {storeToRefs} from "pinia";
+import {useEditStore} from "@/stores/edit.ts";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
 
 const route = useRoute();
+const editStore = useEditStore();
+const {editGraph} = storeToRefs(editStore);
 // 图数据
 const graphData: any = ref({});
 const graphG6 = ref(null);
 let graphInstance = null;
+
+const enableObj = ref({
+  zoomOut: true,
+  zoomReset: true,
+  zoomIn: true,
+  mouseMode: true,
+  dragMode: true,
+  shortestPath: true,
+  downImage: false,
+  layout: true,
+  undo: true,
+  redo: true,
+  close: false,
+})
+
 // 图实例初始化完成后的回调
 const handleGraphReady = (graph) => {
   graphInstance = graph;
@@ -77,6 +100,7 @@ const showShortestPath = ref(false);
 const layoutConfig = ref();
 const elementInfo: any = ref({});
 const elementTargetType = ref("node");
+
 // 元素点击事件处理
 const handleElementClick = (element, targetType) => {
   elementTargetType.value = targetType;
@@ -314,6 +338,17 @@ const handleAddNodeFromDocument = (nodeData) => {
   height: 100%;
   overflow: hidden;
   background-color: #f5f7fa;
+}
+
+.graph-editor{
+  position: absolute;
+  left: 25%;
+  top: 15%;
+  width: 50%;
+  height: 50%;
+  border-color: #2d3748;
+  border-width: 2px;
+  border-radius: 2px
 }
 
 .graph-container {

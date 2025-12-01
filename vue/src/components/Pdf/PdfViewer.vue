@@ -1,5 +1,8 @@
 <template>
-  <div class="pdf-viewer" ref="viewerRef"></div>
+  <div class="pdf-viewer" ref="viewerRef">
+    <div id="highlight-container" class="highlight"></div>
+  </div>
+
 </template>
 
 <script setup lang="ts">
@@ -50,8 +53,22 @@ async function renderPage(page: any) {
   textLayerDiv.style.left = "0";
   textLayerDiv.style.width = viewport.width + "px";
   textLayerDiv.style.height = viewport.height + "px";
+  textLayerDiv.style.zIndex = 9;
   textLayerDiv.style.pointerEvents = "auto";
   pageContainer.appendChild(textLayerDiv);
+
+  //Highlight Layer
+  const highlightLayerDiv = document.createElement("div");
+  highlightLayerDiv.className = "highlightLayer";
+  highlightLayerDiv.style.position = "absolute";
+  highlightLayerDiv.style.top = "0";
+  highlightLayerDiv.style.left = "0";
+  highlightLayerDiv.style.width = viewport.width + "px";
+  highlightLayerDiv.style.height = viewport.height + "px";
+  highlightLayerDiv.style.pointerEvents = "auto";
+  highlightLayerDiv.style.zIndex = 1;
+  highlightLayerDiv.style.background = "rgba(0,0,0,0)";
+  pageContainer.appendChild(highlightLayerDiv);
 
   viewerRef.value!.appendChild(pageContainer);
 
@@ -169,5 +186,13 @@ onBeforeUnmount(() => {
 
 .textLayer span {
   color: transparent;
+}
+
+.highlight{
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  position: absolute;
+  background-color: #f5f5f5;
 }
 </style>

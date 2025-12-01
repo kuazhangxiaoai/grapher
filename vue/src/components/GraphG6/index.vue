@@ -9,6 +9,7 @@
       :showToolbar="showToolbar"
       :layoutConfig="layoutConfig"
       :zoomLevel="zoomLevel"
+      :enables="enableObject"
       @shortestPath="handleShortestPath"
       @exportGraphCsv="handleExportGraphCsv"
     />
@@ -90,6 +91,24 @@ const props = defineProps({
     type: Object as () => LayoutOptions,
     default: () => ({}),
   },
+
+  //选择功能
+  enableObject:{
+    type: Object,
+    default: () => ({
+      zoomOut: true,
+      zoomReset: true,
+      zoomIn: true,
+      mouseMode: true,
+      dragMode: true,
+      shortestPath: true,
+      downImage: true,
+      layout: true,
+      undo: true,
+      redo: true,
+      close: true,
+    }),
+  }
 });
 
 // G6实例引用

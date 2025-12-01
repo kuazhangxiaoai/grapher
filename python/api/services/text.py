@@ -13,12 +13,12 @@ UploadDir = Path("assets")
 UploadDir.mkdir(exist_ok=True)
 router = APIRouter()
 
+class FileUpload(BaseModel):
+    title: str
+    publishtime: str
+
 class Sentence(BaseModel):
     text: str
-    x0: float
-    y0: float
-    x1: float
-    y1: float
     article: str
 
 @router.get("/test")
@@ -26,23 +26,16 @@ async def test():
     return "hello"
 
 @router.post("/upload")
-async def upload(file: UploadFile=File(...), title: str='', publishtime: str=''):
+async def upload(fileUpload: FileUpload):
     try:
-        ext = Path(file.filename).suffix.lower()
-        assert ext in [".docx", ".txt", ".doc", ".pdf"]
-        savepath = UploadDir / file.filename
-        with open(savepath, 'wb') as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        query = '''INSERT INTO t_article (title, create_time, publish_time, filename) VALUES (%s, %s, %s, %s)'''
+        query = '''INSERT INTO t_article (title, create_time, publish_time) VALUES (%s, %s, %s)'''
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,
                             DB_Config().databasename,
                            DB_Config().port)
-        _db.create_one(query, (title, datetime.now(), datetime.strptime(publishtime, "%Y-%m-%d"), file.filename))
-        if ext in ['.docx', '.doc']:
-            html = mammoth.convert_to_html(file.file)
-        return {"filename": file.filename, "html": html}
+        _db.create_one(query, (fileUpload.title, datetime.now(), datetime.strptime(fileUpload.publishtime, "%Y-%m-%d")))
+        return True
 
     except Exception as e:
         return e
@@ -57,8 +50,6 @@ async def proc_sentence(sentence: Sentence):
                             DB_Config().databasename,
                             DB_Config().port)
         _db.create_one(query, (sentence.text, sentence.x0, sentence.y0, sentence.x1, sentence.y1, sentence.article))
-
-
         return True
 
     except Exception as e:

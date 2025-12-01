@@ -3,17 +3,18 @@ import { ref, reactive } from 'vue';
 // 节点类型接口
 export interface NodeType {
   id: string;
+  label: string;
   name: string;
   color: string;
 }
 
 // 默认节点类型列表
 const defaultNodeTypes: NodeType[] = [
-  { id: '1', name: '默认', color: '#1783FF' },
-  { id: '2', name: '人物', color: '#F53F3F' },
-  { id: '3', name: '组织', color: '#722ED1' },
-  { id: '4', name: '概念', color: '#52C41A' },
-  { id: '5', name: '事件', color: '#FAAD14' }
+  { id: '1', label: '默认', name: "A", color: '#1783FF' },
+  { id: '2', label: '人物', name: "B", color: '#F53F3F' },
+  { id: '3', label: '组织', name: "C", color: '#722ED1' },
+  { id: '4', label: '概念', name: "D", color: '#52C41A' },
+  { id: '5', label: '事件', name: "E", color: '#FAAD14' }
 ];
 
 // 节点类型管理组合式函数

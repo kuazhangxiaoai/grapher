@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showToolbar" class="fixed bottom-5 right-5 z-10">
+  <div v-if="showToolbar" class="right-5 z-10" style="position: absolute;bottom: 10px">
     <div
       class="custom-toolbar flex flex-row items-center bg-white rounded-lg shadow-md py-2 px-3 border border-solid border-[#E5E6EB]"
     >
@@ -7,6 +7,7 @@
         class="toolbar-item flex flex-row items-center"
         v-for="item in customToolbarData"
         :key="item.id"
+        :style="{color: item.enabled? 'black' : 'darkgray'}"
       >
         <div
           v-if="item.type == 'divider'"
@@ -99,6 +100,8 @@
 <script setup>
 import { ref, computed } from "vue";
 import { downloadImage, downloadCustomImage, changeLayout } from "../utils";
+import {useEditStore} from "@/stores/edit.js";
+
 const props = defineProps({
   graph: {
     type: Object,
@@ -112,6 +115,9 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  enables: {
+    type: Object,
+  }
 });
 
 const emit = defineEmits(["shortestPath", "exportGraphCsv"]);
@@ -169,8 +175,9 @@ const customToolbarData = ref([
     id: "zoom-out",
     icon: "icon-remove",
     title: "缩小",
+    enabled: props.enables.zoomOut,
     onClick: () => {
-      if (props.graph) {
+      if (props.graph && props.enables.zoomOut) {
         console.log("getZoomRange", props.graph.getZoom());
         const currentZoom = props.graph.getZoom();
         const newZoom = currentZoom * 0.8;
@@ -185,8 +192,9 @@ const customToolbarData = ref([
   {
     id: "zoom-reset",
     title: "重置缩放",
+    enabled: props.enables.zoomReset,
     onClick: () => {
-      if (props.graph) {
+      if (props.graph && props.enables.zoomReset) {
         props.graph.fitView();
         zoomLevel.value = 100;
         // props.graph.updateNodeData([
@@ -207,8 +215,9 @@ const customToolbarData = ref([
     id: "zoom-in",
     icon: "icon-add",
     title: "放大",
+    enabled: props.enables.zoomIn,
     onClick: () => {
-      if (props.graph) {
+      if (props.graph && props.enables.zoomIn) {
         const currentZoom = props.graph.getZoom();
         const newZoom = currentZoom * 1.2;
         zoomLevel.value = Math.round(newZoom * 100);
@@ -221,35 +230,45 @@ const customToolbarData = ref([
   {
     id: "divider",
     type: "divider",
+
   },
   {
     id: "mouseMode",
     icon: "icon-Frame",
     title: "鼠标模式",
+    enabled: props.enables.mouseMode,
     onClick: () => {
-      props.graph.updateBehavior({
-        key: "drag-canvas",
-        enable: false,
-      });
-      props.graph.updateBehavior({
-        key: "brush-select",
-        enable: (event) => event.targetType !== "node", // 不在节点上启用框选
-      });
+      if (props.enables.mouseMode)
+      {
+        props.graph.updateBehavior({
+          key: "drag-canvas",
+          enable: false,
+        });
+        props.graph.updateBehavior({
+          key: "brush-select",
+          enable: (event) => event.targetType !== "node", // 不在节点上启用框选
+        });
+      }
+
     },
   },
   {
     id: "dragMode",
     icon: "icon-laptop",
     title: "拖拽模式",
+    enabled: props.enables.dragMode,
     onClick: () => {
-      props.graph.updateBehavior({
-        key: "brush-select",
-        enable: false,
-      });
-      props.graph.updateBehavior({
-        key: "drag-canvas",
-        enable: (event) => event.targetType !== "node", // 不在节点上启用拖拽画布
-      });
+      if (props.enables.dragMode)
+      {
+        props.graph.updateBehavior({
+          key: "brush-select",
+          enable: false,
+        });
+        props.graph.updateBehavior({
+          key: "drag-canvas",
+          enable: (event) => event.targetType !== "node", // 不在节点上启用拖拽画布
+        });
+      }
     },
   },
   // {
@@ -267,22 +286,32 @@ const customToolbarData = ref([
     id: "shortestPath",
     icon: "icon-lujing",
     title: "最短路径",
+    enabled: props.enables.shortestPath,
     onClick: () => {
-      emit("shortestPath");
+      if (props.enables.shortestPath){
+        emit("shortestPath");
+      }
+
     },
   },
   {
     id: "downloadImage",
     icon: "icon-unpublish",
     title: "下载",
+    enabled: props.enables.downloadImage,
     onClick: () => {
-      downloadCustomImage(props.graph);
+      if(props.enables.downloadImage)
+      {
+        downloadCustomImage(props.graph);
+      }
+
     },
   },
   {
     id: "layout",
     icon: "icon-zhishitupu",
     title: "切换布局",
+    enabled: props.enables.layout,
     onClick: () => {},
   },
   {
@@ -293,22 +322,43 @@ const customToolbarData = ref([
     id: "undo",
     icon: "icon-rollback",
     title: "撤销",
+    enabled: props.enables.undo,
     onClick: () => {
       // redo、undo 需要配合 history 插件使用
-      const history = props.graph.getPluginInstance("history");
-      history.undo();
+      if (props.enables.undo)
+      {
+        const history = props.graph.getPluginInstance("history");
+        history.undo();
+      }
     },
   },
   {
     id: "redo",
     icon: "icon-rollfront",
     title: "还原",
+    enabled: props.enables.redo,
     onClick: () => {
       // redo、undo 需要配合 history 插件使用
-      const history = props.graph.getPluginInstance("history");
-      history.redo();
+      if (props.enables.redo)
+      {
+        const history = props.graph.getPluginInstance("history");
+        history.redo();
+      }
+
     },
   },
+  {
+    id: "close",
+    icon: "icon-icon-close",
+    title: "关闭",
+    enabled: props.enables.close,
+    onClick: () => {
+      if (props.enables.close)
+      {
+        useEditStore().closeGraphEditor()
+      }
+    }
+  }
 ]);
 
 // 切换布局的函数

@@ -5,25 +5,36 @@
     <!-- 文档上传区域 -->
     <div class="upload-section p-4 border-b border-gray-200">
       <h3 class="text-lg font-semibold mb-2">PDF文档上传</h3>
-      <input
-        type="file"
-        id="document-upload"
-        accept=".pdf"
-        class="hidden"
-        @change="handleFileUpload"
-      />
-      <label
-        for="document-upload"
-        class="upload-btn px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors"
-      >
-        选择PDF文档
-      </label>
-      <div class="file-info mt-2 text-sm text-gray-600" v-if="selectedFileName">
-        已选择: {{ selectedFileName }}
-        <span class="ml-2 text-xs text-gray-500"
-          >(提示：框选PDF文字后按 Ctrl+C 复制，自动弹出节点添加窗口)</span
+      <div style="display: flex; width: 100%; height: 55%">
+        <input
+            type="file"
+            id="document-upload"
+            accept=".pdf"
+            class="hidden"
+            @change="handleFileUpload"
+        />
+        <label
+            for="document-upload"
+            class="upload-btn px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors"
         >
+          选择PDF文档
+        </label>
+
+        <!--<div class="file-info mt-2 text-sm text-gray-600" v-if="selectedFileName">
+          已选择: {{ selectedFileName }}
+          <span class="ml-2 text-xs text-gray-500"
+          >(提示：框选PDF文字后按 Ctrl+C 复制，自动弹出节点添加窗口)</span
+          >
+        </div>-->
+        <div class="file-list-button">
+          文件列表
+        </div>
+        <div class="edit-button" @click="handleCopyToOpenModal">
+          编辑
+        </div>
       </div>
+
+      <!--<div style="display: flex ;position: relative; left: 0px; top: 0px; width: 50px; height: 20px; background-color: #1890ff"></div>-->
     </div>
 
     <!-- 文档内容显示区域 -->
@@ -62,43 +73,6 @@
       </a-form-item>
     </a-form>
   </a-modal>
-  <!-- 节点信息设置模态框 -->
-  <a-modal
-    v-model:visible="showNodeModal"
-    title="设置节点信息"
-    @ok="handleNodeModalOk"
-    @cancel="handleNodeModalCancel"
-    width="500px"
-  >
-    <a-form layout="vertical">
-      <a-form-item label="节点名称">
-        <a-input v-model="nodeForm.name" placeholder="请输入节点名称" />
-      </a-form-item>
-      <a-form-item label="节点类型">
-        <a-select v-model="nodeForm.type" placeholder="请选择节点类型">
-          <a-option value="entity">实体</a-option>
-          <a-option value="concept">概念</a-option>
-          <a-option value="event">事件</a-option>
-          <a-option value="attribute">属性</a-option>
-        </a-select>
-      </a-form-item>
-      <a-form-item label="节点描述">
-        <a-textarea
-          v-model="nodeForm.description"
-          placeholder="请输入节点描述"
-          :rows="4"
-        />
-      </a-form-item>
-      <a-form-item label="原始文本">
-        <a-textarea
-          v-model="nodeForm.originalText"
-          placeholder="原始文本"
-          :rows="3"
-          :disabled="true"
-        />
-      </a-form-item>
-    </a-form>
-  </a-modal>
 </template>
 
 <script setup lang="ts">
@@ -106,6 +80,8 @@ import axios from "axios";
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { Message } from "@arco-design/web-vue";
 import PdfViewer from "./PdfViewer.vue";
+import {useEditStore} from "../../stores/edit.ts";
+
 // 文档上传相关
 const selectedFileName = ref("");
 const pdfPreviewUrl = ref("");
@@ -196,6 +172,8 @@ const resetNodeForm = () => {
   };
 };
 
+
+
 // 处理文件上传
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -243,20 +221,37 @@ const readClipboardText = async () => {
   }
 };
 
-// 复制文字后自动弹窗
-const handleCopyToOpenModal = async (e: ClipboardEvent) => {
-  if (!pdfContainer.value) return;
+//点击编辑获取选中的文字内容
+const clickEditButton = (e: MouseEvent) => {
+}
 
+// 复制文字后自动弹窗
+const handleCopyToOpenModal = async () => {
+  if (!pdfContainer.value) return;
+  useEditStore().openGraphEditor();
   const selection: any = window.getSelection();
   const selectedText = selection?.toString().trim() || "";
   if (!selectedText) return;
 
   const range = selection.getRangeAt(0);
+  const rects = Array.from(range.getClientRects()).map(r => ({
+    x: r.left + window.scrollX,
+    y: r.top + window.scrollY,
+    width: r.width,
+    height: r.height,
+    left: r.left + window.scrollX,
+    top: r.top + window.scrollY,
+    right: r.right + window.scrollX,
+    bottom: r.bottom + window.scrollY,
+  }));
+  console.log(rects);
+
   if (!pdfContainer.value.contains(range.commonAncestorContainer)) return;
 
   setTimeout(async () => {
     const text = await readClipboardText();
-    console.log(text);
+    useEditStore().setSequence(text);
+    console.log(text)
     if (text) {
       nodeForm.value.originalText = text;
       nodeForm.value.name = text.substring(0, 20);
@@ -283,7 +278,7 @@ const setupTextSelectionListener = () => {
 
 // PDF渲染完成回调
 const handlePdfRendered = () => {
-  Message.success("PDF加载完成，框选文字后按Ctrl+C即可添加节点");
+  Message.success("PDF加载完成，框选文字后按Ctrl+C即可编辑知识图谱");
   setupTextSelectionListener();
 }; // 主页面向 iframe 发送“获取选中文字”指令
 
@@ -363,4 +358,44 @@ watch(pdfPreviewUrl, (newVal) => {
 .transition-colors {
   transition: background-color 0.2s ease;
 }
+.file-list-button{
+  text-align: center;
+  place-content: center;
+  place-items: center;
+  position: relative;
+  left: 10px;
+  top: 0px;
+  width: 100px;
+  height: 100%;
+  background-color: salmon;
+  border-radius: 5px;
+  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+.file-list-button:hover {
+  cursor: pointer;
+}
+
+.edit-button {
+  text-align: center;
+  place-content: center;
+  place-items: center;
+  position: relative;
+  left: 20px;
+  top: 0px;
+  width: 100px;
+  height: 100%;
+  background-color: hotpink;
+  border-radius: 5px;
+  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+.edit-button:hover {
+  cursor: pointer;
+}
+
 </style>
