@@ -1,4 +1,7 @@
 import os
+
+from starlette.staticfiles import StaticFiles
+
 from api.utils.logger import LOGGER
 from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
@@ -7,7 +10,7 @@ import json
 from python.api.services import user
 from python.api.services import graph
 from python.api.services import text
-
+from python.api.services.text import UploadDir
 if __name__ == '__main__':
     app = FastAPI(title="grapher")
 
@@ -32,5 +35,6 @@ if __name__ == '__main__':
     app.include_router(graph.router, prefix="/graph")
     app.include_router(text.router, prefix="/text")
 
+    app.mount("/assets", StaticFiles(directory=UploadDir), name='assets')
     uvicorn.run(app, host="0.0.0.0", port=8088)
 
