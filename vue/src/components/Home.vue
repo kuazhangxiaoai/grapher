@@ -43,6 +43,9 @@
     <div v-if="editGraph" class="graph-editor">
       <Editor></Editor>
     </div>
+    <div v-if="fileList" class="file-list">
+      <FileList></FileList>
+    </div>
   </div>
 </template>
 
@@ -61,11 +64,13 @@ import { Message } from "@arco-design/web-vue";
 import Editor from "./Editor.vue";
 import {storeToRefs} from "pinia";
 import {useEditStore} from "@/stores/edit.ts";
+import FileList from "./FileList.vue";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
 
 const route = useRoute();
 const editStore = useEditStore();
-const {editGraph} = storeToRefs(editStore);
+editStore.getAllFileInfoList()
+const {editGraph, fileList} = storeToRefs(editStore);
 // 图数据
 const graphData: any = ref({});
 const graphG6 = ref(null);
@@ -356,5 +361,16 @@ const handleAddNodeFromDocument = (nodeData) => {
   height: 100%;
   position: relative;
   overflow: hidden;
+}
+
+.file-list{
+  position: absolute;
+  left: 20%;
+  top: 20%;
+  width: 35%;
+  height: 65%;
+  background-color: antiquewhite;
+  opacity: 0.9;
+  border-radius: 5px;
 }
 </style>

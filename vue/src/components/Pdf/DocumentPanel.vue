@@ -26,7 +26,7 @@
           >(提示：框选PDF文字后按 Ctrl+C 复制，自动弹出节点添加窗口)</span
           >
         </div>-->
-        <div class="file-list-button">
+        <div class="file-list-button" @click="handleFileList">
           文件列表
         </div>
         <div class="edit-button" @click="handleCopyToOpenModal">
@@ -81,10 +81,11 @@ import { ref, onMounted, onUnmounted, watch } from "vue";
 import { Message } from "@arco-design/web-vue";
 import PdfViewer from "./PdfViewer.vue";
 import {useEditStore} from "../../stores/edit.ts";
+import {storeToRefs} from "pinia";
 
 // 文档上传相关
 const selectedFileName = ref("");
-const pdfPreviewUrl = ref("");
+const {pdfPreviewUrl} = storeToRefs(useEditStore())
 const currentFile = ref<File | null>(null);
 const pdfContainer = ref<HTMLDivElement | null>(null);
 let textSelectionHandler: (e: MouseEvent) => void;
@@ -102,7 +103,8 @@ const nodeForm = ref({
 const showFileModel = ref(false);
 const FileUploadForm = ref({
   title: "",
-  publishTime: ""
+  publishTime: "",
+  filename: ""
 })
 
 // 定义emit事件
@@ -114,15 +116,33 @@ const generateId = () =>
 
 //上传文件信息-确认
 const hanleFileUploadOk = ()=>{
-  const formData = new FormData();
   const title = FileUploadForm.value.title
   const publishTime = FileUploadForm.value.publishTime;
+  const filename = FileUploadForm.value.filename;
   axios.post('/api/text/upload',
-      {"title": title, "publishtime": publishTime})
+      {"title": title, "publishtime": publishTime, "filename": filename})
   .then(res => {
     Message.success(res);
-    return true
+    //上传文件
+    const fileInput = document.querySelector("#document-upload");
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    axios.post("/api/text/uploadfile",formData, {headers: {"Content-Type": "multipart/form-data"}})
+        .then(res => {
+          Message.success(res);
+          const url = res.data.url;
+          const server = useEditStore().server;
+          useEditStore().setPDFPreviewUrl(server + url)
+        })
+        .catch(err => {
+          console.log(err);
+        })
   })
+  .catch(err => {
+    console.log(err);
+  })
+
+
 }
 
 //上传文件信息-取消
@@ -172,7 +192,9 @@ const resetNodeForm = () => {
   };
 };
 
-
+const handleFileList = () => {
+  useEditStore().openFileList();
+}
 
 // 处理文件上传
 const handleFileUpload = (event: Event) => {
@@ -192,14 +214,16 @@ const handleFileUpload = (event: Event) => {
 
     selectedFileName.value = file.name;
     currentFile.value = file;
+    FileUploadForm.value.filename = file.name;
 
-    try {
-      if (pdfPreviewUrl.value) URL.revokeObjectURL(pdfPreviewUrl.value);
-      pdfPreviewUrl.value = URL.createObjectURL(file);
-    } catch (error) {
-      console.error("生成PDF预览URL失败:", error);
-      Message.error("文件解析失败，请尝试重新上传");
-    }
+    //try {
+    //  if (pdfPreviewUrl.value) URL.revokeObjectURL(pdfPreviewUrl.value);
+    //  pdfPreviewUrl.value = URL.createObjectURL(file);
+    //  FileUploadForm.value.filename = file.name;
+    //} catch (error) {
+    //  console.error("生成PDF预览URL失败:", error);
+    //  Message.error("文件解析失败，请尝试重新上传");
+    //}
   }
 };
 
@@ -207,6 +231,7 @@ const handleFileUpload = (event: Event) => {
 const resetUploadFileForm = () => {
   FileUploadForm.value.title = ''
   FileUploadForm.value.publishTime = ''
+  FileUploadForm.value.filename = ''
 }
 
 // 读取剪贴板文本
