@@ -1,26 +1,31 @@
 <template>
   <div class="pdf-viewer" ref="viewerRef">
-    <div id="highlight-container" class="highlight"></div>
+    <!--<div id="hc" class="highlight">
+    </div>-->
   </div>
 
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import {ref, onMounted, onBeforeUnmount, watch, computed} from "vue";
+import {storeToRefs} from "pinia";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/web/pdf_viewer.css";
+import {useEditStore} from "../../stores/edit.ts";
+
 // --- Worker 设置 ---
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/package/pdf.worker.min.js";
-
 const props = defineProps<{
   pdfUrl: string | null;
 }>();
 
 const emit = defineEmits(["pdfRendered", "textSelected"]);
-
+const editStore = useEditStore()
+const {rects} = storeToRefs(editStore)
 const viewerRef = ref<HTMLDivElement>();
 let pdfInstance: any = null;
 let rendering = false;
+
 
 // -------------------- 渲染单页 --------------------
 async function renderPage(page: any) {
@@ -90,12 +95,60 @@ async function renderPage(page: any) {
     enhanceTextSelection: true
   });
   await textLayer.promise;
-
+  renderHightLightLayer(textContent, viewport,highlightLayerDiv, rects.value)
   // 高 DPI 修正（可选，PDF.js 计算好了通常不需要）
   // if (outputScale !== 1) {
   //   textLayerDiv.style.transform = `scale(${1 / outputScale})`;
   //   textLayerDiv.style.transformOrigin = "0 0";
   // }
+}
+
+//--------------------渲染高亮层-------------------------
+const renderHightLightLayer = (textContent, viewPort, hightLightElem, rectangles) =>{
+  const highlightLayerDiv = hightLightElem;
+  highlightLayerDiv.style.width = viewPort.width + "px";
+  highlightLayerDiv.style.height = viewPort.height + "px";
+
+  const keywords = "北京"
+  rectangles.forEach((item) => {
+    const x = item.x
+    const y = item.y
+    const width = item.width * viewPort.scale;
+    const height = item.height * viewPort.scale;
+
+    const div = document.createElement("div");
+    //div.className = "highlightBlock";
+    div.style.position = "absolute";
+    div.style.backgroundColor ="aqua"
+    div.style.left = x + "px";
+    div.style.top = y + "50px";
+    div.style.width = width + "px";
+    div.style.height = height + "px";
+    highlightLayerDiv.appendChild(div);
+
+  })/*
+  textContent.items.forEach(item => {
+    if(!item.str.includes(keywords)) return;
+    const transform = pdfjsLib.Util.transform(
+        pdfjsLib.Util.transform(viewPort.transform, item.transform),
+        [1, 0, 0, -1, 0, 0]
+    );
+    const x = transform[4]
+    const y = transform[5]
+    const width = item.width * viewPort.scale;
+    const height = item.height * viewPort.scale;
+
+    const div = document.createElement("div");
+    //div.className = "highlightBlock";
+    div.style.position = "absolute";
+    div.style.backgroundColor ="aqua"
+    div.style.left = x + "px";
+    div.style.top = y + "50px";
+    div.style.width = width + "px";
+    div.style.height = height + "px";
+    highlightLayerDiv.appendChild(div);
+  })*/
+
 }
 
 
@@ -194,5 +247,11 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   position: absolute;
   background-color: #f5f5f5;
+  z-index: 999;
+}
+.highlightBlock{
+  position: absolute;
+  background-color: aquamarine;
+  border-radius: 2px;
 }
 </style>

@@ -14,10 +14,10 @@
       <a-form-item label="节点名称" field="name">
         <a-input v-model="form.name" placeholder="请输入节点名称" />
       </a-form-item>
-      <a-form-item label="节点类型" field="entityType">
+      <a-form-item label="节点类型" field="nodeType">
         <div class="flex items-center">
           <a-select
-            v-model="form.entityType"
+            v-model="form.nodeType"
             placeholder="请选择节点类型"
             class="w-full"
           >
@@ -64,8 +64,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useNodeTypesStore } from '@/stores/nodeTypes';
+//import { useNodeTypesStore } from '@/stores/nodeTypes';
+import {useEditStore} from "@/stores/edit.ts";
 import NodeTypeManager from './nodeTypeManager.vue';
+import axios from "axios";
+import type Node from "@/types/node.ts"
 
 const props = defineProps({});
 const openNodeAddModal = defineModel();
@@ -73,12 +76,12 @@ const formRef = ref();
 const showTypeManager = ref(false);
 
 // 使用节点类型管理
-const { nodeTypes } = useNodeTypesStore();
+const { nodeTypes } = useEditStore();
 
 const form = ref({
   name: "",
   description: "",
-  entityType: "默认" // 默认使用"默认"类型
+  nodeType: "默认" // 默认使用"默认"类型
 });
 
 const rules = ref({
@@ -89,8 +92,23 @@ const rules = ref({
 
 const emit = defineEmits(["confirm", "cancel"]);
 
+//确认创建节点
 const handleOk = async done => {
   const valid = await formRef.value.validate();
+  const sequence = useEditStore().getSequence();
+  const article = useEditStore().getArticleTitle();
+  const node_name = form.value.name;
+  const node_label = form.value.nodeType;
+
+  const node: Node = {
+    label: node_label,
+    name: node_name,
+    sequence: sequence,
+    article: article
+  }
+
+  useEditStore().addNode(node)
+
   if (valid) {
     done(false);
     return;
@@ -121,6 +139,11 @@ const handleOpenTypeManager = () => {
 const handleTypeManagerRefresh = () => {
   // 类型列表会自动更新，无需额外操作
 };
+
+// 组件挂载时初始化
+onMounted(() => {
+  useEditStore().getAllNodeTypes()
+});
 </script>
 <style scoped lang="scss">
 .type-color {

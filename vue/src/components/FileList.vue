@@ -6,15 +6,15 @@
       <div class="fitem">发文时间</div>
     </div>
     <div id="file-list-content" class="list-content">
-      <div class="file-item" ref="items" v-for="(item, index) in page_data" :class="{active: activeIdex === index}"  :key="item.title" @click="selectFile(index)">
+      <div class="file-item" ref="items" v-for="(item, index) in page_data" :class="{active: activeIdex === index}"  :key="index" @click="selectFile(index)">
         <div class="fitem">{{item.title}}</div>
         <div class="fitem">{{item.publish_time}}</div>
       </div>
     </div>
     <div class="page-ctl">
-      <span class="last-page">上一页</span>
+      <span class="last-page" @click="previous_page">上一页</span>
       <span class="last-page">第{{current_page}}页，共{{total_pages}}页</span>
-      <span class="next-page">下一页</span>
+      <span class="next-page" @click="next_page">下一页</span>
       <span class="ok-btn" @click="filelistOK">确认</span>
       <span class="quit-btn" @click="filelistCancel">取消</span>
     </div>
@@ -25,6 +25,7 @@
 import { ref, computed } from "vue";
 import {useEditStore} from "../stores/edit.ts";
 import {storeToRefs} from "pinia";
+import axios from "axios";
 
 const props = defineProps({
 
@@ -32,18 +33,26 @@ const props = defineProps({
 
 const items = ref([])
 const current_page = ref(1)
-const page_size = 20
+const current_index = ref(-1)
+const page_size = 25
 const editStore = useEditStore();
 editStore.getAllFileInfoList();
 const {fileinfos} = storeToRefs(editStore)
-const bgColor = ref("") //salmon
 const activeIdex = ref(null)
 const filelistCancel = () => {
-  editStore.closeFileList()
+  editStore.closeFileList() //关闭文件列表
 }
 
 const filelistOK = () => {
+  const title = page_data.value[current_index.value].title
+  editStore.setArticleTitle(title)
+  axios.get("/api/text/getPDFPreviewUrl", {params: {title:title}}).then((res) => {
+    const server = editStore.server;
+    const url = res.data.url;
+    editStore.setPDFPreviewUrl(server + url);
+  })
 
+  editStore.closeFileList()
 }
 const page_data = computed(() => {
   const start = (current_page.value - 1) * page_size;
@@ -55,19 +64,30 @@ const total_pages = computed(()=>{
 })
 
 const next_page = () => {
-  if (current_page.value < total_pages.value) {current_page.value += 1;}
+  if (current_page.value < total_pages.value) {
+    current_page.value++
+    clearSelection()
+  }
 }
 
 const previous_page = () => {
-  if(current_page.value > 1) { current_page.value -= 1;}
+  if(current_page.value > 1) {
+    current_page.value--;
+    clearSelection()
+  }
 }
 
 const selectFile = (index) => {
   console.log(index)
+  clearSelection()
+  items.value[index].style.backgroundColor = "salmon"
+  current_index.value = index;
+}
+
+const clearSelection = () => {
   items.value.forEach((item, index) => {
     item.style.backgroundColor = "antiquewhite"
   })
-  items.value[index].style.backgroundColor = "salmon"
 }
 
 </script>

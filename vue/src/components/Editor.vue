@@ -39,9 +39,18 @@ const enableObj = ref({
   layout: true,
   undo: true,
   redo: true,
+  commit: true,
   close: true,
 })
 
+// 当前激活的面板
+const activePanel = ref(null); // 'elementInfo' | 'shortestPath' | null
+
+// 是否显示节点信息弹窗
+const expandElementInfoPanel = ref(false);
+const showShortestPath = ref(false);
+const elementInfo: any = ref({});
+const elementTargetType = ref("node");
 
 const handleElementClick = (element, targetType) => {
   elementTargetType.value = targetType;
@@ -83,7 +92,6 @@ const handleGraphReady = (graph) => {
 const handleExportGraphCsv = async () => {
   console.log("handleExportGraphCsv");
 };
-
 
 const handleAddNode = async (nodeData) => {
   try {

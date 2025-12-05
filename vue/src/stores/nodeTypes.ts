@@ -1,28 +1,25 @@
 import { ref, reactive } from 'vue';
+import axios from "axios";
 
 // 节点类型接口
 export interface NodeType {
   id: string;
-  label: string;
   name: string;
   color: string;
 }
-
-// 默认节点类型列表
-const defaultNodeTypes: NodeType[] = [
-  { id: '1', label: '默认', name: "A", color: '#1783FF' },
-  { id: '2', label: '人物', name: "B", color: '#F53F3F' },
-  { id: '3', label: '组织', name: "C", color: '#722ED1' },
-  { id: '4', label: '概念', name: "D", color: '#52C41A' },
-  { id: '5', label: '事件', name: "E", color: '#FAAD14' }
-];
 
 // 节点类型管理组合式函数
 export function useNodeTypesStore() {
   // 从localStorage加载节点类型，如果没有则使用默认值
   const loadNodeTypes = (): NodeType[] => {
-    const stored = localStorage.getItem('nodeTypes');
-    return stored ? JSON.parse(stored) : defaultNodeTypes;
+    //const stored = localStorage.getItem('nodeTypes');
+    const nodes: NodeType[] = [];
+    axios.get("/api/graph/getAllNodeType").then((res) => {
+      res.data.forEach(item => {
+        nodes.push({id: item.id, name: item.name, color: item.color});
+      })
+      return nodes;
+    })
   };
 
   // 保存节点类型到localStorage

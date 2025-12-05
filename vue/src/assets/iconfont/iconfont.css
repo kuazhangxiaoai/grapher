@@ -1,8 +1,14 @@
 @font-face {
   font-family: "iconfont"; /* Project id 4934695 */
   src: url('iconfont.woff2?t=1748413933873') format('woff2'),
-       url('iconfont.woff?t=1748413933873') format('woff'),
-       url('iconfont.ttf?t=1748413933873') format('truetype');
+      url('iconfont.woff?t=1748413933873') format('woff'),
+      url('iconfont.ttf?t=1748413933873') format('truetype')
+}
+@font-face {
+  font-family: "iconfont2"; /* Project id 4934695 */
+  src: url('iconfont2.woff2?t=1764813738122') format('woff2'),
+  url('iconfont2.woff?t=1764813738122') format('woff'),
+  url('iconfont2.ttf?t=1764813738122') format('truetype')
 }
 
 .iconfont {
@@ -12,13 +18,25 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+.iconfont2{
+  font-family: "iconfont2" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 .icon-laptop:before {
   content: "\e61c";
 }
 
-.icon-unpublish:before {
+.icon-commit:before {
+  font-family: "iconfont2"; /* Project id 4934695 */
   content: "\e601";
+
+}
+
+.icon-unpublish:before {
+  content: "\e60a";
 }
 
 .icon-quanping:before {

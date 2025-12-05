@@ -41,9 +41,10 @@
     <div class="document-content flex-1 overflow-hidden">
       <!-- PDF预览区域（vue-office-pdf） -->
       <div
-        v-if="pdfPreviewUrl"
-        ref="pdfContainer"
-        class="content-display h-full flex flex-col"
+          id="pdfPreviewer"
+          v-if="pdfPreviewUrl"
+          ref="pdfContainer"
+          class="content-display h-full flex flex-col"
       >
         <PdfViewer :pdfUrl="pdfPreviewUrl" style="width: 100%; height: 600px" />
       </div>
@@ -82,6 +83,7 @@ import { Message } from "@arco-design/web-vue";
 import PdfViewer from "./PdfViewer.vue";
 import {useEditStore} from "../../stores/edit.ts";
 import {storeToRefs} from "pinia";
+import type {Rectangle} from "../../types/rect.ts";
 
 // 文档上传相关
 const selectedFileName = ref("");
@@ -127,18 +129,20 @@ const hanleFileUploadOk = ()=>{
     const fileInput = document.querySelector("#document-upload");
     const formData = new FormData();
     formData.append("file", fileInput.files[0]);
-    axios.post("/api/text/uploadfile",formData, {headers: {"Content-Type": "multipart/form-data"}})
+    axios.post("/api/text/uploadfile", formData, {headers: {"Content-Type": "multipart/form-data"}})
         .then(res => {
           Message.success(res);
           const url = res.data.url;
           const server = useEditStore().server;
           useEditStore().setPDFPreviewUrl(server + url)
+          useEditStore().getAllFileInfoList()
         })
         .catch(err => {
-          console.log(err);
+          Message.error(err.message);
         })
   })
   .catch(err => {
+    Message.error(err.message);
     console.log(err);
   })
 
@@ -259,16 +263,18 @@ const handleCopyToOpenModal = async () => {
   if (!selectedText) return;
 
   const range = selection.getRangeAt(0);
+  const box = document.getElementById("pdfPreviewer").getElementsByTagName("canvas")[0].getBoundingClientRect();
   const rects = Array.from(range.getClientRects()).map(r => ({
-    x: r.left + window.scrollX,
-    y: r.top + window.scrollY,
+    x: r.left - box.left+ window.scrollX,
+    y: r.top - box.top + window.scrollY - r.height + 3,
     width: r.width,
-    height: r.height,
-    left: r.left + window.scrollX,
-    top: r.top + window.scrollY,
-    right: r.right + window.scrollX,
-    bottom: r.bottom + window.scrollY,
-  }));
+    height: 3,
+    left: r.left - box.left + window.scrollX,
+    top: r.top - box.top + window.scrollY - r.height + 3,
+    right: r.right - box.left + window.scrollX,
+    bottom: r.bottom - box.top + window.scrollY,
+  } as Rectangle));
+  useEditStore().setRects(rects)
   console.log(rects);
 
   if (!pdfContainer.value.contains(range.commonAncestorContainer)) return;

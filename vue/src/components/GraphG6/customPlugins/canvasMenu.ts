@@ -5,27 +5,31 @@ import {
   ExtensionCategory,
   register,
 } from "@antv/g6";
+import {useEditStore} from "../../../stores/edit.ts";
 
 // 从localStorage获取节点类型配置
-const getNodeTypeColor = (entityType: string): string => {
+const getNodeTypeColor = (nodeType: string): string => {
   try {
     const stored = localStorage.getItem('nodeTypes');
     if (stored) {
       const nodeTypes = JSON.parse(stored);
-      const type = nodeTypes.find((t: any) => t.name === entityType);
+      const type = nodeTypes.find((t: any) => t.name === nodeType);
       if (type) {
         return type.color;
       }
     }
-    // 默认颜色或根据类型返回不同颜色
-    const defaultColors: Record<string, string> = {
-      '默认': '#1783FF',
-      '人物': '#F53F3F',
-      '组织': '#722ED1',
-      '概念': '#52C41A',
-      '事件': '#FAAD14'
-    };
-    return defaultColors[entityType] || '#1783FF';
+    else
+    {
+      // 默认颜色或根据类型返回不同颜色
+      const defaultColors: Record<string, string> = {
+        '默认': '#1783FF',
+        '人物': '#F53F3F',
+        '组织': '#722ED1',
+        '概念': '#52C41A',
+        '事件': '#FAAD14'
+      };
+      return defaultColors[nodeType] || '#1783FF';
+    }
   } catch (error) {
     console.error('获取节点类型颜色失败:', error);
     return '#1783FF';
@@ -182,6 +186,7 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
   // 处理添加节点
   private handleAddNode = () => {
     const { graph } = this.context;
+    useEditStore().getAllNodeTypes()
     // 创建临时节点ID
     const nodeId = "node-" + Date.now();
     this.tempNodeId = nodeId;
@@ -220,7 +225,7 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
     if (nodeData && nodeData.name) {
       // 保存原始数据
       this.originalNodeData = graph.getNodeData(nodeId);
-
+      const color = getNodeTypeColor(nodeData.nodeType)
       // 更新节点
       graph.updateNodeData([
         {
@@ -228,12 +233,12 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
           data: {
             name: nodeData.name,
             description: nodeData.description || "",
-            entityType: nodeData.entityType || "默认",
+            nodeType: nodeData.nodeType || "默认",
           },
           style: {
             labelText: nodeData.name,
             // 根据节点类型设置不同样式
-            fill: getNodeTypeColor(nodeData.entityType || "默认"),
+            fill: color,
           },
         },
       ]);

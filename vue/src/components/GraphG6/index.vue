@@ -106,6 +106,7 @@ const props = defineProps({
       layout: true,
       undo: true,
       redo: true,
+      commit: false,
       close: true,
     }),
   }
@@ -411,7 +412,7 @@ const handleNodeOk = async (nodeData) => {
       menuPlugin.updateNodeData(currentNodeId.value, nodeData);
       menuPlugin.clearTempNodeId();
       Message.success("添加节点成功");
-      emit("addNodeSuccess");
+      //emit("addNodeSuccess");
     } catch (error) {
       console.error("添加节点失败:", error);
       menuPlugin.cancelAddNode();

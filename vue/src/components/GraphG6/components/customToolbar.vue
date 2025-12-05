@@ -26,8 +26,7 @@
           class="text-sm text-gray-600 min-w-[36px] text-center cursor-pointer"
           @click="item.onClick"
           title="重置缩放"
-          >{{ Math.min(zoomLevel, 100) }}%</span
-        >
+          >{{ Math.min(zoomLevel, 100) }}%</span>
         <button
           v-else-if="item.id == 'zoom-in'"
           class="w-8 h-8 rounded bg-white flex items-center justify-center cursor-pointer transition-all duration-200 mx-0.5 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -346,6 +345,21 @@ const customToolbarData = ref([
       }
 
     },
+  },
+  {
+    id: "commit",
+    icon: "icon-commit",
+    title: "提交",
+    enabled: props.enables.commit,
+    onClick: () => {
+      //提交知识图谱
+      if (props.enables.commit)
+      {
+        console.log("commit")
+        //useEditStore().closeGraphEditor()
+      }
+    }
+
   },
   {
     id: "close",

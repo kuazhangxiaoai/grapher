@@ -91,8 +91,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useNodeTypesStore } from '@/stores/nodeTypes';
+import { ref, computed, onMounted } from 'vue';
+import {useEditStore} from "@/stores/edit.ts";
+//import { useNodeTypesStore } from '@/stores/nodeTypes';
 import { Message } from '@arco-design/web-vue';
 
 const props = defineProps<{
@@ -109,7 +110,8 @@ const visible = computed({
   set: (value) => emit('update:visible', value),
 });
 
-const { nodeTypes, addNodeType, updateNodeType, deleteNodeType } = useNodeTypesStore();
+//const { nodeTypes, addNodeType, updateNodeType, deleteNodeType } = useNodeTypesStore();
+const {nodeTypes} = useEditStore();
 
 const formRef = ref();
 const saving = ref(false);
@@ -139,7 +141,7 @@ const handleEditType = (type: any) => {
 
 // 删除节点类型
 const handleDeleteType = (id: string) => {
-  deleteNodeType(id);
+  //deleteNodeType(id);
   Message.success('节点类型删除成功');
   emit('refresh');
 };
@@ -153,11 +155,11 @@ const handleSaveType = async () => {
   try {
     if (editingType.value) {
       // 更新现有类型
-      updateNodeType(editingType.value.id, form.value);
+      //updateNodeType(editingType.value.id, form.value);
       Message.success('节点类型更新成功');
     } else {
       // 添加新类型
-      addNodeType(form.value);
+      //addNodeType(form.value);
       Message.success('节点类型添加成功');
     }
     handleResetForm();
@@ -181,6 +183,12 @@ const handleOk = () => {
   handleResetForm();
   return true;
 };
+
+// 组件挂载时初始化
+onMounted(() => {
+  useEditStore().getAllNodeTypes()
+});
+
 </script>
 
 <style scoped lang="scss">
