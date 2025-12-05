@@ -233,7 +233,7 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
           data: {
             name: nodeData.name,
             description: nodeData.description || "",
-            nodeType: nodeData.nodeType || "默认",
+            entityType: nodeData.nodeType || "默认",
           },
           style: {
             labelText: nodeData.name,

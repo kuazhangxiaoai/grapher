@@ -22,10 +22,11 @@ import {ref} from "vue";
 import {storeToRefs} from "pinia"
 import {useEditStore} from "../stores/edit.ts";
 import GraphG6 from "@/components/GraphG6/index.vue";
-import CustomToolbar from "./GraphG6/components/customToolbar.vue";
+import {Message} from "@arco-design/web-vue";
+import {generateMockData} from "@/components/GraphG6/mock";
 
 const {sequence} = storeToRefs(useEditStore())
-const graphData: any = ref({});   //图数据
+const graphData: any = ref({ nodes: [], edges: [] });   //图数据，初始化为空数组，防止节点提前显示
 const layoutConfig = ref();   // 布局类型配置
 let graphInstance = null; //图实例
 const enableObj = ref({
@@ -91,6 +92,16 @@ const handleGraphReady = (graph) => {
 // 处理导出三元组CSV
 const handleExportGraphCsv = async () => {
   console.log("handleExportGraphCsv");
+};
+
+// 获取所有节点列表
+const getAllNodeList = () => {
+  // 从graph实例中获取最新的节点列表
+  if (graphInstance) {
+    const data = graphInstance.getGraphData();
+    return data.nodes || [];
+  }
+  return [];
 };
 
 const handleAddNode = async (nodeData) => {
