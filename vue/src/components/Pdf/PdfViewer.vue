@@ -1,5 +1,6 @@
 <template>
   <div class="pdf-viewer" ref="viewerRef">
+    <div id="pageContainer"></div>
     <!--<div id="hc" class="highlight">
     </div>-->
   </div>
@@ -21,25 +22,38 @@ const props = defineProps<{
 
 const emit = defineEmits(["pdfRendered", "textSelected"]);
 const editStore = useEditStore()
-const {rects} = storeToRefs(editStore)
+const {rects, currentPDFPage} = storeToRefs(editStore)
 const viewerRef = ref<HTMLDivElement>();
 let pdfInstance: any = null;
 let rendering = false;
 
+//---------------------获取页数----------------------
+const getPageCount = async () => {
+  const loadingTask = pdfjsLib.getDocument({
+    url: props.pdfUrl,
+    cMapUrl: "/package/cmaps/",
+    cMapPacked: true,
+  });
+  pdfInstance = await loadingTask.promise
+  return pdfInstance.numPages
+}
+
 
 // -------------------- 渲染单页 --------------------
-async function renderPage(page: any) {
+async function renderPage(page: any, index: number) {
   const scale = 1;
   const viewport = page.getViewport({ scale });
   const outputScale = window.devicePixelRatio || 1;
 
-  const pageContainer = document.createElement("div");
+  //const pageContainer = document.createElement("div");
+  const pageContainer = document.getElementById("pageContainer");
   pageContainer.className = "page-container";
   pageContainer.style.position = "relative";
   pageContainer.style.display = "inline-block";
   pageContainer.style.margin = "20px auto";
   pageContainer.style.width = viewport.width + "px";
   pageContainer.style.height = viewport.height + "px";
+  pageContainer.innerHTML = ""
 
   // Canvas
   const canvas = document.createElement("canvas");
@@ -52,6 +66,7 @@ async function renderPage(page: any) {
 
   // Text Layer
   const textLayerDiv = document.createElement("div");
+  textLayerDiv.id = "textLayerDiv"
   textLayerDiv.className = "textLayer";
   textLayerDiv.style.position = "absolute";
   textLayerDiv.style.top = "0";
@@ -64,6 +79,7 @@ async function renderPage(page: any) {
 
   //Highlight Layer
   const highlightLayerDiv = document.createElement("div");
+  highlightLayerDiv.id = "highlightLayer"
   highlightLayerDiv.className = "highlightLayer";
   highlightLayerDiv.style.position = "absolute";
   highlightLayerDiv.style.top = "0";
@@ -104,51 +120,35 @@ async function renderPage(page: any) {
 }
 
 //--------------------渲染高亮层-------------------------
-const renderHightLightLayer = (textContent, viewPort, hightLightElem, rectangles) =>{
+const renderHightLightLayer = (textContent, viewPort, hightLightElem, rectangles, pageIndex) =>{
   const highlightLayerDiv = hightLightElem;
   highlightLayerDiv.style.width = viewPort.width + "px";
   highlightLayerDiv.style.height = viewPort.height + "px";
 
-  const keywords = "北京"
   rectangles.forEach((item) => {
-    const x = item.x
-    const y = item.y
-    const width = item.width * viewPort.scale;
-    const height = item.height * viewPort.scale;
+    const x = item.x;
+    const y = item.y;
+    const p = item.page;
+    const pageBox = highlightLayerDiv.getBoundingClientRect()
+    const highlightLayerLeft = pageBox.left
+    const highlightLayerTop = pageBox.top
+    const highlightLayerRight = highlightLayerLeft + pageBox.width
+    const highlightLayerBottom = highlightLayerTop + pageBox.height
+    if(x >= highlightLayerLeft && x < highlightLayerRight && y >= highlightLayerTop && y < highlightLayerBottom && p===pageIndex){
+      const width = item.width * viewPort.scale;
+      const height = item.height * viewPort.scale;
 
-    const div = document.createElement("div");
-    //div.className = "highlightBlock";
-    div.style.position = "absolute";
-    div.style.backgroundColor ="aqua"
-    div.style.left = x + "px";
-    div.style.top = y + "50px";
-    div.style.width = width + "px";
-    div.style.height = height + "px";
-    highlightLayerDiv.appendChild(div);
-
-  })/*
-  textContent.items.forEach(item => {
-    if(!item.str.includes(keywords)) return;
-    const transform = pdfjsLib.Util.transform(
-        pdfjsLib.Util.transform(viewPort.transform, item.transform),
-        [1, 0, 0, -1, 0, 0]
-    );
-    const x = transform[4]
-    const y = transform[5]
-    const width = item.width * viewPort.scale;
-    const height = item.height * viewPort.scale;
-
-    const div = document.createElement("div");
-    //div.className = "highlightBlock";
-    div.style.position = "absolute";
-    div.style.backgroundColor ="aqua"
-    div.style.left = x + "px";
-    div.style.top = y + "50px";
-    div.style.width = width + "px";
-    div.style.height = height + "px";
-    highlightLayerDiv.appendChild(div);
-  })*/
-
+      const div = document.createElement("div");
+      div.className = "highlightBlock";
+      div.style.position = "absolute";
+      div.style.backgroundColor =item.color;
+      div.style.left = x + "px";
+      div.style.top = y + "50px";
+      div.style.width = width + "px";
+      div.style.height = height + "px";
+      highlightLayerDiv.appendChild(div);
+    }
+  })
 }
 
 
@@ -166,19 +166,16 @@ async function renderPDF() {
     cMapUrl: "/package/cmaps/",
     cMapPacked: true,
   });
-
   pdfInstance = await loadingTask.promise;
-
   const totalPages = pdfInstance.numPages;
 
   for (let i = 1; i <= totalPages; i++) {
     const page = await pdfInstance.getPage(i);
     // 不 await，异步渲染，提高滚动流畅度
-    renderPage(page);
+    renderPage(page, i);
   }
 
   rendering = false;
-
   emit("pdfRendered");
 }
 
@@ -193,15 +190,65 @@ function handleTextSelection() {
   document.addEventListener("mouseup", mouseUpHandler);
 }
 
-onMounted(() => {
+onMounted(async () => {
   handleTextSelection();
-  if (props.pdfUrl) renderPDF();
+  //if (props.pdfUrl) renderPDF();
+  if(props.pdfUrl){
+    const loadingTask = pdfjsLib.getDocument({
+      url: props.pdfUrl,
+      cMapUrl: "/package/cmaps/",
+      cMapPacked: true,
+    });
+    pdfInstance = await loadingTask.promise;
+    const page = await pdfInstance.getPage(1)
+    const pageNum = await pdfInstance.numPages;
+    useEditStore().setTotalPages(pageNum);
+    renderPage(page, 1)
+  }
 });
 
-watch(
-  () => props.pdfUrl,
-  () => renderPDF()
-);
+watch([props.pdfUrl, currentPDFPage], async ([new_A, new_B], [oldA, oldB]) => {
+  const loadingTask = pdfjsLib.getDocument({
+    url: props.pdfUrl,
+    cMapUrl: "/package/cmaps/",
+    cMapPacked: true,
+  });
+  pdfInstance = await loadingTask.promise;
+  const page = await pdfInstance.getPage(new_B);
+  renderPage(page, new_B);
+  const pageNum = await pdfInstance.numPages;
+  useEditStore().setTotalPages(pageNum);
+})
+
+//watch(
+//  () => props.pdfUrl,
+//  () => renderPDF()
+//);
+
+watch(rects, async (newVal, oldVal) =>{
+  const currentPage = useEditStore().currentPDFPage;
+  //const canvas = document.createElement("canvas");
+  //const context = canvas.getContext("2d")!;
+  //先清空高亮层
+  const highlightLayerDiv = document.getElementById("highlightLayer");
+  highlightLayerDiv.innerHTML = "";
+
+  const scale = 1
+  const page = await pdfInstance.getPage(currentPage);
+  const viewport = page.getViewport({ scale });
+  //const outputScale = window.devicePixelRatio || 1;
+  // 不 await，异步渲染，提高滚动流畅度
+  //const renderContext = {
+  //  canvasContext: context,
+  //  viewport,
+  //  transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
+  //};
+  //await page.render(renderContext).promise;
+
+  // highlight Layer 渲染
+  const textContent = await page.getTextContent();
+  renderHightLightLayer(textContent, viewport, highlightLayerDiv, newVal, currentPage)
+})
 
 onBeforeUnmount(() => {
   if (mouseUpHandler) document.removeEventListener("mouseup", mouseUpHandler);
@@ -250,8 +297,10 @@ onBeforeUnmount(() => {
   z-index: 999;
 }
 .highlightBlock{
-  position: absolute;
-  background-color: aquamarine;
+  //position: absolute;
   border-radius: 2px;
+}
+.highlightBlock:hover{
+  cursor: pointer;
 }
 </style>

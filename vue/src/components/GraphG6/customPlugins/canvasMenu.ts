@@ -5,7 +5,7 @@ import {
   ExtensionCategory,
   register,
 } from "@antv/g6";
-import {useEditStore} from "../../../stores/edit.ts";
+import {useEditStore} from "@/stores/edit.ts";
 
 // 从localStorage获取节点类型配置
 const getNodeTypeColor = (nodeType: string): string => {

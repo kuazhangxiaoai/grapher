@@ -1,12 +1,16 @@
 import {defineStore} from 'pinia'
 import axios from "axios";
-import type {FileInfo} from "../types/text.ts";
-import type {Rectangle} from "../types/rect.ts";
+import type {FileInfo} from "@/types/text.ts";
+import type {Rectangle} from "@/types/rect.ts";
 import type {NodeType} from "./nodeTypes.ts";
+import {Message} from "@arco-design/web-vue";
+import {RectangleType} from "@/types/rect.ts";
 
 export const useEditStore = defineStore('editStore', {
     state: ()=>({
         article: null as string,
+        currentPDFPage: 1 as number,
+        totalPages: 1 as number,
         sequence: null as string,
         nodes: [] as Node,
         nodeTypes: [] as NodeType[],
@@ -43,6 +47,8 @@ export const useEditStore = defineStore('editStore', {
             this.editGraph = true
         },
         closeGraphEditor(){
+            this.nodes = [] as NodeType[];
+            this.edges = [] as Edge[];
             this.editGraph = false
         },
         openFileList(){
@@ -72,6 +78,12 @@ export const useEditStore = defineStore('editStore', {
         setRects(rects:Rectangle[]){
             this.rects = rects
         },
+        addRect(rect:Rectangle){
+            this.rects.push(rect)
+        },
+        deleteEditingRect(){
+            this.rects = this.rects.filter(rectangle => rectangle.type === RectangleType.COMMITED);
+        },
         getRects(){
             return this.rects
         },
@@ -93,6 +105,53 @@ export const useEditStore = defineStore('editStore', {
                 .then((res) => {
                     return res.data;
                 })
+        },
+        nextPDFPage(){
+            this.currentPDFPage++
+        },
+        lastPDFPage(){
+            this.currentPDFPage--;
+        },
+        setTotalPages(page:number){
+            this.totalPages = page;
+        },
+        jumpPDFPage(page:number){
+            this.currentPDFPage = page;
+        },
+        commit(){
+            let nodeObjs = []
+            this.nodes.forEach(node => {
+                let node_str = JSON.stringify(node);
+                let node_obj = JSON.parse(node_str);
+                nodeObjs.push(node_obj);
+            })
+            axios.post("/api/graph/createNodes",nodeObjs).then((res) => {
+                Message.success("上传节点成功")
+            })
+            //提交
+            /*this.nodes.forEach(node => {
+                axios.post("/api/graph/createNode", {
+                    name: node.name,
+                    label: node.label,
+                    sequence: node.sequence,
+                    article: node.article
+                }).then((res) => {
+                    Message.success("上传节点成功")
+                })
+            })
+            this.edges.forEach(edge => {
+                axios.post("/api/graph/createEdge", {
+                    name: edge.name,
+                    from_node_name: edge.from_node_name,
+                    from_node_label: edge.from_node_label,
+                    to_node_name: edge.to_node_name,
+                    to_node_label: edge.to_node_label,
+                    sequence: edge.sequence,
+                    article: edge.article,
+                }).then(res=>{
+
+                })
+            })*/
         }
     }
 

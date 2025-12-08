@@ -100,6 +100,7 @@
 import { ref, computed } from "vue";
 import { downloadImage, downloadCustomImage, changeLayout } from "../utils";
 import {useEditStore} from "@/stores/edit.js";
+import {RectangleType} from "../../../types/rect.js";
 
 const props = defineProps({
   graph: {
@@ -355,8 +356,8 @@ const customToolbarData = ref([
       //提交知识图谱
       if (props.enables.commit)
       {
-        console.log("commit")
-        //useEditStore().closeGraphEditor()
+        useEditStore().commit()
+        useEditStore().closeGraphEditor()
       }
     }
 
@@ -369,6 +370,7 @@ const customToolbarData = ref([
     onClick: () => {
       if (props.enables.close)
       {
+        useEditStore().deleteEditingRect()
         useEditStore().closeGraphEditor()
       }
     }

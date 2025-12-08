@@ -29,9 +29,10 @@
         <div class="file-list-button" @click="handleFileList">
           文件列表
         </div>
-        <div class="edit-button" @click="handleCopyToOpenModal">
-          编辑
-        </div>
+        <div class="last-page-button" @click="lastPDFPage">上一页</div>
+        <div class="next-page-button" @click="nextPDFPage">下一页</div>
+        <div class="jump-page-button" @click="jumpPDFPage">跳页至</div>
+        <div class="edit-button" @click="handleCopyToOpenModal">编辑</div>
       </div>
 
       <!--<div style="display: flex ;position: relative; left: 0px; top: 0px; width: 50px; height: 20px; background-color: #1890ff"></div>-->
@@ -81,13 +82,14 @@ import axios from "axios";
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { Message } from "@arco-design/web-vue";
 import PdfViewer from "./PdfViewer.vue";
-import {useEditStore} from "../../stores/edit.ts";
+import {useEditStore} from "@/stores/edit.ts";
 import {storeToRefs} from "pinia";
-import type {Rectangle} from "../../types/rect.ts";
-
+import type {Rectangle} from "@/types/rect.ts";
+import {RectangleColorType} from "@/types/rect.ts";
+import {RectangleType} from "@/types/rect.ts";
 // 文档上传相关
 const selectedFileName = ref("");
-const {pdfPreviewUrl} = storeToRefs(useEditStore())
+const {pdfPreviewUrl,currentPDFPage} = storeToRefs(useEditStore())
 const currentFile = ref<File | null>(null);
 const pdfContainer = ref<HTMLDivElement | null>(null);
 let textSelectionHandler: (e: MouseEvent) => void;
@@ -145,9 +147,24 @@ const hanleFileUploadOk = ()=>{
     Message.error(err.message);
     console.log(err);
   })
-
-
 }
+
+ const lastPDFPage = () => {
+    if(useEditStore().currentPDFPage > 1){
+      useEditStore().lastPDFPage();
+    }
+
+ }
+
+ const nextPDFPage = () => {
+  if(useEditStore().currentPDFPage < useEditStore().totalPages){
+    useEditStore().nextPDFPage();
+  }
+ }
+
+ const jumpPDFPage = () => {
+
+ }
 
 //上传文件信息-取消
 const hanleFileUploadCancel = ()=>{
@@ -254,34 +271,54 @@ const readClipboardText = async () => {
 const clickEditButton = (e: MouseEvent) => {
 }
 
+//获取选区对应的页码
+const getSelectionPageNum = (selection) =>{
+  const range = selection.getRangeAt(0);
+  const container = range.commonAncestorContainer;
+  const textLayers = document.querySelectorAll(".textLayer")
+  const pages = new Set()
+
+  textLayers.forEach((layer, index) => {
+    if (layer.contains(container)) {
+     pages.add(index + 1);
+    }
+  })
+}
+
 // 复制文字后自动弹窗
 const handleCopyToOpenModal = async () => {
   if (!pdfContainer.value) return;
   useEditStore().openGraphEditor();
   const selection: any = window.getSelection();
+
   const selectedText = selection?.toString().trim() || "";
   if (!selectedText) return;
 
   const range = selection.getRangeAt(0);
   const box = document.getElementById("pdfPreviewer").getElementsByTagName("canvas")[0].getBoundingClientRect();
+
   const rects = Array.from(range.getClientRects()).map(r => ({
-    x: r.left - box.left+ window.scrollX,
-    y: r.top - box.top + window.scrollY - r.height + 3,
+    x: r.left - box.left,
+    y: r.top - box.top + r.height - 3,
     width: r.width,
     height: 3,
-    left: r.left - box.left + window.scrollX,
-    top: r.top - box.top + window.scrollY - r.height + 3,
-    right: r.right - box.left + window.scrollX,
-    bottom: r.bottom - box.top + window.scrollY,
+    left: r.left - box.left,
+    top: r.top - box.top + r.height - 3,
+    right: r.right - box.left,
+    bottom: r.bottom - box.top,
+    color: RectangleColorType.EDITING,
+    type: RectangleType.EDITING,
+    page: useEditStore().currentPDFPage,
   } as Rectangle));
+
   useEditStore().setRects(rects)
-  console.log(rects);
 
   if (!pdfContainer.value.contains(range.commonAncestorContainer)) return;
 
   setTimeout(async () => {
     const text = await readClipboardText();
     useEditStore().setSequence(text);
+    console.log(rects);
     console.log(text)
     if (text) {
       nodeForm.value.originalText = text;
@@ -414,7 +451,7 @@ watch(pdfPreviewUrl, (newVal) => {
   place-content: center;
   place-items: center;
   position: relative;
-  left: 20px;
+  left: 50px;
   top: 0px;
   width: 100px;
   height: 100%;
@@ -423,6 +460,70 @@ watch(pdfPreviewUrl, (newVal) => {
   font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: white;
+}
+
+.edit-button:hover {
+  cursor: pointer;
+}
+
+.last-page-button{
+  text-align: center;
+  place-content: center;
+  place-items: center;
+  position: relative;
+  left: 20px;
+  top: 0px;
+  width: 100px;
+  height: 100%;
+  background-color: orange;
+  border-radius: 5px;
+  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+.last-page-button:hover {
+  cursor: pointer;
+}
+
+.next-page-button{
+  text-align: center;
+  place-content: center;
+  place-items: center;
+  position: relative;
+  left: 30px;
+  top: 0px;
+  width: 100px;
+  height: 100%;
+  background-color: orange;
+  border-radius: 5px;
+  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+.next-page-button:hover {
+  cursor: pointer;
+}
+
+.jump-page-button{
+  text-align: center;
+  place-content: center;
+  place-items: center;
+  position: relative;
+  left: 40px;
+  top: 0px;
+  width: 100px;
+  height: 100%;
+  background-color: sandybrown;
+  border-radius: 5px;
+  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+.jump-page-button:hover {
+  cursor: pointer;
 }
 
 .edit-button:hover {
