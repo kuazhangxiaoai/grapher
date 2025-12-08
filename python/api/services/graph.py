@@ -5,6 +5,7 @@ from python.api.db.postgre_helper import PostgreHelper
 from python.api.db.neo4j_helper import Neo4jHelper
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
+from typing import List
 from pydantic import BaseModel
 from  datetime import datetime
 router = APIRouter()
@@ -15,17 +16,22 @@ class Node(BaseModel):
     """
     name: str
     label: str
-    source: str
+    sequence: str
     article: str
 
-class AddSourceToNode(BaseModel):
+
+class Edge(BaseModel):
     """
-        新增源节点类
+        边类
+        :param:
     """
     name: str
-    label: str
-    new_source: str
-    new_article: str
+    from_node_label: str
+    from_node_name: str
+    to_node_label: str
+    to_node_name: str
+    sequence: str
+    article: str
 
 class NodeType(BaseModel):
     name: str
@@ -41,7 +47,7 @@ class UpdateNodeType(BaseModel):
 async def test():
     return "hello"
 
-@router.post("/createnode")
+@router.post("/createNode")
 async def create_node(node: Node):
     """
         新增节点(同时为graph db和 postgre db 添加数据)
@@ -62,14 +68,76 @@ async def create_node(node: Node):
                             DB_Config().port)
         query = '''SELECT * FROM t_node WHERE node_name='%s' ''' % node.name
         exist = _db.df_query_sql(query)
-        query = '''INSERT INTO t_node (node_name, node_label, source, article, create_time) VALUES (%s, %s, %s, %s, %s)'''
-        _db.create_one(query, (node.name, node.label, node.source, node.article, datetime.now()))
+        query = '''INSERT INTO t_node (node_name, node_label, sequence, article, create_time) VALUES (%s, %s, %s, %s, %s)'''
+        _db.create_one(query, (node.name, node.label, node.sequence, node.article, datetime.now()))
 
         if len(exist) == 0: #如果是全新的节点，在图数据库中添加节点
             _gdb.create_node(node.label, node.name)
 
     except Exception as e:
         return e
+
+@router.post("/createNodes")
+async def create_nodes(nodes: List[Node]):
+    """
+        批量新增节点(同时为graph db和 postgre db 添加数据)
+        :param nodes List[Node]: 节点类
+        :return: None
+    """
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+
+        for i in range(len(nodes)):
+            query = '''SELECT * FROM t_node WHERE node_name='%s' ''' % nodes[i].name
+            exist = _db.df_query_sql(query)
+            query = '''INSERT INTO t_node (node_name, node_label, sequence, article, create_time) VALUES (%s, %s, %s, %s, %s)'''
+            _db.create_one(query, (nodes[i].name, nodes[i].label, nodes[i].sequence, nodes[i].article, datetime.now()))
+
+            if len(exist) == 0:  # 如果是全新的节点，在图数据库中添加节点
+                _gdb.create_node(nodes[i].label, nodes[i].name)
+    except Exception as e:
+        return e
+
+@router.post("/createEdge")
+async def create_edge(edge: Edge):
+    """
+            新增边类(同时为graph db和 postgre db 添加数据)
+            :param edge: 边类
+            :return: None
+        """
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_predicate WHERE predicate_name='%s AND from_node='%s' AND to_node='%s' ''' % edge.name, edge.from_node, edge.to_node
+        exist = _db.df_query_sql(query)
+        query = '''INSERT INTO t_predicate (predicate_name, sequence, from_node, to_node, article, create_time) VALUES (%s, %s, %s, %s, %s, %s)'''
+        _db.create_one(query, (edge.name, edge.sequence, edge.from_node, edge.to_node, edge.article, datetime.now()))
+
+        if len(exist) == 0:  # 如果是全新的节点，在图数据库中添边
+            _gdb.create_edge(edge.name, edge.from_node_name, edge.from_node_label, edge.to_node_name, edge.to_node_label)
+
+    except Exception as e:
+        return e
+
 
 @router.post("/getgraph")
 async def get_graph():
@@ -96,23 +164,6 @@ async def get_graph():
 
     return res
 
-@router.post("/addsourcetonode")
-async def add_source_to_node(n:AddSourceToNode):
-    """
-    为已存在节点添加源语句和源文章
-    :param n: 新增源节点类
-    :return: None
-    """
-    try:
-        _db = PostgreHelper(DB_Config().host,
-                            DB_Config().user,
-                            DB_Config().password,
-                            DB_Config().databasename,
-                            DB_Config().port)
-        query = '''INSERT INTO t_user (node_name, node_label, source, article, create_time) VALUES (%s, %s, %s, %s, %s)'''
-        _db.create_one(query, (n.name, n.label, n.new_source, n.new_article, datetime.now()))
-    except Exception as e:
-        return e
 
 @router.get("/getAllNodeType")
 async def get_all_node_type():
