@@ -24,25 +24,15 @@ export function useTextSelection() {
 
   // 获取选区对应的页码
   const getSelectionPageNum = (selection: Selection) => {
-    const range = selection.getRangeAt(0);
-    const container = range.commonAncestorContainer;
-    const textLayers = document.querySelectorAll('.textLayer');
-    const pages = new Set<number>();
-
-    textLayers.forEach((layer, index) => {
-      if (layer.contains(container)) {
-        pages.add(index + 1);
-      }
-    });
-
-    return Array.from(pages)[0] || 1;
+    // 直接使用当前页面的页码，因为每次切换页面后只会显示一个页面
+    return useEditStore().currentPDFPage;
   };
 
   // 选中文字后自动弹窗（核心逻辑）
   const handleOpenBySelection = () => {
     useEditStore().openGraphEditor();
-    useEditStore().deleteEditingRect();
-
+    // useEditStore().deleteEditingRect();
+    useEditStore().clearAllRects();
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 

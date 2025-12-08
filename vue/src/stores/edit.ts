@@ -1,13 +1,13 @@
-import {defineStore} from 'pinia'
+import { defineStore } from 'pinia'
 import axios from "axios";
-import type {FileInfo} from "@/types/text.ts";
-import type {Rectangle} from "@/types/rect.ts";
-import type {NodeType} from "./nodeTypes.ts";
-import {Message} from "@arco-design/web-vue";
-import {RectangleType} from "@/types/rect.ts";
+import type { FileInfo } from "@/types/text.ts";
+import type { Rectangle } from "@/types/rect.ts";
+import type { NodeType } from "./nodeTypes.ts";
+import { Message } from "@arco-design/web-vue";
+import { RectangleType } from "@/types/rect.ts";
 
 export const useEditStore = defineStore('editStore', {
-    state: ()=>({
+    state: () => ({
         article: null as string,
         currentPDFPage: 1 as number,
         totalPages: 1 as number,
@@ -23,8 +23,8 @@ export const useEditStore = defineStore('editStore', {
         server: "http://localhost:8088",
     }),
     getters: {
-        getCurrentPage:(state) => {},
-        getCurrentPageItem: (state) => {},
+        getCurrentPage: (state) => { },
+        getCurrentPageItem: (state) => { },
     },
     actions: {
         addNode(node: NodeType) {
@@ -33,99 +33,105 @@ export const useEditStore = defineStore('editStore', {
         deleteNode(node: NodeType) {
             this.nodes.splice(this.nodes.indexOf(node), 1);
         },
-        updateNode(old_node: Node, new_node:Node) {
+        updateNode(old_node: Node, new_node: Node) {
             const ind = this.nodes.findIndex(x => old_node.name === x.name)
             this.nodes[ind] = new_node;
         },
-        getArticleTitle(){
+        getArticleTitle() {
             return this.article
         },
-        setArticleTitle(article){
+        setArticleTitle(article) {
             this.article = article
         },
-        openGraphEditor(){
+        openGraphEditor() {
             this.editGraph = true
         },
-        closeGraphEditor(){
+        closeGraphEditor() {
             this.nodes = [] as NodeType[];
             this.edges = [] as Edge[];
             this.editGraph = false
         },
-        openFileList(){
+        openFileList() {
             this.fileList = true
         },
-        closeFileList(){
+        closeFileList() {
             this.fileList = false
         },
-        getSequence(){
+        getSequence() {
             return this.sequence
         },
-        setSequence(sequence){
+        setSequence(sequence) {
             this.sequence = sequence
         },
-        getAllFileInfoList():FileInfo[]{
-            axios.get("/api/text/articletitles").then(res=>{
+        getAllFileInfoList(): FileInfo[] {
+            axios.get("/api/text/articletitles").then(res => {
                 this.fileinfos = res.data
                 return this.fileinfos
             })
         },
-        setPDFPreviewUrl(url:string){
+        setPDFPreviewUrl(url: string) {
             this.pdfPreviewUrl = url
         },
-        getPDFPreviewUrl:()=>{
+        getPDFPreviewUrl: () => {
             return this.pdfPreviewUrl
         },
-        setRects(rects:Rectangle[]){
-            this.rects = rects
+        setRects(rects: Rectangle[]) {
+            this.rects = [...rects]   // 防止被外部引用污染
         },
-        addRect(rect:Rectangle){
+        addRect(rect: Rectangle) {
             this.rects.push(rect)
         },
-        deleteEditingRect(){
+        deleteEditingRect() {
             this.rects = this.rects.filter(rectangle => rectangle.type === RectangleType.COMMITED);
         },
-        getRects(){
+        clearAllRects() {
+            this.rects = [];
+        },
+        getRects() {
             return this.rects
         },
-        getAllNodeTypes(){
+        getAllNodeTypes() {
             localStorage.removeItem('nodeTypes');
             const node_types: NodeType[] = [];
             axios.get("/api/graph/getAllNodeType").then((res) => {
                 res.data.forEach(item => {
-                    node_types.push({id: item.id, name: item.name, color: item.color} as NodeType);
+                    node_types.push({ id: item.id, name: item.name, color: item.color } as NodeType);
                 })
                 this.nodeTypes = node_types;
                 localStorage.setItem('nodeTypes', JSON.stringify(node_types));
                 return node_types;
             })
         },
-        addNodeType(type:NodeType){
+        addNodeType(type: NodeType) {
             axios.post("/api/graph/addNodeType",
-                {name: type.name, color: type.color})
+                { name: type.name, color: type.color })
                 .then((res) => {
                     return res.data;
                 })
         },
-        nextPDFPage(){
-            this.currentPDFPage++
+        nextPDFPage() {
+            this.currentPDFPage++;
+            this.clearAllRects();  
         },
-        lastPDFPage(){
+        lastPDFPage() {
             this.currentPDFPage--;
+            this.clearAllRects();   
         },
-        setTotalPages(page:number){
+        setTotalPages(page: number) {
             this.totalPages = page;
         },
-        jumpPDFPage(page:number){
+        jumpPDFPage(page: number) {
             this.currentPDFPage = page;
+            this.clearAllRects();  
         },
-        commit(){
+        commit() {
             let nodeObjs = []
             this.nodes.forEach(node => {
                 let node_str = JSON.stringify(node);
                 let node_obj = JSON.parse(node_str);
                 nodeObjs.push(node_obj);
             })
-            axios.post("/api/graph/createNodes",nodeObjs).then((res) => {
+            axios.post("/api/graph/createNodes", nodeObjs).then((res) => {
                 Message.success("上传节点成功")
             })
             //提交
