@@ -111,7 +111,7 @@ async function renderPage(page: any, index: number) {
     enhanceTextSelection: true
   });
   await textLayer.promise;
-  renderHightLightLayer(textContent, viewport,highlightLayerDiv, rects.value)
+  renderHightLightLayer(textContent, viewport,highlightLayerDiv, rects.value, index)
   // 高 DPI 修正（可选，PDF.js 计算好了通常不需要）
   // if (outputScale !== 1) {
   //   textLayerDiv.style.transform = `scale(${1 / outputScale})`;
@@ -125,27 +125,21 @@ const renderHightLightLayer = (textContent, viewPort, hightLightElem, rectangles
   highlightLayerDiv.style.width = viewPort.width + "px";
   highlightLayerDiv.style.height = viewPort.height + "px";
 
-  rectangles.forEach((item) => {
-    const x = item.x;
-    const y = item.y;
-    const p = item.page;
-    const pageBox = highlightLayerDiv.getBoundingClientRect()
-    const highlightLayerLeft = pageBox.left
-    const highlightLayerTop = pageBox.top
-    const highlightLayerRight = highlightLayerLeft + pageBox.width
-    const highlightLayerBottom = highlightLayerTop + pageBox.height
-    if(x >= highlightLayerLeft && x < highlightLayerRight && y >= highlightLayerTop && y < highlightLayerBottom && p===pageIndex){
-      const width = item.width * viewPort.scale;
-      const height = item.height * viewPort.scale;
+  // 清除现有的高亮块
+  highlightLayerDiv.innerHTML = "";
 
+  rectangles.forEach((item) => {
+    // pageIndex从0开始，item.page从1开始，需要转换
+    if(item.page === (pageIndex + 1)){
+      // 直接使用item中的坐标，因为已经在创建时考虑了相对位置
       const div = document.createElement("div");
       div.className = "highlightBlock";
       div.style.position = "absolute";
-      div.style.backgroundColor =item.color;
-      div.style.left = x + "px";
-      div.style.top = y + "50px";
-      div.style.width = width + "px";
-      div.style.height = height + "px";
+      div.style.backgroundColor = item.color;
+      div.style.left = item.x + "px";
+      div.style.top = item.y + "px";
+      div.style.width = item.width + "px";
+      div.style.height = item.height + "px";
       highlightLayerDiv.appendChild(div);
     }
   })
@@ -247,7 +241,7 @@ watch(rects, async (newVal, oldVal) =>{
 
   // highlight Layer 渲染
   const textContent = await page.getTextContent();
-  renderHightLightLayer(textContent, viewport, highlightLayerDiv, newVal, currentPage)
+  renderHightLightLayer(textContent, viewport, highlightLayerDiv, newVal, currentPage - 1)
 })
 
 onBeforeUnmount(() => {

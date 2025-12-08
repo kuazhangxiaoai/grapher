@@ -5,7 +5,7 @@
     <!-- 文档上传区域 -->
     <div class="upload-section p-4 border-b border-gray-200">
       <h3 class="text-lg font-semibold mb-2">PDF文档上传</h3>
-      <div style="display: flex; width: 100%; height: 55%">
+      <div class="upload-container">
         <input
             type="file"
             id="document-upload"
@@ -78,307 +78,54 @@
 </template>
 
 <script setup lang="ts">
-import axios from "axios";
-import { ref, onMounted, onUnmounted, watch } from "vue";
-import { Message } from "@arco-design/web-vue";
+import { storeToRefs } from "pinia";
+import { watch } from "vue";
 import PdfViewer from "./PdfViewer.vue";
-import {useEditStore} from "@/stores/edit.ts";
-import {storeToRefs} from "pinia";
-import type {Rectangle} from "@/types/rect.ts";
-import {RectangleColorType} from "@/types/rect.ts";
-import {RectangleType} from "@/types/rect.ts";
-// 文档上传相关
-const selectedFileName = ref("");
-const {pdfPreviewUrl,currentPDFPage} = storeToRefs(useEditStore())
-const currentFile = ref<File | null>(null);
-const pdfContainer = ref<HTMLDivElement | null>(null);
-let textSelectionHandler: (e: MouseEvent) => void;
-
-// 节点模态框相关
-const showNodeModal = ref(false);
-const nodeForm = ref({
-  name: "",
-  type: "entity",
-  description: "",
-  originalText: "",
-});
-
-// 文件上传模态框相关
-const showFileModel = ref(false);
-const FileUploadForm = ref({
-  title: "",
-  publishTime: "",
-  filename: ""
-})
+import { useEditStore } from "@/stores/edit.ts";
+import { usePdfUpload } from "@/hooks/usePdfUpload.ts";
+import { usePdfNavigation } from "@/hooks/usePdfNavigation.ts";
+import { useTextSelection } from "@/hooks/useTextSelection.ts";
 
 // 定义emit事件
 const emit = defineEmits(["addNode"]);
 
-// 生成唯一ID
-const generateId = () =>
-  "node_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+// 获取store状态
+const { pdfPreviewUrl } = storeToRefs(useEditStore());
 
-//上传文件信息-确认
-const hanleFileUploadOk = ()=>{
-  const title = FileUploadForm.value.title
-  const publishTime = FileUploadForm.value.publishTime;
-  const filename = FileUploadForm.value.filename;
-  axios.post('/api/text/upload',
-      {"title": title, "publishtime": publishTime, "filename": filename})
-  .then(res => {
-    Message.success(res);
-    //上传文件
-    const fileInput = document.querySelector("#document-upload");
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    axios.post("/api/text/uploadfile", formData, {headers: {"Content-Type": "multipart/form-data"}})
-        .then(res => {
-          Message.success(res);
-          const url = res.data.url;
-          const server = useEditStore().server;
-          useEditStore().setPDFPreviewUrl(server + url)
-          useEditStore().getAllFileInfoList()
-        })
-        .catch(err => {
-          Message.error(err.message);
-        })
-  })
-  .catch(err => {
-    Message.error(err.message);
-    console.log(err);
-  })
-}
+// 使用hooks
+const {
+  selectedFileName,
+  showFileModel,
+  FileUploadForm,
+  handleFileUpload,
+  hanleFileUploadOk,
+  hanleFileUploadCancel
+} = usePdfUpload();
 
- const lastPDFPage = () => {
-    if(useEditStore().currentPDFPage > 1){
-      useEditStore().lastPDFPage();
-    }
+const {
+  lastPDFPage,
+  nextPDFPage,
+  jumpPDFPage,
+  handleFileList
+} = usePdfNavigation();
 
- }
-
- const nextPDFPage = () => {
-  if(useEditStore().currentPDFPage < useEditStore().totalPages){
-    useEditStore().nextPDFPage();
-  }
- }
-
- const jumpPDFPage = () => {
-
- }
-
-//上传文件信息-取消
-const hanleFileUploadCancel = ()=>{
-  showFileModel.value = false;
-  resetUploadFileForm()
-  return false
-}
+const {
+  pdfContainer,
+  showNodeModal,
+  nodeForm,
+  handleCopyToOpenModal,
+  handleNodeModalOk: handleNodeModalOkHook,
+  handleNodeModalCancel,
+  resetNodeForm
+} = useTextSelection();
 
 // 处理节点模态框确认
 const handleNodeModalOk = () => {
-  if (!nodeForm.value.name.trim()) {
-    Message.warning("请输入节点名称");
-    return;
-  }
-
-  const nodeData = {
-    id: generateId(),
-    data: {
-      name: nodeForm.value.name.trim(),
-      type: nodeForm.value.type,
-      description: nodeForm.value.description.trim(),
-      originalText: nodeForm.value.originalText.trim(),
-      createdAt: new Date().toISOString(),
-    },
-  };
-
-  emit("addNode", nodeData);
-  Message.success("节点已添加到图谱");
-  showNodeModal.value = false;
-  resetNodeForm();
-};
-
-// 处理节点模态框取消
-const handleNodeModalCancel = () => {
-  showNodeModal.value = false;
-  resetNodeForm();
-};
-
-// 重置节点表单
-const resetNodeForm = () => {
-  nodeForm.value = {
-    name: "",
-    type: "entity",
-    description: "",
-    originalText: "",
-  };
-};
-
-const handleFileList = () => {
-  useEditStore().openFileList();
-}
-
-// 处理文件上传
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-
-  showFileModel.value = true;
-  if (file) {
-    if (
-      file.type !== "application/pdf" &&
-      !file.name.toLowerCase().endsWith(".pdf")
-    ) {
-      Message.error("请上传PDF格式的文件");
-      target.value = "";
-      return;
-    }
-
-    selectedFileName.value = file.name;
-    currentFile.value = file;
-    FileUploadForm.value.filename = file.name;
-
-    //try {
-    //  if (pdfPreviewUrl.value) URL.revokeObjectURL(pdfPreviewUrl.value);
-    //  pdfPreviewUrl.value = URL.createObjectURL(file);
-    //  FileUploadForm.value.filename = file.name;
-    //} catch (error) {
-    //  console.error("生成PDF预览URL失败:", error);
-    //  Message.error("文件解析失败，请尝试重新上传");
-    //}
+  const nodeData = handleNodeModalOkHook();
+  if (nodeData) {
+    emit("addNode", nodeData);
   }
 };
-
-//Reset
-const resetUploadFileForm = () => {
-  FileUploadForm.value.title = ''
-  FileUploadForm.value.publishTime = ''
-  FileUploadForm.value.filename = ''
-}
-
-// 读取剪贴板文本
-const readClipboardText = async () => {
-  try {
-    const text = await navigator.clipboard.readText();
-    return text.trim();
-  } catch (error) {
-    console.error("读取剪贴板失败:", error);
-    Message.warning("读取剪贴板失败，请手动复制后重试");
-    return "";
-  }
-};
-
-//点击编辑获取选中的文字内容
-const clickEditButton = (e: MouseEvent) => {
-}
-
-//获取选区对应的页码
-const getSelectionPageNum = (selection) =>{
-  const range = selection.getRangeAt(0);
-  const container = range.commonAncestorContainer;
-  const textLayers = document.querySelectorAll(".textLayer")
-  const pages = new Set()
-
-  textLayers.forEach((layer, index) => {
-    if (layer.contains(container)) {
-     pages.add(index + 1);
-    }
-  })
-}
-
-// 复制文字后自动弹窗
-const handleCopyToOpenModal = async () => {
-  if (!pdfContainer.value) return;
-  useEditStore().openGraphEditor();
-  const selection: any = window.getSelection();
-
-  const selectedText = selection?.toString().trim() || "";
-  if (!selectedText) return;
-
-  const range = selection.getRangeAt(0);
-  const box = document.getElementById("pdfPreviewer").getElementsByTagName("canvas")[0].getBoundingClientRect();
-
-  const rects = Array.from(range.getClientRects()).map(r => ({
-    x: r.left - box.left,
-    y: r.top - box.top + r.height - 3,
-    width: r.width,
-    height: 3,
-    left: r.left - box.left,
-    top: r.top - box.top + r.height - 3,
-    right: r.right - box.left,
-    bottom: r.bottom - box.top,
-    color: RectangleColorType.EDITING,
-    type: RectangleType.EDITING,
-    page: useEditStore().currentPDFPage,
-  } as Rectangle));
-
-  useEditStore().setRects(rects)
-
-  if (!pdfContainer.value.contains(range.commonAncestorContainer)) return;
-
-  setTimeout(async () => {
-    const text = await readClipboardText();
-    useEditStore().setSequence(text);
-    console.log(rects);
-    console.log(text)
-    if (text) {
-      nodeForm.value.originalText = text;
-      nodeForm.value.name = text.substring(0, 20);
-      showNodeModal.value = true;
-    }
-  }, 120);
-};
-
-// 监听PDF文本选择（可选）
-const setupTextSelectionListener = () => {
-  if (!pdfContainer.value) return;
-
-  if (textSelectionHandler)
-    document.removeEventListener("mouseup", textSelectionHandler);
-
-  textSelectionHandler = (e: MouseEvent) => {
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim() || "";
-    if (selectedText) nodeForm.value.originalText = selectedText;
-  };
-
-  document.addEventListener("mouseup", textSelectionHandler);
-};
-
-// PDF渲染完成回调
-const handlePdfRendered = () => {
-  Message.success("PDF加载完成，框选文字后按Ctrl+C即可编辑知识图谱");
-  setupTextSelectionListener();
-}; // 主页面向 iframe 发送“获取选中文字”指令
-
-// 监听 iframe 返回的选中文字并复制
-window.addEventListener("message", (e) => {
-  if (e.data.type === "SELECTED_TEXT") {
-    const text = e.data.content;
-    if (text) {
-      // 调用剪贴板 API 复制
-      navigator.clipboard
-        .writeText(text)
-        .then(() => {
-          alert("复制成功：" + text);
-        })
-        .catch((err) => {
-          console.error("复制失败：", err);
-        });
-    }
-  }
-});
-// 生命周期
-onMounted(() => {
-  document.addEventListener("copy", handleCopyToOpenModal);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("copy", handleCopyToOpenModal);
-  if (textSelectionHandler)
-    document.removeEventListener("mouseup", textSelectionHandler);
-  if (pdfPreviewUrl.value) URL.revokeObjectURL(pdfPreviewUrl.value);
-  currentFile.value = null;
-});
 
 // 监听PDF URL变化
 watch(pdfPreviewUrl, (newVal) => {
@@ -387,147 +134,5 @@ watch(pdfPreviewUrl, (newVal) => {
 </script>
 
 <style scoped>
-.document-panel {
-  box-sizing: border-box;
-}
-.upload-section {
-  box-sizing: border-box;
-}
-.upload-btn {
-  display: inline-block;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-.upload-btn:hover {
-  background-color: #2563eb;
-}
-.file-info {
-  line-height: 1.4;
-}
-.tip {
-  margin-top: 4px;
-  color: #9ca3af;
-}
-.content-display {
-  width: 100%;
-  height: 100%;
-}
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-.empty-state p {
-  margin: 0;
-  line-height: 1.5;
-}
-.transition-colors {
-  transition: background-color 0.2s ease;
-}
-.file-list-button{
-  text-align: center;
-  place-content: center;
-  place-items: center;
-  position: relative;
-  left: 10px;
-  top: 0px;
-  width: 100px;
-  height: 100%;
-  background-color: salmon;
-  border-radius: 5px;
-  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  color: white;
-}
-
-.file-list-button:hover {
-  cursor: pointer;
-}
-
-.edit-button {
-  text-align: center;
-  place-content: center;
-  place-items: center;
-  position: relative;
-  left: 50px;
-  top: 0px;
-  width: 100px;
-  height: 100%;
-  background-color: hotpink;
-  border-radius: 5px;
-  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  color: white;
-}
-
-.edit-button:hover {
-  cursor: pointer;
-}
-
-.last-page-button{
-  text-align: center;
-  place-content: center;
-  place-items: center;
-  position: relative;
-  left: 20px;
-  top: 0px;
-  width: 100px;
-  height: 100%;
-  background-color: orange;
-  border-radius: 5px;
-  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  color: white;
-}
-
-.last-page-button:hover {
-  cursor: pointer;
-}
-
-.next-page-button{
-  text-align: center;
-  place-content: center;
-  place-items: center;
-  position: relative;
-  left: 30px;
-  top: 0px;
-  width: 100px;
-  height: 100%;
-  background-color: orange;
-  border-radius: 5px;
-  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  color: white;
-}
-
-.next-page-button:hover {
-  cursor: pointer;
-}
-
-.jump-page-button{
-  text-align: center;
-  place-content: center;
-  place-items: center;
-  position: relative;
-  left: 40px;
-  top: 0px;
-  width: 100px;
-  height: 100%;
-  background-color: sandybrown;
-  border-radius: 5px;
-  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  color: white;
-}
-
-.jump-page-button:hover {
-  cursor: pointer;
-}
-
-.edit-button:hover {
-  cursor: pointer;
-}
-
+@import url("./assets/documentPanel.css");
 </style>

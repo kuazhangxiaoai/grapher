@@ -347,7 +347,7 @@ const handleAddNodeFromDocument = (nodeData) => {
 
 .graph-editor{
   position: absolute;
-  left: 25%;
+  left: 42%;
   top: 15%;
   width: 50%;
   height: 50%;
