@@ -184,6 +184,20 @@ function handleTextSelection() {
   document.addEventListener("mouseup", mouseUpHandler);
 }
 
+const updateHightLightLayer = async (pageIndex, rectList) => {
+  const highlightLayerDiv = document.getElementById("highlightLayer");
+  highlightLayerDiv.innerHTML = "";
+
+  const scale = 1
+  const page = await pdfInstance.getPage(pageIndex);
+  const viewport = page.getViewport({ scale });
+
+  // highlight Layer 渲染
+  const textContent = await page.getTextContent();
+  //console.log(useEditStore().rects);
+  renderHightLightLayer(textContent, viewport, highlightLayerDiv, rectList,  pageIndex - 1)
+}
+
 onMounted(async () => {
   handleTextSelection();
   //if (props.pdfUrl) renderPDF();
@@ -198,6 +212,10 @@ onMounted(async () => {
     const pageNum = await pdfInstance.numPages;
     useEditStore().setTotalPages(pageNum);
     renderPage(page, 1)
+
+    //init rects
+    useEditStore().queryRects()
+    //updateHightLightLayer(1, useEditStore().getRects())
   }
 });
 
@@ -214,35 +232,21 @@ watch([props.pdfUrl, currentPDFPage], async ([new_A, new_B], [oldA, oldB]) => {
   useEditStore().setTotalPages(pageNum);
 })
 
-//watch(
-//  () => props.pdfUrl,
-//  () => renderPDF()
-//);
-
 watch(rects, async (newVal, oldVal) =>{
   const currentPage = useEditStore().currentPDFPage;
-  //const canvas = document.createElement("canvas");
-  //const context = canvas.getContext("2d")!;
+  updateHightLightLayer(currentPage, newVal);
   //先清空高亮层
-  const highlightLayerDiv = document.getElementById("highlightLayer");
-  highlightLayerDiv.innerHTML = "";
+  //const highlightLayerDiv = document.getElementById("highlightLayer");
+  //highlightLayerDiv.innerHTML = "";
 
-  const scale = 1
-  const page = await pdfInstance.getPage(currentPage);
-  const viewport = page.getViewport({ scale });
-  //const outputScale = window.devicePixelRatio || 1;
-  // 不 await，异步渲染，提高滚动流畅度
-  //const renderContext = {
-  //  canvasContext: context,
-  //  viewport,
-  //  transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
-  //};
-  //await page.render(renderContext).promise;
+  //const scale = 1
+  //const page = await pdfInstance.getPage(currentPage);
+  //const viewport = page.getViewport({ scale });
 
   // highlight Layer 渲染
-  const textContent = await page.getTextContent();
+  //const textContent = await page.getTextContent();
   //console.log(useEditStore().rects);
-  renderHightLightLayer(textContent, viewport, highlightLayerDiv, newVal, currentPage - 1)
+  //renderHightLightLayer(textContent, viewport, highlightLayerDiv, newVal, currentPage - 1)
 })
 
 onBeforeUnmount(() => {

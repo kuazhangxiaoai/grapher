@@ -5,6 +5,7 @@ import type { Rectangle } from "@/types/rect.ts";
 import type { NodeType } from "./nodeTypes.ts";
 import { Message } from "@arco-design/web-vue";
 import { RectangleType } from "@/types/rect.ts";
+import {RectangleColorType} from "../types/rect.ts";
 
 export const useEditStore = defineStore('editStore', {
     state: () => ({
@@ -90,6 +91,35 @@ export const useEditStore = defineStore('editStore', {
         getRects() {
             return this.rects
         },
+        queryRects(){
+            axios.get("/api/text/querySentences",
+                {
+                    params: {
+                        article: this.article,
+                        page: this.currentPDFPage,
+                    }
+                }).then(res => {
+                    res.data.forEach((item) => {
+                        let rectObj: Rectangle = {
+                            x: item.x0,
+                            y: item.y0,
+                            width: item.x1 - item.x0,
+                            height: item.y1 - item.y0,
+                            left: item.x0,
+                            top: item.y0,
+                            right: item.x1,
+                            bottom: item.y1,
+                            color: RectangleColorType.COMMITED,
+                            type: RectangleType.COMMITED,
+                            page: item.page
+                        }
+                        if (item.article === this.article) {
+                            this.addRect(rectObj)
+                        }
+
+                    })
+            })
+        },
         getAllNodeTypes() {
             localStorage.removeItem('nodeTypes');
             const node_types: NodeType[] = [];
@@ -149,6 +179,8 @@ export const useEditStore = defineStore('editStore', {
             })
 
             axios.post("/api/text/uploadSentences", rectObjs).then((res) => {
+                this.deleteEditingRect()
+                this.queryRects()
                 Message.success("上传标记成功")
             })
             //提交

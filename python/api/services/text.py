@@ -120,6 +120,35 @@ async def write_sentences(sentences: List[Sentence]):
     except Exception as e:
         raise  HTTPException(status_code=404, detail=str(e))
 
+@router.get("/querySentences")
+async def query_sentences(article: str, page: int):
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+
+
+        query = '''SELECT * FROM t_sequence WHERE article='%s' AND page='%s' ''' % (article, page)
+        sequence_df = _db.df_query_sql(query)
+        seq_list = []
+        for i, row in sequence_df.iterrows():
+            seq_list.append({
+                "sequence": row.get("sequence"),
+                "x0": row.get("x0"),
+                "y0": row.get("y0"),
+                "x1": row.get("x1"),
+                "y1": row.get("y1"),
+                "article": row.get("article"),
+                "page": row.get("page"),
+            })
+        return seq_list
+
+    except Exception as e:
+        raise  HTTPException(status_code=404, detail=str(e))
+
+
 @router.get("/articletitles")
 async def get_article_titles():
     try:
