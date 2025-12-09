@@ -19,7 +19,6 @@
         >
           选择PDF文档
         </label>
-
         <!--<div class="file-info mt-2 text-sm text-gray-600" v-if="selectedFileName">
           已选择: {{ selectedFileName }}
           <span class="ml-2 text-xs text-gray-500"

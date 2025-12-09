@@ -121,6 +121,7 @@ const handleOk = async done => {
   emit("confirm", formData);
   openNodeAddModal.value = false;
   formRef.value.resetFields();
+  console.log(useEditStore().rects);
   done(true);
 };
 

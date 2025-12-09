@@ -126,13 +126,30 @@ export const useEditStore = defineStore('editStore', {
         },
         commit() {
             let nodeObjs = []
+            let rectObjs = [];
             this.nodes.forEach(node => {
                 let node_str = JSON.stringify(node);
                 let node_obj = JSON.parse(node_str);
                 nodeObjs.push(node_obj);
             })
+            this.rects.forEach(rectangle => {
+                let seq_obj: object = {
+                    text: this.sequence,
+                    x0: rectangle.left,
+                    y0: rectangle.top,
+                    x1: rectangle.left + rectangle.width,
+                    y1: rectangle.top + rectangle.height,
+                    article: this.article,
+                    page: this.currentPDFPage,
+                }
+                rectObjs.push(seq_obj);
+            })
             axios.post("/api/graph/createNodes", nodeObjs).then((res) => {
                 Message.success("上传节点成功")
+            })
+
+            axios.post("/api/text/uploadSentences", rectObjs).then((res) => {
+                Message.success("上传标记成功")
             })
             //提交
             /*this.nodes.forEach(node => {

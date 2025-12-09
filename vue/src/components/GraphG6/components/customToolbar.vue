@@ -357,7 +357,7 @@ const customToolbarData = ref([
       if (props.enables.commit)
       {
         useEditStore().commit()
-        useEditStore().closeGraphEditor()
+        //useEditStore().closeGraphEditor()
       }
     }
 

@@ -241,6 +241,7 @@ watch(rects, async (newVal, oldVal) =>{
 
   // highlight Layer 渲染
   const textContent = await page.getTextContent();
+  //console.log(useEditStore().rects);
   renderHightLightLayer(textContent, viewport, highlightLayerDiv, newVal, currentPage - 1)
 })
 
@@ -293,6 +294,7 @@ onBeforeUnmount(() => {
 .highlightBlock{
   //position: absolute;
   border-radius: 2px;
+  z-index: 999;
 }
 .highlightBlock:hover{
   cursor: pointer;
