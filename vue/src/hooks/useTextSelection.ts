@@ -88,7 +88,12 @@ export function useTextSelection() {
       document.removeEventListener('mouseup', textSelectionHandler);
     }
 
-    textSelectionHandler = () => {
+    textSelectionHandler = (e: MouseEvent) => {
+      // 检查事件是否发生在 pdfContainer 内部
+      if (pdfContainer.value && !pdfContainer.value.contains(e.target as Node)) {
+        return;
+      }
+
       const selection = window.getSelection();
       const text = selection?.toString().trim() || '';
 
