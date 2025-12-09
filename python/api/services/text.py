@@ -6,11 +6,12 @@ from pathlib import Path
 from datetime import datetime
 
 from pydantic import BaseModel
-import mammoth
-from sympy import content
+from typing import List
 
 from python.api.config.db_config import DB_Config
+from python.api.config.graph_config import Graph_Config
 from python.api.db.postgre_helper import PostgreHelper
+from python.api.db.neo4j_helper import Neo4jHelper
 
 UploadDir = Path("python/assets")
 UploadDir.mkdir(exist_ok=True)
@@ -23,7 +24,12 @@ class FileUpload(BaseModel):
 
 class Sentence(BaseModel):
     text: str
+    x0: float
+    y0: float
+    x1: float
+    y1: float
     article: str
+    page: int
 
 
 @router.get("/test")
@@ -83,20 +89,36 @@ async def uploadfile(file: UploadFile=File(...)):
     data = {"message": 'OK', 'url': f"/assets/{file.filename}"}
     return JSONResponse(content=data, status_code=200)
 
-@router.post("/sentence")
-async def proc_sentence(sentence: Sentence):
+@router.post("/uploadSentence")
+async def write_sentence(sentence: Sentence):
     try:
-        query = '''INSERT INTO t_article (sentence, x0, y0, x1, y1, article) VALUES (%s, %s, %s, %s, %s, %s)'''
+        query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page) VALUES (%s, %s, %s, %s, %s, %s, %s)'''
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        _db.create_one(query, (sentence.text, sentence.x0, sentence.y0, sentence.x1, sentence.y1, sentence.article))
+        _db.create_one(query, (sentence.text, sentence.x0, sentence.y0, sentence.x1, sentence.y1, sentence.article, sentence.page))
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@router.post("/uploadSentences")
+async def write_sentences(sentences: List[Sentence]):
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+
+        for i in range(len(sentences)):
+            query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page) VALUES (%s, %s, %s, %s, %s, %s, %s)'''
+            _db.create_one(query, (sentences[i].text, sentences[i].x0, sentences[i].y0, sentences[i].x1, sentences[i].y1, sentences[i].article, sentences[i].page))
+
+    except Exception as e:
+        raise  HTTPException(status_code=404, detail=str(e))
 
 @router.get("/articletitles")
 async def get_article_titles():
