@@ -31,8 +31,8 @@ export function useTextSelection() {
   // 选中文字后自动弹窗（核心逻辑）
   const handleOpenBySelection = () => {
     useEditStore().openGraphEditor();
-    // useEditStore().deleteEditingRect();
-    useEditStore().clearAllRects();
+    useEditStore().deleteEditingRect();
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
@@ -71,7 +71,9 @@ export function useTextSelection() {
     if (!rects.length) return;
 
     // 设置高亮框
-    useEditStore().setRects(rects);
+    rects.forEach((rect: Rectangle) => {
+      useEditStore().addRect(rect);
+    })
 
     // 设置知识图谱内容
     useEditStore().setSequence(selectedText);
@@ -159,7 +161,7 @@ export function useTextSelection() {
   // PDF渲染完成回调
   const handlePdfRendered = () => {
     Message.success('PDF加载完成，框选文字后松开鼠标即可编辑知识图谱');
-    setupTextSelectionListener();
+    //setupTextSelectionListener();
   };
 
   // iframe 跨窗口选区监听

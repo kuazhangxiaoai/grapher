@@ -13,6 +13,7 @@ import {storeToRefs} from "pinia";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/web/pdf_viewer.css";
 import {useEditStore} from "../../stores/edit.ts";
+import axios from "axios";
 
 // --- Worker 设置 ---
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/package/pdf.worker.min.js";
@@ -141,6 +142,9 @@ const renderHightLightLayer = (textContent, viewPort, hightLightElem, rectangles
       div.style.width = item.width + "px";
       div.style.height = item.height + "px";
       highlightLayerDiv.appendChild(div);
+      div.addEventListener("click", () =>{
+        console.log("click-this");
+      })
     }
   })
 }
@@ -212,10 +216,7 @@ onMounted(async () => {
     const pageNum = await pdfInstance.numPages;
     useEditStore().setTotalPages(pageNum);
     renderPage(page, 1)
-
-    //init rects
-    useEditStore().queryRects()
-    //updateHightLightLayer(1, useEditStore().getRects())
+    document.getElementById("pageContainer").click()
   }
 });
 
@@ -230,23 +231,14 @@ watch([props.pdfUrl, currentPDFPage], async ([new_A, new_B], [oldA, oldB]) => {
   renderPage(page, new_B);
   const pageNum = await pdfInstance.numPages;
   useEditStore().setTotalPages(pageNum);
+
+  const currentPage = useEditStore().currentPDFPage;
+  updateHightLightLayer(currentPage, newVal);
 })
 
 watch(rects, async (newVal, oldVal) =>{
   const currentPage = useEditStore().currentPDFPage;
   updateHightLightLayer(currentPage, newVal);
-  //先清空高亮层
-  //const highlightLayerDiv = document.getElementById("highlightLayer");
-  //highlightLayerDiv.innerHTML = "";
-
-  //const scale = 1
-  //const page = await pdfInstance.getPage(currentPage);
-  //const viewport = page.getViewport({ scale });
-
-  // highlight Layer 渲染
-  //const textContent = await page.getTextContent();
-  //console.log(useEditStore().rects);
-  //renderHightLightLayer(textContent, viewport, highlightLayerDiv, newVal, currentPage - 1)
 })
 
 onBeforeUnmount(() => {

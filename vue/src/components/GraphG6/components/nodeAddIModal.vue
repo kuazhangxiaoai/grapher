@@ -45,13 +45,13 @@
           </a-button>
         </div>
       </a-form-item>
-      <a-form-item label="节点描述" field="description">
+      <!--<a-form-item label="节点描述" field="description">
         <a-textarea
           v-model="form.description"
           placeholder="请输入节点描述"
           :auto-size="{ minRows: 3, maxRows: 5 }"
         />
-      </a-form-item>
+      </a-form-item>-->
     </a-form>
 
     <!-- 节点类型管理组件 -->

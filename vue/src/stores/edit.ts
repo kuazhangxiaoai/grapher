@@ -3,6 +3,7 @@ import axios from "axios";
 import type { FileInfo } from "@/types/text.ts";
 import type { Rectangle } from "@/types/rect.ts";
 import type { NodeType } from "./nodeTypes.ts";
+import type {Edge} from "@/types/edges.ts";
 import { Message } from "@arco-design/web-vue";
 import { RectangleType } from "@/types/rect.ts";
 import {RectangleColorType} from "../types/rect.ts";
@@ -82,14 +83,49 @@ export const useEditStore = defineStore('editStore', {
         addRect(rect: Rectangle) {
             this.rects.push(rect)
         },
+        addEdge(edge: Edge){
+            this.edges.push(edge)
+        },
         deleteEditingRect() {
             this.rects = this.rects.filter(rectangle => rectangle.type === RectangleType.COMMITED);
         },
         clearAllRects() {
             this.rects = [];
         },
-        getRects() {
-            return this.rects
+        getRects(queryEnable=false) {
+            if (queryEnable) {
+                axios.get("/api/text/querySentences",
+                    {
+                        params: {
+                            article: this.article,
+                            page: this.currentPDFPage,
+                        }
+                    }).then(res => {
+                    res.data.forEach((item) => {
+                        let rectObj: Rectangle = {
+                            x: item.x0,
+                            y: item.y0,
+                            width: item.x1 - item.x0,
+                            height: item.y1 - item.y0,
+                            left: item.x0,
+                            top: item.y0,
+                            right: item.x1,
+                            bottom: item.y1,
+                            color: RectangleColorType.COMMITED,
+                            type: RectangleType.COMMITED,
+                            page: item.page
+                        }
+                        if (item.article === this.article) {
+                            this.addRect(rectObj)
+                        }
+
+                    })
+                    return this.rects;
+                })
+            }
+            else {
+                return this.rects
+            }
         },
         queryRects(){
             axios.get("/api/text/querySentences",
@@ -157,6 +193,7 @@ export const useEditStore = defineStore('editStore', {
         commit() {
             let nodeObjs = []
             let rectObjs = [];
+            let edgeObjs = [];
             this.nodes.forEach(node => {
                 let node_str = JSON.stringify(node);
                 let node_obj = JSON.parse(node_str);
@@ -174,6 +211,18 @@ export const useEditStore = defineStore('editStore', {
                 }
                 rectObjs.push(seq_obj);
             })
+            this.edges.forEach(edge => {
+                let seq_obj: object = {
+                    name: edge.name,
+                    from_node_label: edge.from_node_label,
+                    from_node_name: edge.from_node_name,
+                    to_node_label: edge.to_node_label,
+                    to_node_name: edge.to_node_name,
+                    sequence: edge.sequence,
+                    article: edge.article,
+                }
+                edgeObjs.push(seq_obj);
+            })
             axios.post("/api/graph/createNodes", nodeObjs).then((res) => {
                 Message.success("上传节点成功")
             })
@@ -182,6 +231,9 @@ export const useEditStore = defineStore('editStore', {
                 this.deleteEditingRect()
                 this.queryRects()
                 Message.success("上传标记成功")
+            })
+            axios.post("/api/graph/createEdges", edgeObjs).then((res) => {
+                Message.success("上传关系成功")
             })
             //提交
             /*this.nodes.forEach(node => {

@@ -52,7 +52,9 @@ import NodeAddModal from "./components/nodeAddIModal.vue";
 import EdgeAddModal from "./components/edgeAddModal.vue";
 import { CanvasMenuPlugin } from "./customPlugins/canvasMenu";
 import { canCreateEdge } from "./utils";
+import type {Edge} from "@/types/edges.ts";
 import { Message, Modal } from "@arco-design/web-vue";
+import {useEditStore} from "../../stores/edit.ts";
 
 // 注册交互;
 register(ExtensionCategory.BEHAVIOR, "click-add-node", ClickAddNode);
@@ -332,6 +334,9 @@ const initGraph = () => {
           if (value == "deleteNode") {
             handleDeleteNode(current);
           }
+          if(current == null) {
+            return;
+          }
           if (value == "addEdge" && current.type == "node") {
             graph.value.updateBehavior({
               key: "create-edge",
@@ -475,14 +480,27 @@ const handleEdgeOk = async (value) => {
   // 删除旧的连线,因id不一致
   graph.value.removeEdgeData([currentEdge.value.id]);
   // 添加新的连线
+  const eid = "edge_" + new Date().getTime()
   graph.value.addEdgeData([
     {
       ...currentEdge.value,
-      id: "edge_" + new Date().getTime(),
+      id: eid,
       data: { name: value.name },
     },
   ]);
-
+  const edgeData = graph.value.getEdgeData(eid)
+  const sourceNode = graph.value.getNodeData(edgeData.source);
+  const targetNode = graph.value.getNodeData(edgeData.target);
+  const edge: Edge = {
+    name: value.name,
+    from_node_name: sourceNode.data.name,
+    from_node_label: sourceNode.data.entityType,
+    to_node_name: targetNode.data.name,
+    to_node_label: targetNode.data.entityType,
+    sequence: useEditStore().sequence,
+    article: useEditStore().getArticleTitle()
+  }
+  useEditStore().addEdge(edge)
   Message.success("添加连线成功");
 
   graph.value.render();

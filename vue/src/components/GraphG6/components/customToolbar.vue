@@ -370,6 +370,7 @@ const customToolbarData = ref([
     onClick: () => {
       if (props.enables.close)
       {
+        useEditStore().queryRects()
         useEditStore().deleteEditingRect()
         useEditStore().closeGraphEditor()
       }

@@ -138,6 +138,37 @@ async def create_edge(edge: Edge):
     except Exception as e:
         return e
 
+@router.post("/createEdges")
+async def create_edges(edges: List[Edge]):
+    """
+                新增边类(同时为graph db和 postgre db 添加数据)
+                :param edges: 多边类
+                :return: None
+            """
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+
+        for i in range(len(edges)):
+            query = '''SELECT * FROM t_predicate WHERE predicate_name='%s AND from_node='%s' AND to_node='%s' ''' % edges[i].name, edges[i].from_node, edges[i].to_node
+            exist = _db.df_query_sql(query)
+            query = '''INSERT INTO t_predicate (predicate_name, sequence, from_node, to_node, article, create_time) VALUES (%s, %s, %s, %s, %s, %s)'''
+            _db.create_one(query, (edges[i].name, edges[i].sequence, edges[i].from_node, edges[i].to_node, edges[i].article, datetime.now()))
+
+            if len(exist) == 0:  # 如果是全新的节点，在图数据库中添边
+                _gdb.create_edge(edges[i].name, edges[i].from_node_name, edges[i].from_node_label, edges[i].to_node_name, edges[i].to_node_label)
+
+    except Exception as e:
+        return e
 
 @router.post("/getgraph")
 async def get_graph():

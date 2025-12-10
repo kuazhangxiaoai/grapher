@@ -14,10 +14,10 @@
       <a-form-item label="连线名称" field="name">
         <a-input v-model="form.name" placeholder="请输入连线名称" />
       </a-form-item>
-      <a-form-item label="连线描述" field="description">
+      <!--<a-form-item label="连线描述" field="description">
         <a-input v-model="form.description" placeholder="请输入连线描述" />
       </a-form-item>
-      <!-- <a-form-item label="权重" field="weight">
+      <a-form-item label="权重" field="weight">
         <a-input-number v-model="form.weight" placeholder="请输入权重" />
       </a-form-item> -->
     </a-form>
