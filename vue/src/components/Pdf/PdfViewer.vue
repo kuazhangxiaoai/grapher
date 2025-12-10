@@ -44,7 +44,7 @@ async function renderPage(page: any, index: number) {
   const viewport = page.getViewport({ scale });
   const outputScale = window.devicePixelRatio || 1;
 
-  //const pageContainer = document.createElement("div");
+  // 获取页面容器并清空内容，避免重复渲染
   const pageContainer: HTMLElement = document.getElementById("pageContainer")!;
   pageContainer.className = "page-container";
   pageContainer.style.position = "relative";
@@ -65,7 +65,6 @@ async function renderPage(page: any, index: number) {
 
   // Text Layer
   const textLayerDiv: HTMLElement = document.createElement("div");
-  textLayerDiv.id = "textLayerDiv"
   textLayerDiv.className = "textLayer";
   textLayerDiv.style.position = "absolute";
   textLayerDiv.style.top = "0";
@@ -76,9 +75,8 @@ async function renderPage(page: any, index: number) {
   textLayerDiv.style.pointerEvents = "auto";
   pageContainer.appendChild(textLayerDiv);
 
-  //Highlight Layer
+  // Highlight Layer
   const highlightLayerDiv: HTMLElement = document.createElement("div");
-  highlightLayerDiv.id = "highlightLayer"
   highlightLayerDiv.className = "highlightLayer";
   highlightLayerDiv.style.position = "absolute";
   highlightLayerDiv.style.top = "0";
@@ -89,8 +87,6 @@ async function renderPage(page: any, index: number) {
   highlightLayerDiv.style.zIndex = 1;
   highlightLayerDiv.style.background = "rgba(0,0,0,0)";
   pageContainer.appendChild(highlightLayerDiv);
-
-  viewerRef.value!.appendChild(pageContainer);
 
   // Canvas 渲染
   const renderContext = {
@@ -110,7 +106,9 @@ async function renderPage(page: any, index: number) {
     enhanceTextSelection: true
   });
   await textLayer.promise;
-  renderHightLightLayer(textContent, viewport,highlightLayerDiv, rects.value, index)
+  
+  // 渲染高亮层
+  renderHightLightLayer(textContent, viewport, highlightLayerDiv, rects.value, index);
   
 }
 
@@ -130,7 +128,11 @@ const renderHightLightLayer = (textContent: any, viewPort: any, hightLightElem: 
       const div = document.createElement("div");
       div.className = "highlightBlock";
       div.style.position = "absolute";
-      div.style.backgroundColor = item.color;
+      // div.style.backgroundColor = item.color;
+      div.style.backgroundColor = "transparent";
+      div.style.borderBottom = `2px solid ${item.color}`; // 黄色下划线
+      div.style.pointerEvents = "auto"; // 开启鼠标事件
+      div.style.cursor = "pointer"; // 鼠标悬浮变小手
       div.style.left = item.x + "px";
       div.style.top = item.y + "px";
       div.style.width = item.width + "px";
@@ -183,7 +185,14 @@ function handleTextSelection() {
 }
 
 const updateHightLightLayer = async (pageIndex: number, rectList: any[]) => {
-  let highlightLayerDiv: any = document.getElementById("highlightLayer");
+  // 获取页面容器
+  const pageContainer: HTMLElement = document.getElementById("pageContainer")!;
+  if (!pageContainer) {
+    return;
+  }
+  
+  // 获取当前页面的高亮层元素，通过类名查找
+  let highlightLayerDiv: any = pageContainer.querySelector(".highlightLayer");
   
   // 如果高亮层元素不存在，重新创建
   if (!highlightLayerDiv && pdfInstance) {
@@ -191,26 +200,20 @@ const updateHightLightLayer = async (pageIndex: number, rectList: any[]) => {
     const page = await pdfInstance.getPage(pageIndex);
     const viewport = page.getViewport({ scale });
     
-    const pageContainer: HTMLElement = document.getElementById("pageContainer")!;
-    if (pageContainer) {
-      // 创建高亮层元素
-      highlightLayerDiv = document.createElement("div");
-      highlightLayerDiv.id = "highlightLayer";
-      highlightLayerDiv.className = "highlightLayer";
-      highlightLayerDiv.style.position = "absolute";
-      highlightLayerDiv.style.top = "0";
-      highlightLayerDiv.style.left = "0";
-      highlightLayerDiv.style.width = viewport.width + "px";
-      highlightLayerDiv.style.height = viewport.height + "px";
-      highlightLayerDiv.style.pointerEvents = "auto";
-      highlightLayerDiv.style.zIndex = "1";
-      highlightLayerDiv.style.background = "rgba(0,0,0,0)";
-      
-      // 添加到页面容器
-      pageContainer.appendChild(highlightLayerDiv);
-    } else {
-      return;
-    }
+    // 创建高亮层元素
+    highlightLayerDiv = document.createElement("div");
+    highlightLayerDiv.className = "highlightLayer";
+    highlightLayerDiv.style.position = "absolute";
+    highlightLayerDiv.style.top = "0";
+    highlightLayerDiv.style.left = "0";
+    highlightLayerDiv.style.width = viewport.width + "px";
+    highlightLayerDiv.style.height = viewport.height + "px";
+    highlightLayerDiv.style.pointerEvents = "auto";
+    highlightLayerDiv.style.zIndex = "1";
+    highlightLayerDiv.style.background = "rgba(0,0,0,0)";
+    
+    // 添加到页面容器
+    pageContainer.appendChild(highlightLayerDiv);
   }
   
   if (highlightLayerDiv) {
@@ -330,8 +333,10 @@ onBeforeUnmount(() => {
 .highlightBlock{
   border-radius: 2px;
   z-index: 999;
+  pointer-events: auto;
 }
-.highlightBlock:hover{
+
+.highlightBlock:hover {
   cursor: pointer;
 }
 </style>
