@@ -1,8 +1,7 @@
 <template>
   <div class="pdf-viewer" ref="viewerRef">
     <div id="pageContainer"></div>
-    <!--<div id="hc" class="highlight">
-    </div>-->
+    <!--<div id="hc" class="highlight"></div>-->
   </div>
 
 </template>
@@ -13,7 +12,6 @@ import {storeToRefs} from "pinia";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/web/pdf_viewer.css";
 import {useEditStore} from "../../stores/edit.ts";
-import axios from "axios";
 
 // --- Worker 设置 ---
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/package/pdf.worker.min.js";
@@ -47,7 +45,7 @@ async function renderPage(page: any, index: number) {
   const outputScale = window.devicePixelRatio || 1;
 
   //const pageContainer = document.createElement("div");
-  const pageContainer = document.getElementById("pageContainer");
+  const pageContainer: HTMLElement = document.getElementById("pageContainer")!;
   pageContainer.className = "page-container";
   pageContainer.style.position = "relative";
   pageContainer.style.display = "inline-block";
@@ -66,7 +64,7 @@ async function renderPage(page: any, index: number) {
   pageContainer.appendChild(canvas);
 
   // Text Layer
-  const textLayerDiv = document.createElement("div");
+  const textLayerDiv: HTMLElement = document.createElement("div");
   textLayerDiv.id = "textLayerDiv"
   textLayerDiv.className = "textLayer";
   textLayerDiv.style.position = "absolute";
@@ -79,7 +77,7 @@ async function renderPage(page: any, index: number) {
   pageContainer.appendChild(textLayerDiv);
 
   //Highlight Layer
-  const highlightLayerDiv = document.createElement("div");
+  const highlightLayerDiv: HTMLElement = document.createElement("div");
   highlightLayerDiv.id = "highlightLayer"
   highlightLayerDiv.className = "highlightLayer";
   highlightLayerDiv.style.position = "absolute";
@@ -113,15 +111,11 @@ async function renderPage(page: any, index: number) {
   });
   await textLayer.promise;
   renderHightLightLayer(textContent, viewport,highlightLayerDiv, rects.value, index)
-  // 高 DPI 修正（可选，PDF.js 计算好了通常不需要）
-  // if (outputScale !== 1) {
-  //   textLayerDiv.style.transform = `scale(${1 / outputScale})`;
-  //   textLayerDiv.style.transformOrigin = "0 0";
-  // }
+  
 }
 
 //--------------------渲染高亮层-------------------------
-const renderHightLightLayer = (textContent, viewPort, hightLightElem, rectangles, pageIndex) =>{
+const renderHightLightLayer = (textContent: any, viewPort: any, hightLightElem: HTMLElement, rectangles: any[], pageIndex: number) =>{
   const highlightLayerDiv = hightLightElem;
   highlightLayerDiv.style.width = viewPort.width + "px";
   highlightLayerDiv.style.height = viewPort.height + "px";
@@ -188,18 +182,48 @@ function handleTextSelection() {
   document.addEventListener("mouseup", mouseUpHandler);
 }
 
-const updateHightLightLayer = async (pageIndex, rectList) => {
-  const highlightLayerDiv = document.getElementById("highlightLayer");
-  highlightLayerDiv.innerHTML = "";
-
-  const scale = 1
-  const page = await pdfInstance.getPage(pageIndex);
-  const viewport = page.getViewport({ scale });
-
-  // highlight Layer 渲染
-  const textContent = await page.getTextContent();
-  //console.log(useEditStore().rects);
-  renderHightLightLayer(textContent, viewport, highlightLayerDiv, rectList,  pageIndex - 1)
+const updateHightLightLayer = async (pageIndex: number, rectList: any[]) => {
+  let highlightLayerDiv: any = document.getElementById("highlightLayer");
+  
+  // 如果高亮层元素不存在，重新创建
+  if (!highlightLayerDiv && pdfInstance) {
+    const scale = 1;
+    const page = await pdfInstance.getPage(pageIndex);
+    const viewport = page.getViewport({ scale });
+    
+    const pageContainer: HTMLElement = document.getElementById("pageContainer")!;
+    if (pageContainer) {
+      // 创建高亮层元素
+      highlightLayerDiv = document.createElement("div");
+      highlightLayerDiv.id = "highlightLayer";
+      highlightLayerDiv.className = "highlightLayer";
+      highlightLayerDiv.style.position = "absolute";
+      highlightLayerDiv.style.top = "0";
+      highlightLayerDiv.style.left = "0";
+      highlightLayerDiv.style.width = viewport.width + "px";
+      highlightLayerDiv.style.height = viewport.height + "px";
+      highlightLayerDiv.style.pointerEvents = "auto";
+      highlightLayerDiv.style.zIndex = "1";
+      highlightLayerDiv.style.background = "rgba(0,0,0,0)";
+      
+      // 添加到页面容器
+      pageContainer.appendChild(highlightLayerDiv);
+    } else {
+      return;
+    }
+  }
+  
+  if (highlightLayerDiv) {
+    highlightLayerDiv.innerHTML = "";
+    
+    const scale = 1;
+    const page = await pdfInstance.getPage(pageIndex);
+    const viewport = page.getViewport({ scale });
+    
+    // highlight Layer 渲染
+    const textContent = await page.getTextContent();
+    renderHightLightLayer(textContent, viewport, highlightLayerDiv, rectList,  pageIndex - 1);
+  }
 }
 
 onMounted(async () => {
@@ -216,7 +240,16 @@ onMounted(async () => {
     const pageNum = await pdfInstance.numPages;
     useEditStore().setTotalPages(pageNum);
     renderPage(page, 1)
-    document.getElementById("pageContainer").click()
+    
+    // 清除当前矩形数据并从后端获取已提交的矩形数据
+    useEditStore().clearAllRects();
+    await useEditStore().queryRects();
+    
+    // 确保在 queryRects() 完成后更新高亮层
+    setTimeout(() => {
+      const currentPage = useEditStore().currentPDFPage;
+      updateHightLightLayer(currentPage, rects.value);
+    }, 100);
   }
 });
 
@@ -232,13 +265,22 @@ watch([props.pdfUrl, currentPDFPage], async ([new_A, new_B], [oldA, oldB]) => {
   const pageNum = await pdfInstance.numPages;
   useEditStore().setTotalPages(pageNum);
 
-  const currentPage = useEditStore().currentPDFPage;
-  updateHightLightLayer(currentPage, newVal);
+  // 清除当前矩形数据并从后端获取已提交的矩形数据
+  useEditStore().clearAllRects();
+  await useEditStore().queryRects();
+
+  // 确保在 queryRects() 完成后更新高亮层
+  setTimeout(() => {
+    const currentPage = useEditStore().currentPDFPage;
+    updateHightLightLayer(currentPage, rects.value);
+  }, 100);
 })
 
 watch(rects, async (newVal, oldVal) =>{
-  const currentPage = useEditStore().currentPDFPage;
-  updateHightLightLayer(currentPage, newVal);
+  if (newVal.length > 0 && pdfInstance) {
+    const currentPage = useEditStore().currentPDFPage;
+    updateHightLightLayer(currentPage, newVal);
+  }
 })
 
 onBeforeUnmount(() => {
@@ -267,8 +309,6 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   pointer-events: auto;
-  /* opacity: 0.5;  */
-  /* mix-blend-mode: multiply; */
 }
 
 .textLayer ::selection {
@@ -288,7 +328,6 @@ onBeforeUnmount(() => {
   z-index: 999;
 }
 .highlightBlock{
-  //position: absolute;
   border-radius: 2px;
   z-index: 999;
 }
