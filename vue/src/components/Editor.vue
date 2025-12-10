@@ -1,33 +1,32 @@
 <template>
   <div class="editor">
-    <div class="textbox" style="background-color: darksalmon">{{sequence}}</div>
+    <div class="textbox">{{ sequence }}</div>
     <GraphG6
-        ref="graphEditor"
-        :data="graphData"
-        :layout-config="layoutConfig"
-        :enableObject="enableObj"
-        @elementClick="handleElementClick"
-        @ready="handleGraphReady"
-        @shortestPath="handleShortestPath"
-        @exportGraphCsv="handleExportGraphCsv"
-        @addNodeSuccess="handleAddNode"
-        @addEdgeSuccess="handleAddEdge"
-        @deleteElementSuccess="handleDeleteElement"
+      ref="graphEditor"
+      :data="graphData"
+      :layout-config="layoutConfig"
+      :enableObject="enableObj"
+      @elementClick="handleElementClick"
+      @ready="handleGraphReady"
+      @shortestPath="handleShortestPath"
+      @exportGraphCsv="handleExportGraphCsv"
+      @addNodeSuccess="handleAddNode"
+      @addEdgeSuccess="handleAddEdge"
+      @deleteElementSuccess="handleDeleteElement"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref} from "vue";
-import {storeToRefs} from "pinia"
-import {useEditStore} from "../stores/edit.ts";
+import { ref } from "vue";
+import { storeToRefs } from "pinia";
+import { useEditStore } from "../stores/edit.ts";
 import GraphG6 from "@/components/GraphG6/index.vue";
-import {Message} from "@arco-design/web-vue";
-import {generateMockData} from "@/components/GraphG6/mock";
+import { Message } from "@arco-design/web-vue";
 
-const {sequence} = storeToRefs(useEditStore())
-const graphData: any = ref({ nodes: [], edges: [] });   //图数据，初始化为空数组，防止节点提前显示
-const layoutConfig = ref();   // 布局类型配置
+const { sequence } = storeToRefs(useEditStore());
+const graphData: any = ref({ nodes: [], edges: [] }); //图数据，初始化为空数组，防止节点提前显示
+const layoutConfig = ref(); // 布局类型配置
 let graphInstance = null; //图实例
 const enableObj = ref({
   zoomOut: true,
@@ -42,7 +41,7 @@ const enableObj = ref({
   redo: true,
   commit: true,
   close: true,
-})
+});
 
 // 当前激活的面板
 const activePanel = ref(null); // 'elementInfo' | 'shortestPath' | null
@@ -107,7 +106,7 @@ const getAllNodeList = () => {
 const handleAddNode = async (nodeData) => {
   try {
     // await createNode(nodeData);
-    Message.success('节点创建成功');
+    Message.success("节点创建成功");
     getAllNodeList();
   } catch (error) {
     Message.error(error.message);
@@ -116,7 +115,7 @@ const handleAddNode = async (nodeData) => {
 const handleAddEdge = async (edgeData) => {
   try {
     // await createEdge(edgeData);
-    Message.success('边创建成功');
+    Message.success("边创建成功");
     getAllNodeList();
   } catch (error) {
     Message.error(error.message);
@@ -125,7 +124,7 @@ const handleAddEdge = async (edgeData) => {
 const handleDeleteElement = async (elementId, type) => {
   try {
     // await deleteElement(elementId, type);
-    Message.success(`${type === 'node' ? '节点' : '边'}删除成功`);
+    Message.success(`${type === "node" ? "节点" : "边"}删除成功`);
     getAllNodeList();
   } catch (error) {
     Message.error(error.message);
@@ -133,7 +132,6 @@ const handleDeleteElement = async (elementId, type) => {
 };
 
 const zoomLevel = ref(100);
-
 </script>
 
 <style scoped>
@@ -143,5 +141,11 @@ const zoomLevel = ref(100);
   top: 0px;
   width: 100%;
   height: 95%;
+}
+.textbox {
+  position: absolute;
+  top: 0;
+  z-index: 9;
+  background-color: darksalmon;
 }
 </style>

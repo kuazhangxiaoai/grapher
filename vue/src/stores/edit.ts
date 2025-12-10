@@ -128,33 +128,39 @@ export const useEditStore = defineStore('editStore', {
             }
         },
         queryRects(){
-            axios.get("/api/text/querySentences",
-                {
-                    params: {
-                        article: this.article,
-                        page: this.currentPDFPage,
-                    }
-                }).then(res => {
-                    res.data.forEach((item) => {
-                        let rectObj: Rectangle = {
-                            x: item.x0,
-                            y: item.y0,
-                            width: item.x1 - item.x0,
-                            height: item.y1 - item.y0,
-                            left: item.x0,
-                            top: item.y0,
-                            right: item.x1,
-                            bottom: item.y1,
-                            color: RectangleColorType.COMMITED,
-                            type: RectangleType.COMMITED,
-                            page: item.page
+            return new Promise((resolve) => {
+                axios.get("/api/text/querySentences",
+                    {
+                        params: {
+                            article: this.article,
+                            page: this.currentPDFPage,
                         }
-                        if (item.article === this.article) {
-                            this.addRect(rectObj)
-                        }
-
-                    })
-            })
+                    }).then(res => {
+                        let newRects: Rectangle[] = [];
+                        res.data.forEach((item) => {
+                            let rectObj: Rectangle = {
+                                x: item.x0,
+                                y: item.y0,
+                                width: item.x1 - item.x0,
+                                height: item.y1 - item.y0,
+                                left: item.x0,
+                                top: item.y0,
+                                right: item.x1,
+                                bottom: item.y1,
+                                color: RectangleColorType.COMMITED,
+                                type: RectangleType.COMMITED,
+                                page: item.page
+                            }
+                            if (item.article === this.article) {
+                                newRects.push(rectObj);
+                            }
+                        });
+                        this.setRects(newRects);
+                        resolve(newRects);
+                    }).catch(() => {
+                        resolve([]);
+                    });
+            });
         },
         getAllNodeTypes() {
             localStorage.removeItem('nodeTypes');
