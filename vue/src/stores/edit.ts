@@ -235,30 +235,7 @@ export const useEditStore = defineStore('editStore', {
             axios.post("/api/graph/createEdges", edgeObjs).then((res) => {
                 Message.success("上传关系成功")
             })
-            //提交
-            /*this.nodes.forEach(node => {
-                axios.post("/api/graph/createNode", {
-                    name: node.name,
-                    label: node.label,
-                    sequence: node.sequence,
-                    article: node.article
-                }).then((res) => {
-                    Message.success("上传节点成功")
-                })
-            })
-            this.edges.forEach(edge => {
-                axios.post("/api/graph/createEdge", {
-                    name: edge.name,
-                    from_node_name: edge.from_node_name,
-                    from_node_label: edge.from_node_label,
-                    to_node_name: edge.to_node_name,
-                    to_node_label: edge.to_node_label,
-                    sequence: edge.sequence,
-                    article: edge.article,
-                }).then(res=>{
 
-                })
-            })*/
         }
     }
 

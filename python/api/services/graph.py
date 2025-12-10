@@ -159,10 +159,10 @@ async def create_edges(edges: List[Edge]):
                             DB_Config().port)
 
         for i in range(len(edges)):
-            query = '''SELECT * FROM t_predicate WHERE predicate_name='%s AND from_node='%s' AND to_node='%s' ''' % edges[i].name, edges[i].from_node, edges[i].to_node
+            query = '''SELECT * FROM t_predicate WHERE predicate_name='%s AND from_node='%s' AND to_node='%s' ''' % edges[i].name, edges[i].from_node_name, edges[i].to_node_name
             exist = _db.df_query_sql(query)
             query = '''INSERT INTO t_predicate (predicate_name, sequence, from_node, to_node, article, create_time) VALUES (%s, %s, %s, %s, %s, %s)'''
-            _db.create_one(query, (edges[i].name, edges[i].sequence, edges[i].from_node, edges[i].to_node, edges[i].article, datetime.now()))
+            _db.create_one(query, (edges[i].name, edges[i].sequence, edges[i].from_node_name, edges[i].to_node_name, edges[i].article, datetime.now()))
 
             if len(exist) == 0:  # 如果是全新的节点，在图数据库中添边
                 _gdb.create_edge(edges[i].name, edges[i].from_node_name, edges[i].from_node_label, edges[i].to_node_name, edges[i].to_node_label)
