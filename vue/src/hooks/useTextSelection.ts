@@ -158,6 +158,23 @@ export function useTextSelection() {
     };
   };
 
+  // 处理高亮点击事件
+  const handleHighlightClick = (highlightData: any) => {
+    useEditStore().openGraphEditor();
+    useEditStore().deleteEditingRect();
+
+    const selectedText = highlightData.text;
+    if (!selectedText) return;
+
+    // 设置知识图谱内容
+    useEditStore().setSequence(selectedText);
+    nodeForm.value.originalText = selectedText;
+    nodeForm.value.name = selectedText.substring(0, 20);
+
+    // 打开弹窗
+    showNodeModal.value = true;
+  };
+
   // PDF渲染完成回调
   const handlePdfRendered = () => {
     Message.success('PDF加载完成，框选文字后松开鼠标即可编辑知识图谱');
@@ -203,6 +220,7 @@ export function useTextSelection() {
     handleNodeModalCancel,
     setupTextSelectionListener,
     handlePdfRendered,
-    resetNodeForm
+    resetNodeForm,
+    handleHighlightClick
   };
 }

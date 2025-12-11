@@ -19,5 +19,7 @@ export interface Rectangle {
     bottom: number,
     color: string,
     type: RectangleType,
-    page: number
+    page: number,
+    text?: string,
+    id?: string
 }

@@ -15,7 +15,7 @@
         <a-input v-model="form.name" placeholder="请输入节点名称" />
       </a-form-item>
       <a-form-item label="节点类型" field="nodeType">
-        <div class="flex items-center">
+        <div class="flex items-center"  style="width: 250px;">
           <a-select
             v-model="form.nodeType"
             placeholder="请选择节点类型"
@@ -29,7 +29,7 @@
             >
               <div class="flex items-center">
                 <div
-                  class="type-color w-5 h-4 rounded-full mr-2"
+                  class="type-color w-8 h-4 rounded-full mr-2"
                   :style="{ backgroundColor: type.color }"
                 ></div>
                 {{ type.name }}
