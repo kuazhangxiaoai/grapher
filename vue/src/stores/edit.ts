@@ -113,7 +113,9 @@ export const useEditStore = defineStore('editStore', {
                             bottom: item.y1,
                             color: RectangleColorType.COMMITED,
                             type: RectangleType.COMMITED,
-                            page: item.page
+                            page: item.page,
+                            text: item.sequence || "",
+                            id: item.id || item.sentence_id || ""
                         }
                         if (item.article === this.article) {
                             this.addRect(rectObj)
@@ -149,7 +151,9 @@ export const useEditStore = defineStore('editStore', {
                                 bottom: item.y1,
                                 color: RectangleColorType.COMMITED,
                                 type: RectangleType.COMMITED,
-                                page: item.page
+                                page: item.page,
+                                text: item.sequence || "",
+                                id: item.id || item.sentence_id || ""
                             }
                             if (item.article === this.article) {
                                 newRects.push(rectObj);
@@ -157,7 +161,8 @@ export const useEditStore = defineStore('editStore', {
                         });
                         this.setRects(newRects);
                         resolve(newRects);
-                    }).catch(() => {
+                    }).catch((error) => {
+                        console.error("查询rects失败:", error);
                         resolve([]);
                     });
             });

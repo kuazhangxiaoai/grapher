@@ -10,7 +10,7 @@ class DB_Config:
         """
             initial function to define database link parameter
         """
-        self.host = "localhost"
+        self.host = "10.11.52.199"
         self.port = 5432
         self.user = "postgres"
         self.password = "ZGCATT"
