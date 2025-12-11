@@ -10,6 +10,7 @@ import { storeToRefs } from "pinia";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/web/pdf_viewer.css";
 import { useEditStore } from "../../stores/edit.ts";
+import { RectangleType } from "../../types/rect.ts";
 
 // --- Worker 设置 ---
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/package/pdf.worker.min.js";
@@ -167,24 +168,23 @@ function installGlobalMouseHandlers() {
       const top = Math.max(0, item.y - expandHeightUp); // 向上扩大更多，覆盖文字部分
       const right = item.x + item.width;
       const bottom = item.y + item.height + expandHeightDown; // 向下扩大适当高度
-      
-      // console.log(`高亮区域原始位置: x=${item.x}, y=${item.y}, width=${item.width}, height=${item.height}`);
-      // console.log(`扩大后的检测区域: left=${left}, top=${top}, right=${right}, bottom=${bottom}`);
-
       if (clickX >= left && clickX <= right && clickY >= top && clickY <= bottom) {
         console.log("点击到高亮区域", item);
-        // emit("highlightClick", {
-        //   id: item.id,
-        //   text: item.text,
-        //   highlight: item,
-        //   index: i,
-        //   page: item.page,
-        //   rects: currentRects,
-        //   clientX: e.clientX,
-        //   clientY: e.clientY,
-        // });
-        // 同时触发文本选择事件，显示文字编辑框
+       
         if (item.text) {
+          // 打开编辑框
+          editStore.openGraphEditor();
+          // 设置选中的文字内容
+          editStore.setSequence(item.text);
+          // 删除之前的编辑态矩形
+          editStore.deleteEditingRect();
+          // 重新添加当前点击的矩形作为编辑态
+          const rectToEdit = {
+            ...item,
+            type: RectangleType.EDITING
+          };
+          editStore.addRect(rectToEdit);
+          
           emit("textSelected", item.text);
         }
         return;
@@ -279,41 +279,6 @@ function uninstallGlobalClickHandler() {
   globalClickHandler = null;
 }
 
-// -------------------- 文本选中事件 --------------------
-function handleTextSelection() {
-  mouseUpHandler = () => {
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    if (!selectedText) return;
-    emit("textSelected", selectedText);
-  };
-  document.addEventListener("mouseup", mouseUpHandler);
-}
-
-// -------------------- 渲染整个 PDF --------------------
-async function renderPDF() {
-  if (!props.pdfUrl || rendering) return;
-  rendering = true;
-
-  viewerRef.value!.innerHTML = "";
-
-  const loadingTask = pdfjsLib.getDocument({
-    url: props.pdfUrl,
-    cMapUrl: "/package/cmaps/",
-    cMapPacked: true,
-  });
-  pdfInstance = await loadingTask.promise;
-  const totalPages = pdfInstance.numPages;
-
-  for (let i = 1; i <= totalPages; i++) {
-    const page = await pdfInstance.getPage(i);
-    renderPage(page, i);
-  }
-
-  rendering = false;
-  emit("pdfRendered");
-}
-
 // -------------------- 更新高亮 --------------------
 const updateHightLightLayer = async (pageIndex: number, rectList: any[]) => {
   const pageContainer: HTMLElement = document.getElementById("pageContainer")!;
@@ -346,7 +311,6 @@ const updateHightLightLayer = async (pageIndex: number, rectList: any[]) => {
 
 // -------------------- 生命周期 --------------------
 onMounted(async () => {
-  handleTextSelection();
 
   if (props.pdfUrl) {
     const loadingTask = pdfjsLib.getDocument({
