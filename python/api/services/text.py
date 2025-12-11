@@ -114,8 +114,12 @@ async def write_sentences(sentences: List[Sentence]):
                             DB_Config().port)
 
         for i in range(len(sentences)):
-            query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page) VALUES (%s, %s, %s, %s, %s, %s, %s)'''
-            _db.create_one(query, (sentences[i].text, sentences[i].x0, sentences[i].y0, sentences[i].x1, sentences[i].y1, sentences[i].article, sentences[i].page))
+            query = ('''SELECT * FROM t_sequence WHERE sequence='%s' AND x0=%s AND y0=%s AND x1=%s AND y1=%s AND article='%s' AND page=%s''' %
+                     (sentences[i].text, sentences[i].x0, sentences[i].y0, sentences[i].x1, sentences[i].y1, sentences[i].article, sentences[i].page))
+            existed = _db.df_query_sql(query)
+            if len(existed) == 0:
+                query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page) VALUES (%s, %s, %s, %s, %s, %s, %s)'''
+                _db.create_one(query, (sentences[i].text, sentences[i].x0, sentences[i].y0, sentences[i].x1, sentences[i].y1, sentences[i].article, sentences[i].page))
 
     except Exception as e:
         raise  HTTPException(status_code=404, detail=str(e))

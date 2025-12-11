@@ -234,18 +234,26 @@ export const useEditStore = defineStore('editStore', {
                 }
                 edgeObjs.push(seq_obj);
             })
-            axios.post("/api/graph/createNodes", nodeObjs).then((res) => {
+            axios.post("/api/graph/commit", {
+                sequence: this.sequence,
+                nodes: nodeObjs,
+                edges: edgeObjs,
+            }).then((res) => {
+                Message.success("上传数据成功")
+            })
+            /*axios.post("/api/graph/createNodes", nodeObjs).then((res) => {
                 Message.success("上传节点成功")
             })
+            axios.post("/api/graph/createEdges", edgeObjs).then((res) => {
+                Message.success("上传关系成功")
+            })*/
 
             axios.post("/api/text/uploadSentences", rectObjs).then((res) => {
                 this.deleteEditingRect()
                 this.queryRects()
                 Message.success("上传标记成功")
             })
-            axios.post("/api/graph/createEdges", edgeObjs).then((res) => {
-                Message.success("上传关系成功")
-            })
+
 
         }
     }
