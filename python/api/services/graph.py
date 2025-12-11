@@ -1,3 +1,6 @@
+from altair import sequence
+from dominate.tags import article
+
 from python.api.utils.logger import LOGGER
 from python.api.config.db_config import DB_Config
 from python.api.config.graph_config import Graph_Config
@@ -42,6 +45,11 @@ class UpdateNodeType(BaseModel):
     color: str
     new_name: str
     new_color: str
+
+class Commity(BaseModel):
+    sequence: str
+    nodes: List[Node]
+    edges: List[Edge]
 
 @router.get("/test")
 async def test():
@@ -99,12 +107,80 @@ async def create_nodes(nodes: List[Node]):
 
         for i in range(len(nodes)):
             query = '''SELECT * FROM t_node WHERE node_name='%s' ''' % nodes[i].name
-            exist = _db.df_query_sql(query)
-            query = '''INSERT INTO t_node (node_name, node_label, sequence, article, create_time) VALUES (%s, %s, %s, %s, %s)'''
-            _db.create_one(query, (nodes[i].name, nodes[i].label, nodes[i].sequence, nodes[i].article, datetime.now()))
+            exist_db = _db.df_query_sql(query)
 
-            if len(exist) == 0:  # 如果是全新的节点，在图数据库中添加节点
+            if len(exist_db) == 0:  # 如果是全新的节点，在图数据库中添加节点
                 _gdb.create_node(nodes[i].label, nodes[i].name)
+
+            query = '''SELECT * FROM t_node WHERE node_name='%s' AND sequence='%s' ''' % (nodes[i].name, nodes[i].sequence)
+            exist_db = _db.df_query_sql(query)
+            if len(exist_db) ==0:
+                _db.create_one(
+                    '''INSERT INTO t_node (node_name, node_label, sequence, article, create_time) VALUES (%s, %s, %s, %s, %s)''',
+                    (nodes[i].name, nodes[i].label, nodes[i].sequence, nodes[i].article, datetime.now()))
+    except Exception as e:
+        return e
+
+@router.get("/getNodesFromSeq")
+async def get_nodes(sequence: str):
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_node WHERE sequence='%s' ''' % (sequence)
+        nodes_df = _db.df_query_sql(query)
+        nodes = []
+        node_names = []
+        for i, row in nodes_df.iterrows():
+            if row.get("node_name") not in node_names:
+                nodes.append({
+                    "name": row.get("node_name"),
+                    "label": row.get("node_label"),
+                    "sequence": row.get("sequence"),
+                    "article": row.get("article"),
+                    "create_time": row.get("create_time")
+                })
+                node_names.append(row.get("node_name"))
+        return nodes
+
+    except Exception as e:
+        return e
+
+@router.get("/getAllNodes")
+async def get_all_nodes():
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = "SELECT DISTINCT node_name, node_label, sequence, article, create_time FROM t_node"
+        nodes_df = _db.df_query_sql(query)
+        nodes = []
+        for i, row in nodes_df.iterrows():
+            nodes.append({
+                "name": row.get("node_name"),
+                "label": row.get("node_label"),
+                "sequence": row.get("sequence"),
+                "article": row.get("article"),
+                "create_time": row.get("create_time")
+            })
+        return nodes
+
     except Exception as e:
         return e
 
@@ -166,6 +242,40 @@ async def create_edges(edges: List[Edge]):
 
             if len(exist) == 0:  # 如果是全新的节点，在图数据库中添边
                 _gdb.create_edge(edges[i].name, edges[i].from_node_name, edges[i].from_node_label, edges[i].to_node_name, edges[i].to_node_label)
+
+    except Exception as e:
+        return e
+
+@router.get("getEdgesFromSeq")
+async def get_edges(sequence: str):
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_predicate WHERE sequence='%s' '''
+        edges_df = _db.df_query_sql(query)
+        edges, edge_names = [], []
+        for i, row in edges_df.iterrows():
+            if row.get("predicate_name") not in edge_names:
+                edges.append({
+                    "name": row.get("predicate_name"),
+                    "sequence": row.get("sequence"),
+                    "from_node_name": row.get("from_node_name"),
+                    "from_node_label": row.get("from_node_label"),
+                    "to_node_name": row.get("to_node_name"),
+                    "to_node_label": row.get("to_node_label"),
+                    "create_time": row.get("create_time")
+                })
+                edges.append(row.get("predicate_name"))
+        return edges
 
     except Exception as e:
         return e
@@ -297,3 +407,92 @@ async def delete_node_type(node_type: NodeType):
 
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@router.post("/commit")
+async def commit(commit: Commity):
+    try:
+        sequence = commit.sequence
+        nodes = commit.nodes
+        edges = commit.edges
+
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        #处理删除节点
+        node_names = [node.name for node in nodes]
+        exsisted_nodes_df = _db.df_query_sql('''SELECT * FROM t_node WHERE sequence='%s' ''' % (sequence))
+        for i, row in exsisted_nodes_df.iterrows():
+            if (row.get("node_name") not in node_names): #需要删除节点
+                n, l = row.get("node_name"), row.get("node_label")
+                _db.delete_one('''DELETE FROM t_node WHERE node_name='%s' AND sequence='%s' ''' % (row.get("node_name"), sequence))
+                existed = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' ''' % (row.get("node_name")))
+                if len(existed) == 0:
+                    _gdb.delete_node(l, n)
+
+        #处理新增节点
+        for i, node in enumerate(nodes):
+            exsisted_nodes_context_df = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' ''' % (node.name))
+            exsisted_nodes_seq_df = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' AND sequence='%s' ''' % (node.name, sequence))
+            if len(exsisted_nodes_context_df) == 0: #全文没有该节点
+                _gdb.create_node(nodes[i].label, nodes[i].name)
+            if len(exsisted_nodes_seq_df) == 0: #语句没有该节点
+                _db.create_one(
+                    '''INSERT INTO t_node (node_name, node_label, sequence, article, create_time) VALUES (%s, %s, %s, %s, %s)''',
+                    (nodes[i].name, nodes[i].label, nodes[i].sequence, nodes[i].article, datetime.now()))
+
+        #处理删除边
+        posted_edge = []
+        for edge in edges:
+            posted_edge.append({
+                "name": edge.name,
+                "from": edge.from_node_name,
+                "to": edge.to_node_name
+            })
+
+        existed_edges_df = _db.df_query_sql('''SELECT * FROM t_predicate WHERE sequence='%s' ''' % (sequence))
+        for i, row in existed_edges_df.iterrows():
+            existed_edge = {
+                "name": row.get("predicate_name"),
+                "from": row.get("from_node_name"),
+                "to": row.get("to_node_name")
+            }
+            if (existed_edge not in posted_edge):
+                name = row.get("predicate_name")
+                fnn = row.get("from_node_name")
+                fnl = row.get("from_node_label")
+                tnn = row.get("to_node_name")
+                tnl = row.get("to_node_label")
+                _db.delete_one(
+                    '''DELETE FROM t_predicate WHERE predicate_name='%s' AND sequence='%s' AND from_node_name='%s' AND to_node_name='%s' ''' % (name, sequence, fnn, tnn))
+                _gdb.delete_edge(name, fnn, fnl, tnn, tnl)
+
+        #处理添加边
+        for i, edge in enumerate(edges):
+            name = edge.name
+            fnn = edge.from_node_name
+            fnl = edge.from_node_label
+            tnn = edge.to_node_name
+            tnl = edge.to_node_label
+
+            existed_edges_context_df = _db.df_query_sql(
+                '''SELECT * FROM t_predicate WHERE predicate_name='%s' AND from_node_name='%s' AND to_node_name='%s' ''' % (name, fnn, tnn))
+
+            if len(existed_edges_context_df) == 0:
+                _gdb.create_edge(name, fnn, fnl, tnn, tnl)
+
+            existed_edges_seq_df = _db.df_query_sql('''SELECT * FROM t_predicate WHERE predicate_name='%s' AND sequence='%s' AND from_node_name='%s' AND to_node_name='%s' ''' % (name, sequence, fnn, tnn))
+            if len(existed_edges_seq_df) == 0:
+                query = '''INSERT INTO t_predicate (predicate_name, sequence, from_node_name, from_node_label, to_node_name, to_node_label, article, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'''
+                _db.create_one(query,
+                               (edge.name, edge.sequence, edge.from_node_name, edge.from_node_label, edge.to_node_name, edge.to_node_label, edge.article, datetime.now()))
+
+    except Exception as e:
+        return e

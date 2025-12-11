@@ -51,6 +51,21 @@ class Neo4jHelper:
             )
             return rel
 
+    #删除edge, => 函数
+    def delete_edge_function(self, tx, edge_name, from_node_name, from_node_label, to_node_name, to_node_label):
+        cypher = f"""
+                    MATCH (a:{from_node_label} {{name: $from_node_name}})-[r:{edge_name}]->(b:{to_node_label} {{name: $to_node_name}})
+                    DELETE r
+                    """
+        tx.run(cypher, from_node_name, to_node_name)
+
+    # 删除edge, => 执行
+    def delete_edge(self, edge_name, from_node_name, from_node_label, to_node_name, to_node_label):
+        with self.driver.session() as session:
+            session.execute_write(
+                self.delete_edge_function,
+                edge_name, from_node_name, from_node_label, to_node_name, to_node_label
+            )
 
     # 创建node, 返回node 函数
     def create_node_function(self, tx, node_label, props):
