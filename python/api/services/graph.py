@@ -41,10 +41,10 @@ class NodeType(BaseModel):
     color: str
 
 class UpdateNodeType(BaseModel):
+    id: int
     name: str
     color: str
-    new_name: str
-    new_color: str
+
 
 class Commity(BaseModel):
     sequence: str
@@ -383,9 +383,9 @@ async def update_node_type(node_type: UpdateNodeType):
                             DB_Config().port)
         _db.updateById(query, (node_type.name))
         query = '''
-            UPDATE t_node SET node_label='%s' WHERE node_label='%s'
+            UPDATE t_node SET node_label='%s' WHERE node_type='%s'
         '''
-        _db.updateById(query, (node_type.name))
+        _db.updateById(query, (node_type.id))
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:

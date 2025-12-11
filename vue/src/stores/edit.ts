@@ -181,6 +181,13 @@ export const useEditStore = defineStore('editStore', {
                     return res.data;
                 })
         },
+        updateNodeType(type: NodeType) {
+            axios.post("/api/graph/addNodeType",
+                { id: type.id, name: type.name, color: type.color })
+                .then((res) => {
+                    return res.data;
+                })
+        },
         nextPDFPage() {
             this.currentPDFPage++;
             this.clearAllRects();  

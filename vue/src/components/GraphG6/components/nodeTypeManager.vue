@@ -92,9 +92,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import axios from "axios";
 import {useEditStore} from "@/stores/edit.ts";
 //import { useNodeTypesStore } from '@/stores/nodeTypes';
 import { Message } from '@arco-design/web-vue';
+import type {NodeType} from "../../../stores/nodeTypes.ts";
 
 const props = defineProps<{
   visible: boolean;
@@ -149,18 +151,27 @@ const handleDeleteType = (id: string) => {
 // 保存节点类型
 const handleSaveType = async () => {
   const valid = await formRef.value.validate();
-  if (!valid) return;
+  //if (!valid) return;
 
   saving.value = true;
   try {
     if (editingType.value) {
       // 更新现有类型
       //updateNodeType(editingType.value.id, form.value);
+      const nodeType: NodeType = {
+        id: editingType.value.id,
+        name: editingType.value.name,
+        color: editingType.value.color
+      }
+      useEditStore().updateNodeType(nodeType)
       Message.success('节点类型更新成功');
     } else {
-      // 添加新类型
-      //addNodeType(form.value);
-      Message.success('节点类型添加成功');
+      axios.post("/api/graph/addNodeType", {
+        name: this.form.name,
+        color: this.form.color,
+      }).then(res => {
+        Message.success('节点类型添加成功');
+      })
     }
     handleResetForm();
     emit('refresh');
