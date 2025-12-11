@@ -9,14 +9,14 @@ export enum RectangleType{
 }
 
 export interface Rectangle {
-    x: float,
-    y: float,
-    width: float,
-    height: float,
-    left: float,
-    top: float,
-    right: float,
-    bottom: float,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    left: number,
+    top: number,
+    right: number,
+    bottom: number,
     color: string,
     type: RectangleType,
     page: number
