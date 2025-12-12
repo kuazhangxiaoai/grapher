@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import {onMounted, ref} from "vue";
 import { storeToRefs } from "pinia";
 import { useEditStore } from "../stores/edit.ts";
 import GraphG6 from "@/components/GraphG6/index.vue";
@@ -130,6 +130,50 @@ const handleDeleteElement = async (elementId, type) => {
     Message.error(error.message);
   }
 };
+
+onMounted(()=>{
+  const article = useEditStore().article
+  const sequence = useEditStore().sequence
+  if(!article || !sequence) {
+    graphData.value.nodes = []
+    graphData.value.edges = []
+  }
+  else {
+    useEditStore().queryGraphBySeq(sequence)
+    setTimeout(()=>{
+      const nodes = useEditStore().nodes;
+      const edges = useEditStore().edges;
+      let node_data = []
+      let edges_data = []
+      nodes.forEach(node => {
+        node_data.push({
+          id: node.name,
+          data: {
+            name: node.name,
+            description: "",
+            entityType: node.label
+          },
+          style: {
+            labelText: node.name,
+            fill: node.color,
+          },
+        })
+      })
+     edges.forEach(edge => {
+       edges_data.push({
+         id: "edge-" + Date.now(),
+         data: {name: edge.name},
+         target: edge.to_node_name,
+         source: edge.from_node_name,
+       })
+     })
+
+      graphData.value.nodes = node_data
+      graphData.value.edges = edges_data;
+
+    }, 100)
+  }
+})
 
 const zoomLevel = ref(100);
 </script>

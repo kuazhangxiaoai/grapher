@@ -154,6 +154,121 @@ async def get_nodes(sequence: str):
     except Exception as e:
         return e
 
+@router.get("/getGraphFromSeq")
+async def get_graph_by_seq(sequence: str):
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_node WHERE sequence='%s' ''' % (sequence)
+        nodes_df = _db.df_query_sql(query)
+        nodes = []
+        node_names = []
+        for i, row in nodes_df.iterrows():
+            if row.get("node_name") not in node_names:
+                node_name, node_label = row.get("node_name"), row.get("node_label")
+                query = '''SELECT node_type_color FROM t_node_type WHERE node_type_name='%s' ''' % node_label
+                color_df = _db.df_query_sql(query)
+                nodes.append({
+                    "name": row.get("node_name"),
+                    "label": row.get("node_label"),
+                    "sequence": row.get("sequence"),
+                    "article": row.get("article"),
+                    "create_time": row.get("create_time"),
+                    "color": color_df.loc[0, "node_type_color"]
+                })
+                node_names.append(row.get("node_name"))
+
+        query = '''SELECT * FROM t_predicate WHERE sequence='%s' ''' % sequence
+        edges_df = _db.df_query_sql(query)
+        edges, edge_names = [], []
+        for i, row in edges_df.iterrows():
+            if row.get("predicate_name") not in edge_names:
+                edges.append({
+                    "name": row.get("predicate_name"),
+                    "sequence": row.get("sequence"),
+                    "from_node_name": row.get("from_node_name"),
+                    "from_node_label": row.get("from_node_label"),
+                    "to_node_name": row.get("to_node_name"),
+                    "to_node_label": row.get("to_node_label"),
+                    "create_time": row.get("create_time")
+                })
+                edge_names.append(row.get("predicate_name"))
+        graph = {
+            "sequence": sequence,
+            "nodes": nodes,
+            "edges": edges
+        }
+        return graph
+
+    except Exception as e:
+        return e
+
+@router.get("/getGraphFromArticle")
+async def get_graph_from_article(article: str):
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_node WHERE article='%s' ''' % (article)
+        nodes_df = _db.df_query_sql(query)
+        nodes = []
+        node_names = []
+        for i, row in nodes_df.iterrows():
+            if row.get("node_name") not in node_names:
+                node_name, node_label = row.get("node_name"), row.get("node_label")
+                query = '''SELECT node_type_color FROM t_node_type WHERE node_type_name='%s' ''' % node_label
+                color_df = _db.df_query_sql(query)
+                nodes.append({
+                    "name": row.get("node_name"),
+                    "label": row.get("node_label"),
+                    "sequence": row.get("sequence"),
+                    "article": row.get("article"),
+                    "create_time": row.get("create_time"),
+                    "color": color_df.loc[0, "node_type_color"]
+                })
+                node_names.append(row.get("node_name"))
+
+        query = '''SELECT * FROM t_predicate WHERE article='%s' ''' % article
+        edges_df = _db.df_query_sql(query)
+        edges, edge_names = [], []
+        for i, row in edges_df.iterrows():
+            if row.get("predicate_name") not in edge_names:
+                edges.append({
+                    "name": row.get("predicate_name"),
+                    "sequence": row.get("sequence"),
+                    "from_node_name": row.get("from_node_name"),
+                    "from_node_label": row.get("from_node_label"),
+                    "to_node_name": row.get("to_node_name"),
+                    "to_node_label": row.get("to_node_label"),
+                    "create_time": row.get("create_time")
+                })
+                edge_names.append(row.get("predicate_name"))
+        graph = {
+            "article": article,
+            "nodes": nodes,
+            "edges": edges
+        }
+        return graph
+    except Exception as e:
+        return e
+
 @router.get("/getAllNodes")
 async def get_all_nodes():
     try:
@@ -181,6 +296,63 @@ async def get_all_nodes():
             })
         return nodes
 
+    except Exception as e:
+        return e
+
+@router.get("/getGlobalGraph")
+async def get_global_graph():
+    try:
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = "SELECT * FROM t_node"
+        nodes_df = _db.df_query_sql(query)
+        nodes = []
+        node_names = []
+        for i, row in nodes_df.iterrows():
+            if row.get("node_name") not in node_names:
+                node_name, node_label = row.get("node_name"), row.get("node_label")
+                query = '''SELECT node_type_color FROM t_node_type WHERE node_type_name='%s' ''' % node_label
+                color_df = _db.df_query_sql(query)
+                nodes.append({
+                    "name": row.get("node_name"),
+                    "label": row.get("node_label"),
+                    "sequence": row.get("sequence"),
+                    "article": row.get("article"),
+                    "create_time": row.get("create_time"),
+                    "color": color_df.loc[0, "node_type_color"]
+                })
+                node_names.append(row.get("node_name"))
+
+        query = "SELECT * FROM t_predicate"
+        edges_df = _db.df_query_sql(query)
+        edges, edge_names = [], []
+        for i, row in edges_df.iterrows():
+            if row.get("predicate_name") not in edge_names:
+                edges.append({
+                    "name": row.get("predicate_name"),
+                    "sequence": row.get("sequence"),
+                    "from_node_name": row.get("from_node_name"),
+                    "from_node_label": row.get("from_node_label"),
+                    "to_node_name": row.get("to_node_name"),
+                    "to_node_label": row.get("to_node_label"),
+                    "create_time": row.get("create_time")
+                })
+                edge_names.append(row.get("predicate_name"))
+        graph = {
+            "article": article,
+            "nodes": nodes,
+            "edges": edges
+        }
+        return graph
     except Exception as e:
         return e
 
@@ -260,7 +432,7 @@ async def get_edges(sequence: str):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        query = '''SELECT * FROM t_predicate WHERE sequence='%s' '''
+        query = '''SELECT * FROM t_predicate WHERE sequence='%s' ''' % sequence
         edges_df = _db.df_query_sql(query)
         edges, edge_names = [], []
         for i, row in edges_df.iterrows():

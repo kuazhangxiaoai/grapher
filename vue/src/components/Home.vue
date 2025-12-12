@@ -65,12 +65,13 @@ import Editor from "./Editor.vue";
 import {storeToRefs} from "pinia";
 import {useEditStore} from "@/stores/edit.ts";
 import FileList from "./FileList.vue";
+import axios from "axios";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
 
 const route = useRoute();
 const editStore = useEditStore();
 editStore.getAllFileInfoList()
-const {editGraph, fileList} = storeToRefs(editStore);
+const {editGraph, fileList, article} = storeToRefs(editStore);
 // 图数据
 const graphData: any = ref({});
 const graphG6 = ref(null);
@@ -200,13 +201,48 @@ watch(showShortestPath, (newValue) => {
 
 // 获取数据详情
 const getGraphDetail = async (graphId?: string) => {
-  // try {
-  //   graphData.value = await getGraphData(graphId);
-  // } catch (error) {
-  //   Message.error(error.message);
+  try {
+     //graphData.value = await getGraphData(graphId);
+    const article = editStore.getArticleTitle()
+    const sequence = editStore.getSequence()
+    console.log(article)
+    if (article === null && sequence === null){
+      axios.get("/api/graph/getGlobalGraph").then((res) => {
+        let graph_data = {
+          nodes: [],
+          edges: [],
+        }
+        res.data.nodes.forEach((node) => {
+          graph_data.nodes.push({
+            id: node.name,
+            data: {
+              name: node.name,
+              description: "",
+              entityType: node.label || "默认",
+            },
+            style: {
+              labelText: node.name,
+              fill: node.color,
+            },
+          });
+        })
+        res.data.edges.forEach((edge) => {
+          graph_data.edges.push({
+            id: "edge-" + Date.now(),
+            data: {name: edge.name},
+            target: edge.to_node_name,
+            source: edge.from_node_name,
+          })
+        })
+        graphData.value.edges = graph_data.edges;
+        graphData.value.nodes = graph_data.nodes;
+      })
+    }
+   } catch (error) {
+     Message.error(error.message);
     // 出错时使用模拟数据兜底
-    graphData.value = generateMockData();
-  // }
+    //graphData.value = generateMockData();
+   }
 };
 
 // 处理搜索节点
@@ -273,6 +309,43 @@ watch(() => route.params.id || route.query.graphId, (newGraphId) => {
   getGraphDetail(newGraphId as string);
   getAllNodeList(newGraphId as string);
 });
+
+watch(article, (newVal) => {
+  if(newVal) {
+    axios.get("/api/graph/getGraphFromArticle", {params:{article: newVal}}).then((res) => {
+      let graph_data = {
+        nodes: [],
+        edges: [],
+      }
+      res.data.nodes.forEach((node) => {
+        graph_data.nodes.push({
+          id: node.name,
+          data: {
+            name: node.name,
+            description: "",
+            entityType: node.label || "默认",
+          },
+          style: {
+            labelText: node.name,
+            fill: node.color,
+          },
+        });
+      })
+      res.data.edges.forEach((edge) => {
+        graph_data.edges.push({
+          id: "edge-" + Date.now(),
+          data: {name: edge.name},
+          target: edge.to_node_name,
+          source: edge.from_node_name,
+        })
+      })
+      graphData.value.edges = graph_data.edges;
+      graphData.value.nodes = graph_data.nodes;
+    })
+  }else{
+    graphData.value = {}
+  }
+})
 
 onMounted(() => {
   const graphId = route.params.id || route.query.graphId;

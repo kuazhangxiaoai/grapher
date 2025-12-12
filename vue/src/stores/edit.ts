@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from "axios";
+import type {Node} from "@/types/node.ts"
 import type { FileInfo } from "@/types/text.ts";
 import type { Rectangle } from "@/types/rect.ts";
 import type { NodeType } from "./nodeTypes.ts";
@@ -29,10 +30,10 @@ export const useEditStore = defineStore('editStore', {
         getCurrentPageItem: (state) => { },
     },
     actions: {
-        addNode(node: NodeType) {
+        addNode(node: Node) {
             this.nodes.push(node);
         },
-        deleteNode(node: NodeType) {
+        deleteNode(node: Node) {
             this.nodes.splice(this.nodes.indexOf(node), 1);
         },
         updateNode(old_node: Node, new_node: Node) {
@@ -85,6 +86,9 @@ export const useEditStore = defineStore('editStore', {
         },
         addEdge(edge: Edge){
             this.edges.push(edge)
+        },
+        deleteEdge(edge: Edge){
+            this.edges.splice(this.edges.indexOf(edge), 1);
         },
         deleteEditingRect() {
             this.rects = this.rects.filter(rectangle => rectangle.type === RectangleType.COMMITED);
@@ -208,6 +212,39 @@ export const useEditStore = defineStore('editStore', {
             this.currentPDFPage = page;
             this.clearAllRects();  
         },
+        queryGraphBySeq(seq: string) {
+            this.sequence = seq;
+            axios.get("/api/graph/getGraphFromSeq", {params: {sequence: seq}}).then((res) => {
+                console.log(res.data);
+                let nodes = [] as Node[];
+                let edges = [] as Edge[];
+
+                res.data.nodes.forEach(node => {
+                    const n: Node = {
+                        label: node.label,
+                        name: node.name,
+                        sequence: node.sequence,
+                        article: node.article
+                    }
+                    nodes.push(n);
+                })
+
+                res.data.edges.forEach(edge => {
+                    const e: Edge = {
+                        name: edge.name,
+                        from_node_name: edge.from_node_name,
+                        from_node_label: edge.from_node_label,
+                        to_node_name: edge.to_node_name,
+                        to_node_label: edge.to_node_label,
+                        sequence: edge.sequence,
+                        article: edge.article
+                    }
+                    edges.push(e);
+                })
+                this.nodes = nodes;
+                this.edges = edges;
+            })
+        },
         commit() {
             let nodeObjs = []
             let rectObjs = [];
@@ -248,20 +285,12 @@ export const useEditStore = defineStore('editStore', {
             }).then((res) => {
                 Message.success("上传数据成功")
             })
-            /*axios.post("/api/graph/createNodes", nodeObjs).then((res) => {
-                Message.success("上传节点成功")
-            })
-            axios.post("/api/graph/createEdges", edgeObjs).then((res) => {
-                Message.success("上传关系成功")
-            })*/
 
             axios.post("/api/text/uploadSentences", rectObjs).then((res) => {
                 this.deleteEditingRect()
                 this.queryRects()
                 Message.success("上传标记成功")
             })
-
-
         }
     }
 

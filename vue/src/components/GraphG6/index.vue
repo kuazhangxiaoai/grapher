@@ -116,6 +116,7 @@ const props = defineProps({
 
 // G6实例引用
 const graph = shallowRef(null);
+
 // DOM容器引用
 const container = ref<HTMLElement | null>(null);
 
@@ -554,6 +555,45 @@ watch(
 onMounted(() => {
   nextTick(() => {
     initGraph();
+    /*setTimeout(() => {
+      const seq = useEditStore().getSequence()
+      if (seq) {
+        const nodes = useEditStore().nodes
+        const edges = useEditStore().edges
+
+        nodes.forEach(node => {
+          graph.value.addNodeData([{
+            id: node.name,
+            data: {
+              name: node.name,
+              description: "",
+              entityType: node.label || "默认",
+            },
+            style: {
+              labelText: node.name,
+              fill: node.color,
+            },
+          }]);
+
+        })
+        edges.forEach(edge => {
+          graph.value.addEdgeData([{
+            id: "edge-" + Date.now(),
+            data: {name: edge.name},
+            target: edge.to_node_name,
+            source: edge.from_node_name,
+          }])
+        })
+      }
+      if (props.fitView) {
+        graph.value.fitView();
+      }
+
+      graph.value.layout();
+      //graph.value.updateData()
+      graph.value.render();
+    },100)*/
+
   });
 });
 

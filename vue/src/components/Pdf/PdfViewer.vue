@@ -184,7 +184,7 @@ function installGlobalMouseHandlers() {
             type: RectangleType.EDITING
           };
           editStore.addRect(rectToEdit);
-          
+          editStore.queryGraphBySeq(item.text);
           emit("textSelected", item.text);
         }
         return;
