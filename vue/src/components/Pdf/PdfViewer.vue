@@ -18,7 +18,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "/package/pdf.worker.min.js";
 const props = defineProps<{
   pdfUrl: string | null;
 }>();
-const emit = defineEmits(["pdfRendered", "textSelected", "highlightClick"]);
+const emit = defineEmits(["pdfRendered"]);
 
 const editStore = useEditStore();
 const { rects, currentPDFPage } = storeToRefs(editStore);
@@ -185,7 +185,6 @@ function installGlobalMouseHandlers() {
           };
           editStore.addRect(rectToEdit);
           editStore.queryGraphBySeq(item.text);
-          emit("textSelected", item.text);
         }
         return;
       }

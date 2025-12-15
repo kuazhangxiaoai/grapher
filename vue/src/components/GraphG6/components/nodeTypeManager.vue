@@ -13,7 +13,7 @@
       <!-- 节点类型列表 -->
       <div class="node-type-list mb-6">
         <h4 class="text-lg font-semibold mb-4">节点类型列表</h4>
-        <a-space direction="vertical" :size="16" class="w-full">
+        <a-space direction="vertical" :size="16" class="w-full scroll-y">
           <div
             v-for="type in nodeTypes"
             :key="type.id"
@@ -92,6 +92,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import axios from "axios";
 import {useEditStore} from "@/stores/edit.ts";
 //import { useNodeTypesStore } from '@/stores/nodeTypes';
@@ -112,8 +113,10 @@ const visible = computed({
   set: (value) => emit('update:visible', value),
 });
 
-//const { nodeTypes, addNodeType, updateNodeType, deleteNodeType } = useNodeTypesStore();
-const {nodeTypes} = useEditStore();
+// 初始化store并获取响应式状态
+const editStore = useEditStore();
+// 使用storeToRefs获取响应式的nodeTypes
+const { nodeTypes } = storeToRefs(editStore);
 
 const formRef = ref();
 const saving = ref(false);
@@ -142,10 +145,17 @@ const handleEditType = (type: any) => {
 };
 
 // 删除节点类型
-const handleDeleteType = (id: string) => {
-  //deleteNodeType(id);
-  Message.success('节点类型删除成功');
-  emit('refresh');
+const handleDeleteType = async (id: string) => {
+  try {
+    // 调用删除节点类型的API
+    await axios.post("/api/graph/deleteNodeType", { id });
+    Message.success('节点类型删除成功');
+    // 删除成功后重新加载节点类型数据
+    editStore.getAllNodeTypes();
+    emit('refresh');
+  } catch (error) {
+    Message.error('删除节点类型失败');
+  }
 };
 
 // 保存节点类型
@@ -156,25 +166,25 @@ const handleSaveType = async () => {
   saving.value = true;
   try {
     if (editingType.value) {
-      // 更新现有类型
-      //updateNodeType(editingType.value.id, form.value);
+      // 更新现有类型，使用表单中的最新数据
       const nodeType: NodeType = {
         id: editingType.value.id,
-        name: editingType.value.name,
-        color: editingType.value.color
+        name: form.value.name,
+        color: form.value.color
       }
-      useEditStore().updateNodeType(nodeType)
+      await editStore.updateNodeType(nodeType);
       Message.success('节点类型更新成功');
+      // 编辑成功后重新加载节点类型数据
+      editStore.getAllNodeTypes();
     } else {
-      const node_name = form.value.name;
-      const node_color = form.value.color;
-      axios.post("/api/graph/addNodeType", {
-        name: node_name,
-        color: node_color,
-      }).then(res => {
-        useEditStore().getAllNodeTypes()
-        Message.success('节点类型添加成功');
-      })
+      // 使用form.value代替this.form
+      await axios.post("/api/graph/addNodeType", {
+        name: form.value.name,
+        color: form.value.color,
+      });
+      Message.success('节点类型添加成功');
+      // 新增成功后重新加载节点类型数据
+      useEditStore().getAllNodeTypes();
     }
     handleResetForm();
     emit('refresh');
@@ -221,5 +231,11 @@ onMounted(() => {
       transform: scale(1.1);
     }
   }
+
+ 
 }
+ .scroll-y{
+    height: 250px;
+    overflow-y: auto;
+  }
 </style>
