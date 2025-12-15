@@ -90,45 +90,50 @@ const form = ref({
 
 const rules = ref({
   name: [{ required: true, message: "请输入节点名称" }],
-  entityType: [{ required: true, message: "请选择节点类型" }],
-  description: [{ required: true, message: "请输入节点描述" }]
+  nodeType: [{ required: true, message: "请选择节点类型" }]
+  // description字段已被注释，移除必填规则
 });
 
 const emit = defineEmits(["confirm", "cancel"]);
 
 //确认创建节点
-const handleOk = async done => {
-  const valid = await formRef.value.validate();
-  
-  if (!valid) {
-    done(false);
-    return;
+const handleOk = async () => {
+  try {
+    console.log('开始验证表单...');
+    // 使用validate的正确调用方式
+    await formRef.value.validate();
+    console.log('表单验证通过！');
+    
+    // 使用已初始化的editStore
+    const sequence = editStore.getSequence();
+    const article = editStore.getArticleTitle();
+    const node_name = form.value.name;
+    const node_label = form.value.nodeType;
+
+    const node: Node = {
+      label: node_label,
+      name: node_name,
+      sequence: sequence,
+      article: article
+    };
+
+    console.log('准备添加节点:', node);
+    // 添加节点到store
+    editStore.addNode(node);
+    
+    // 发送确认事件
+    emit("confirm", { ...form.value });
+    
+    // 重置表单
+    formRef.value.resetFields();
+    
+    console.log('节点添加成功！');
+    // 不需要手动关闭模态框，返回true后a-modal会自动关闭
+    return true;
+  } catch (error) {
+    console.error('表单验证失败:', error);
+    return false;
   }
-  
-  // 使用已初始化的editStore
-  const sequence = editStore.getSequence();
-  const article = editStore.getArticleTitle();
-  const node_name = form.value.name;
-  const node_label = form.value.nodeType;
-
-  const node: Node = {
-    label: node_label,
-    name: node_name,
-    sequence: sequence,
-    article: article
-  };
-
-  // 添加节点到store
-  editStore.addNode(node);
-  
-  // 发送确认事件
-  emit("confirm", { ...form.value });
-  
-  // 关闭模态框并重置表单
-  openNodeAddModal.value = false;
-  formRef.value.resetFields();
-  
-  done(true);
 };
 
 const handleCancel = () => {
