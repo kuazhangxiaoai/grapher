@@ -95,6 +95,20 @@
           <span>{{ elementShowInfo.labelFontSize }}</span>
         </div>
       </div>
+      <!-- 表格 -->
+      <div class="mt-4">
+        <div class="pb-4 text-[#1D2129] font-medium text-[14px]">节点序列信息</div>
+        <div>
+          <a-table
+            :columns="columns"
+            :data="tableData"
+            :loading="loading"
+            :row-key="(record, index) => index"
+            bordered
+            size="small"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -102,6 +116,8 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
 import { throttle, debounce } from "lodash-es";
+import apiClient from "../../../services/apiClient";
+import message from "@arco-design/web-vue/es/message";
 
 const props = defineProps({
   elementInfo: {
@@ -113,6 +129,41 @@ const props = defineProps({
     default: () => "",
   },
 });
+// 定义列配置（优化宽度/ellipsis 配置）
+const columns = ref([
+  { 
+    title: '名字', 
+    dataIndex: 'nodeName', 
+    key: 'nodeName', 
+    ellipsis: true,
+    tooltip: true,
+    width: 60,
+  },
+  { 
+    title: '关系', 
+    dataIndex: 'nodeRelation', 
+    key: 'nodeRelation',
+    ellipsis: true,
+    tooltip: true,
+    width: 60,
+  },
+  { 
+    title: '段落', 
+    dataIndex: 'nodeParagraph', 
+    key: 'nodeParagraph', 
+    ellipsis: true,
+    tooltip: true,
+    width: 120,
+  },
+  { 
+    title: '文档', 
+    dataIndex: 'documentName', 
+    key: 'documentName', 
+    ellipsis: true,
+    tooltip: true,
+    width: 120,
+  }
+]);
 
 const emit = defineEmits(["updateUpload", "updateElementInfo"]);
 const expandElementInfoPanel = defineModel();
@@ -129,6 +180,11 @@ const elementShowInfo = ref({
   labelFill: "",
   labelFontSize: 10,
 });
+
+// 表格数据
+const tableData = ref([]);
+// 加载状态
+const loading = ref(false);
 
 // 监听整个对象变化，但只关注ID
 watch(
@@ -159,6 +215,8 @@ watch(
         nextTick(() => {
           setTimeout(() => {
             isInitializing.value = false;
+            // 获取节点序列数据
+            getNodeSequence(newVal.data?.name || newVal.id);
           }, 100);
         });
       }
@@ -177,10 +235,41 @@ const handleUserEdit = () => {
   }
 };
 
+// 获取节点序列数据
+const getNodeSequence = async (nodeName) => {
+  if (!nodeName) return;
+  
+  loading.value = true;
+  try {
+    const response = await apiClient.get("/text/getSequenceByNode", {
+      params: { name: nodeName }
+    });
+    
+    // 转换数据格式为表格所需
+    const { node_names, node_labels, sequences, articles } = response;
+    const formattedData = [];
+    for (let i = 0; i < node_names.length; i++) {
+      formattedData.push({
+        nodeName: node_names[i],
+        nodeRelation: node_labels[i],
+        nodeParagraph: sequences[i],
+        documentName: articles[i]
+      });
+    }
+    
+    tableData.value = formattedData;
+  } catch (error) {
+    console.error("获取节点序列数据失败:", error);
+    message.error("获取节点序列数据失败");
+    tableData.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
 // 将扁平结构转换回G6需要的嵌套结构
 const convertToG6Format = () => {
-  const { id, name, iconSrc, fill, size, labelFill, labelFontSize } =
-    elementShowInfo.value;
+  const { id, name, iconSrc, fill, size, labelFill, labelFontSize } = elementShowInfo.value;
 
   return {
     id,

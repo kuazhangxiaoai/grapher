@@ -95,9 +95,8 @@ import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import axios from "axios";
 import {useEditStore} from "@/stores/edit.ts";
-//import { useNodeTypesStore } from '@/stores/nodeTypes';
 import { Message } from '@arco-design/web-vue';
-import type {NodeType} from "../../../stores/nodeTypes.ts";
+import type {NodeType} from "@/stores/nodeTypes.ts";
 
 const props = defineProps<{
   visible: boolean;
