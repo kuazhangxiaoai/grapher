@@ -249,17 +249,17 @@ async def get_graph_from_article(article: str):
         edges_df = _db.df_query_sql(query)
         edges, edge_names = [], []
         for i, row in edges_df.iterrows():
-            if row.get("predicate_name") not in edge_names:
-                edges.append({
-                    "name": row.get("predicate_name"),
-                    "sequence": row.get("sequence"),
-                    "from_node_name": row.get("from_node_name"),
-                    "from_node_label": row.get("from_node_label"),
-                    "to_node_name": row.get("to_node_name"),
-                    "to_node_label": row.get("to_node_label"),
-                    "create_time": row.get("create_time")
-                })
-                edge_names.append(row.get("predicate_name"))
+            #if row.get("predicate_name") not in edge_names:
+            edges.append({
+                "name": row.get("predicate_name"),
+                "sequence": row.get("sequence"),
+                "from_node_name": row.get("from_node_name"),
+                "from_node_label": row.get("from_node_label"),
+                "to_node_name": row.get("to_node_name"),
+                "to_node_label": row.get("to_node_label"),
+                "create_time": row.get("create_time")
+            })
+            #edge_names.append(row.get("predicate_name"))
         graph = {
             "article": article,
             "nodes": nodes,
