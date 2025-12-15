@@ -31,7 +31,7 @@
         <div class="last-page-button" @click="lastPDFPage">上一页</div>
         <div class="next-page-button" @click="nextPDFPage">下一页</div>
         <div class="jump-page-button" @click="jumpPDFPage">跳页至</div>
-        <div class="edit-button" @click="handleCopyToOpenModal">编辑</div>
+        <div class="edit-button" @click="handleCopyToOpenModal">自由编辑</div>
       </div>
 
       <!--<div style="display: flex ;position: relative; left: 0px; top: 0px; width: 50px; height: 20px; background-color: #1890ff"></div>-->

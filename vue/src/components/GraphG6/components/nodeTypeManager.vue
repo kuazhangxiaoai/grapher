@@ -166,10 +166,13 @@ const handleSaveType = async () => {
       useEditStore().updateNodeType(nodeType)
       Message.success('节点类型更新成功');
     } else {
+      const node_name = form.value.name;
+      const node_color = form.value.color;
       axios.post("/api/graph/addNodeType", {
-        name: this.form.name,
-        color: this.form.color,
+        name: node_name,
+        color: node_color,
       }).then(res => {
+        useEditStore().getAllNodeTypes()
         Message.success('节点类型添加成功');
       })
     }
