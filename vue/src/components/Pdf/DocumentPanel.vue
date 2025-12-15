@@ -49,8 +49,6 @@
         <PdfViewer 
           :pdfUrl="pdfPreviewUrl" 
           style="width: 100%; height: 600px;" 
-          @textSelected="handleHighlightClick"
-          @highlightClick="handleHighlightClick"
         />
       </div>
 

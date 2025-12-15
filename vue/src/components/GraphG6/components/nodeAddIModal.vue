@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { storeToRefs } from 'pinia';
 //import { useNodeTypesStore } from '@/stores/nodeTypes';
 import {useEditStore} from "@/stores/edit.ts";
 import NodeTypeManager from './nodeTypeManager.vue';
@@ -76,8 +77,10 @@ const openNodeAddModal = defineModel();
 const formRef = ref();
 const showTypeManager = ref(false);
 
-// 使用节点类型管理
-const { nodeTypes } = useEditStore();
+// 初始化store并获取响应式状态
+const editStore = useEditStore();
+// 使用storeToRefs获取响应式的nodeTypes
+const { nodeTypes } = storeToRefs(editStore);
 
 const form = ref({
   name: "",
@@ -96,8 +99,15 @@ const emit = defineEmits(["confirm", "cancel"]);
 //确认创建节点
 const handleOk = async done => {
   const valid = await formRef.value.validate();
-  const sequence = useEditStore().getSequence();
-  const article = useEditStore().getArticleTitle();
+  
+  if (!valid) {
+    done(false);
+    return;
+  }
+  
+  // 使用已初始化的editStore
+  const sequence = editStore.getSequence();
+  const article = editStore.getArticleTitle();
   const node_name = form.value.name;
   const node_label = form.value.nodeType;
 
@@ -106,23 +116,18 @@ const handleOk = async done => {
     name: node_name,
     sequence: sequence,
     article: article
-  }
+  };
 
-  useEditStore().addNode(node)
-
-  if (valid) {
-    done(false);
-    return;
-  }
-
-  // 先保存表单数据的副本，防止后续清除影响
-  const formData = { ...form.value };
-
-  // 发送事件（传递副本）
-  emit("confirm", formData);
+  // 添加节点到store
+  editStore.addNode(node);
+  
+  // 发送确认事件
+  emit("confirm", { ...form.value });
+  
+  // 关闭模态框并重置表单
   openNodeAddModal.value = false;
   formRef.value.resetFields();
-  console.log(useEditStore().rects);
+  
   done(true);
 };
 
@@ -137,14 +142,14 @@ const handleOpenTypeManager = () => {
   showTypeManager.value = true;
 };
 
-// 节点类型管理刷新
+// 节点类型管理刷新，重新加载节点类型数据
 const handleTypeManagerRefresh = () => {
-  // 类型列表会自动更新，无需额外操作
+  editStore.getAllNodeTypes();
 };
 
 // 组件挂载时初始化
 onMounted(() => {
-  useEditStore().getAllNodeTypes()
+  editStore.getAllNodeTypes()
 });
 </script>
 <style scoped lang="scss">
