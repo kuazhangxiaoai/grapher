@@ -553,6 +553,7 @@ watch(
 
 // 组件挂载时初始化图
 onMounted(() => {
+  useEditStore().getAllNodeTypes()
   nextTick(() => {
     initGraph();
     /*setTimeout(() => {

@@ -226,9 +226,9 @@ const getGraphDetail = async (graphId?: string) => {
             },
           });
         })
-        res.data.edges.forEach((edge) => {
+        res.data.edges.forEach((edge, index) => {
           graph_data.edges.push({
-            id: "edge-" + Date.now(),
+            id: "edge-" + index.toString(),
             data: {name: edge.name},
             target: edge.to_node_name,
             source: edge.from_node_name,
@@ -331,16 +331,17 @@ watch(article, (newVal) => {
           },
         });
       })
-      res.data.edges.forEach((edge) => {
+      res.data.edges.forEach((edge, index) => {
         graph_data.edges.push({
-          id: "edge-" + Date.now(),
+          id: "edge-" + index.toString(),
           data: {name: edge.name},
           target: edge.to_node_name,
           source: edge.from_node_name,
         })
       })
-      graphData.value.edges = graph_data.edges;
       graphData.value.nodes = graph_data.nodes;
+      graphData.value.edges = graph_data.edges;
+
     })
   }else{
     graphData.value = {}

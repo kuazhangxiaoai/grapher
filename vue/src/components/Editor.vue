@@ -159,9 +159,9 @@ onMounted(()=>{
           },
         })
       })
-     edges.forEach(edge => {
+     edges.forEach((edge, index) => {
        edges_data.push({
-         id: "edge-" + Date.now(),
+         id: "edge-" + index.toString(),
          data: {name: edge.name},
          target: edge.to_node_name,
          source: edge.from_node_name,
