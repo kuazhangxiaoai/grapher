@@ -177,3 +177,32 @@ async def get_article_titles():
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+@router.get("/getSequenceByNode")
+async def get_seq_by_node(name: str):
+    try:
+        query = '''
+            SELECT node_name, node_label, sequence, article FROM t_node WHERE node_name='%s'
+        ''' % name
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        seq_df = _db.df_query_sql(query)
+        node_names, node_labels, seq_list, article_list = [], [], [], []
+        for i, row in seq_df.iterrows():
+            node_names.append(row.get("node_name"))
+            node_labels.append(row.get("node_label"))
+            seq_list.append(row.get("sequence"))
+            article_list.append(row.get("article"))
+        res = {
+            "node_names": node_names,
+            "node_labels": node_labels,
+            "sequences": seq_list,
+            "articles": article_list
+        }
+
+        return res
+
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
