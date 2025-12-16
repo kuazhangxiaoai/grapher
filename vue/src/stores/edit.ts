@@ -24,6 +24,7 @@ export const useEditStore = defineStore('editStore', {
         fileinfos: [] as FileInfo,
         pdfPreviewUrl: null as string,
         server: "http://localhost:8088",
+        graphRequestCancelToken: null as any,
     }),
     getters: {
         getCurrentPage: (state) => { },
@@ -214,7 +215,19 @@ export const useEditStore = defineStore('editStore', {
         },
         queryGraphBySeq(seq: string) {
             this.sequence = seq;
-            axios.get("/api/graph/getGraphFromSeq", {params: {sequence: seq}}).then((res) => {
+            
+            // 取消之前的请求
+            if (this.graphRequestCancelToken) {
+                this.graphRequestCancelToken.cancel('Operation canceled due to new request.');
+            }
+            
+            // 创建新的取消令牌
+            this.graphRequestCancelToken = axios.CancelToken.source();
+            
+            axios.get("/api/graph/getGraphFromSeq", {
+                params: {sequence: seq},
+                cancelToken: this.graphRequestCancelToken.token
+            }).then((res) => {
                 console.log(res.data);
                 let nodes = [] as Node[];
                 let edges = [] as Edge[];
@@ -224,7 +237,8 @@ export const useEditStore = defineStore('editStore', {
                         label: node.label,
                         name: node.name,
                         sequence: node.sequence,
-                        article: node.article
+                        article: node.article,
+                        color: node.color // 添加color字段，确保节点颜色能正确传递
                     }
                     nodes.push(n);
                 })
@@ -243,6 +257,13 @@ export const useEditStore = defineStore('editStore', {
                 })
                 this.nodes = nodes;
                 this.edges = edges;
+            }).catch((error) => {
+                if (axios.isCancel(error)) {
+                    console.log('Request canceled:', error.message);
+                } else {
+                    console.error('Error fetching graph data:', error);
+                    Message.error('获取关系图数据失败');
+                }
             })
         },
         commit() {

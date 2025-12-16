@@ -18,13 +18,14 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import {onMounted, ref, watch} from "vue";
 import { storeToRefs } from "pinia";
 import { useEditStore } from "../stores/edit.ts";
 import GraphG6 from "@/components/GraphG6/index.vue";
 import { Message } from "@arco-design/web-vue";
 
-const { sequence } = storeToRefs(useEditStore());
+const editStore = useEditStore();
+const { sequence, nodes, edges } = storeToRefs(editStore);
 const graphData: any = ref({ nodes: [], edges: [] }); //图数据，初始化为空数组，防止节点提前显示
 const layoutConfig = ref(); // 布局类型配置
 let graphInstance = null; //图实例
@@ -41,6 +42,46 @@ const enableObj = ref({
   redo: true,
   commit: true,
   close: true,
+});
+
+// 监听nodes和edges变化，更新graphData
+watch([nodes, edges], ([newNodes, newEdges]) => {
+  let node_data = [];
+  let edges_data = [];
+  
+  newNodes.forEach(node => {
+    node_data.push({
+      id: node.name,
+      data: {
+        name: node.name,
+        description: "",
+        entityType: node.label
+      },
+      style: {
+        labelText: node.name,
+        fill: node.color,
+      },
+    });
+  });
+  
+  newEdges.forEach((edge, index) => {
+    edges_data.push({
+      id: "edge-" + index.toString(),
+      data: {name: edge.name},
+      target: edge.to_node_name,
+      source: edge.from_node_name,
+    });
+  });
+  
+  graphData.value.nodes = node_data;
+  graphData.value.edges = edges_data;
+}, { deep: true });
+
+// 监听sequence变化，重新查询关系图数据
+watch(sequence, (newSeq) => {
+  if (newSeq && editStore.article) {
+    editStore.queryGraphBySeq(newSeq);
+  }
 });
 
 // 当前激活的面板
@@ -132,46 +173,9 @@ const handleDeleteElement = async (elementId, type) => {
 };
 
 onMounted(()=>{
-  const article = useEditStore().article
-  const sequence = useEditStore().sequence
-  if(!article || !sequence) {
-    graphData.value.nodes = []
-    graphData.value.edges = []
-  }
-  else {
-    useEditStore().queryGraphBySeq(sequence)
-    setTimeout(()=>{
-      const nodes = useEditStore().nodes;
-      const edges = useEditStore().edges;
-      let node_data = []
-      let edges_data = []
-      nodes.forEach(node => {
-        node_data.push({
-          id: node.name,
-          data: {
-            name: node.name,
-            description: "",
-            entityType: node.label
-          },
-          style: {
-            labelText: node.name,
-            fill: node.color,
-          },
-        })
-      })
-     edges.forEach((edge, index) => {
-       edges_data.push({
-         id: "edge-" + index.toString(),
-         data: {name: edge.name},
-         target: edge.to_node_name,
-         source: edge.from_node_name,
-       })
-     })
-
-      graphData.value.nodes = node_data
-      graphData.value.edges = edges_data;
-
-    }, 100)
+  // 组件挂载时，如果有article和sequence，就查询关系图数据
+  if(editStore.article && sequence.value) {
+    editStore.queryGraphBySeq(sequence.value);
   }
 })
 
