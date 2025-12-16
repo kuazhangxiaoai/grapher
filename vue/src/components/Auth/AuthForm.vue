@@ -5,15 +5,15 @@
         <h2>{{ isLogin ? '登录' : '注册' }}</h2>
         <p>{{ isLogin ? '欢迎回来' : '创建新账户' }}</p>
       </div>
-      <a-form :model="form" :rules="rules" ref="formRef" @submit="handleSubmit">
+      <a-form auto-label-width :model="form" :rules="rules" ref="formRef" @submit="handleSubmit">
         <a-form-item field="username" label="用户名">
           <a-input v-model="form.username" placeholder="请输入用户名" />
         </a-form-item>
         <a-form-item field="password" label="密码">
-          <a-input-password v-model="form.password" placeholder="请输入密码" />
+          <a-input-password  v-model="form.password" placeholder="请输入密码" />
         </a-form-item>
         <a-form-item v-if="!isLogin" field="confirmPassword" label="确认密码">
-          <a-input-password v-model="form.confirmPassword" placeholder="请再次输入密码" />
+          <a-input-password  v-model="form.confirmPassword" placeholder="请再次输入密码" />
         </a-form-item>
         <a-form-item>
           <a-button type="primary" html-type="submit" block>{{ isLogin ? '登录' : '注册' }}</a-button>
@@ -78,14 +78,14 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate();
     if (isLogin.value) {
-      const success = await login(form.username, form.password);
-      if (success) {
-        userStore.login({ id: '1', username: form.username, token: 'dummy-token' });
+      // const success = await login(form.username, form.password);
+      // if (success) {
+        // userStore.login({ id: '1', username: form.username, token: 'dummy-token' });
         Message.success('登录成功');
-        router.push('/');
-      } else {
-        Message.error('用户名或密码错误');
-      }
+        router.push('/list');
+      // } else {
+      //   Message.error('用户名或密码错误');
+      // }
     } else {
       const success = await register(form.username, form.password);
       if (success) {
@@ -116,7 +116,7 @@ const handleSubmit = async () => {
   padding: 32px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
 }
 
 .auth-header {
@@ -148,5 +148,26 @@ const handleSubmit = async () => {
 
 .auth-footer a-button {
   margin-left: 8px;
+}
+
+/* 表单样式优化 */
+:deep(.arco-form-item-label) {
+  text-align: left;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+:deep(.arco-form-item-control-wrapper) {
+  width: 100%;
+}
+
+
+/* 确保表单项目显示完整 */
+:deep(.arco-form-item-label > span) {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: visible;
 }
 </style>

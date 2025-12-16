@@ -1,5 +1,11 @@
 <template>
   <div class="home-container relative w-full h-full flex">
+    <!-- 顶部导航栏 -->
+    <div class="home-header">
+      <a-button @click="handleBack" type="primary" size="small">
+        返回列表
+      </a-button>
+    </div>
     <!-- 左侧文档区域 -->
     <DocumentPanel @addNode="handleAddNodeFromDocument" />
     <!-- 右侧图谱画布区域 -->
@@ -51,7 +57,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick, watch, onMounted } from "vue";
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import GraphG6 from "@/components/GraphG6/index.vue";
 import {
   generateMockData,
@@ -69,9 +75,15 @@ import axios from "axios";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
 
 const route = useRoute();
+const router = useRouter();
 const editStore = useEditStore();
 editStore.getAllFileInfoList()
 const {editGraph, fileList, article} = storeToRefs(editStore);
+
+// 返回列表页面
+const handleBack = () => {
+  router.push('/list');
+};
 // 图数据
 const graphData: any = ref({});
 const graphG6 = ref(null);
@@ -417,6 +429,18 @@ const handleAddNodeFromDocument = (nodeData) => {
   height: 100%;
   overflow: hidden;
   background-color: #f5f7fa;
+  position: relative;
+}
+
+.home-header {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .graph-editor{

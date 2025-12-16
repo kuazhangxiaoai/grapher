@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Home from '@/components/Home.vue';
 import GraphList from '@/components/GraphList.vue';
 import AuthForm from '@/components/Auth/AuthForm.vue';
+import DemoList from '@/components/Project/DemoList.vue';
 import { useUserStore } from '@/stores/user';
 
 const routes = [
@@ -9,6 +10,12 @@ const routes = [
     path: '/',
     name: 'Home',
     component: Home,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/list',
+    name: 'DemoList',
+    component: DemoList,
     meta: { requiresAuth: true }
   },
   // {
@@ -23,11 +30,11 @@ const routes = [
   //   component: Home,
   //   meta: { requiresAuth: true }
   // },
-  // {
-  //   path: '/auth',
-  //   name: 'Auth',
-  //   component: AuthForm
-  // }
+  {
+    path: '/auth',
+    name: 'Auth',
+    component: AuthForm
+  }
 ];
 
 const router = createRouter({
