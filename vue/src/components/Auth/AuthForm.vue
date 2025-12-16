@@ -80,7 +80,8 @@ const handleSubmit = async () => {
     if (isLogin.value) {
       // const success = await login(form.username, form.password);
       // if (success) {
-        // userStore.login({ id: '1', username: form.username, token: 'dummy-token' });
+        // 设置用户状态
+        userStore.login({ id: '1', username: form.username, token: 'dummy-token' });
         Message.success('登录成功');
         router.push('/list');
       // } else {
