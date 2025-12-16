@@ -104,7 +104,9 @@
             :data="tableData"
             :loading="loading"
             :row-key="(record, index) => index"
+            :scroll="{ y: 200 }"
             bordered
+            :pagination="false"
             size="small"
           />
         </div>
@@ -137,7 +139,24 @@ const columns = ref([
     key: 'nodeName', 
     ellipsis: true,
     tooltip: true,
-    width: 60,
+    width: 80,
+  },
+  
+  { 
+    title: '段落', 
+    dataIndex: 'nodeParagraph', 
+    key: 'nodeParagraph', 
+    ellipsis: true,
+    tooltip: true,
+    width: 100,
+  },
+  { 
+    title: '文档', 
+    dataIndex: 'documentName', 
+    key: 'documentName', 
+    ellipsis: true,
+    tooltip: true,
+    width: 100,
   },
   { 
     title: '关系', 
@@ -147,22 +166,6 @@ const columns = ref([
     tooltip: true,
     width: 60,
   },
-  { 
-    title: '段落', 
-    dataIndex: 'nodeParagraph', 
-    key: 'nodeParagraph', 
-    ellipsis: true,
-    tooltip: true,
-    width: 120,
-  },
-  { 
-    title: '文档', 
-    dataIndex: 'documentName', 
-    key: 'documentName', 
-    ellipsis: true,
-    tooltip: true,
-    width: 120,
-  }
 ]);
 
 const emit = defineEmits(["updateUpload", "updateElementInfo"]);
@@ -182,7 +185,7 @@ const elementShowInfo = ref({
 });
 
 // 表格数据
-const tableData = ref([]);
+const tableData:any = ref([]);
 // 加载状态
 const loading = ref(false);
 
@@ -256,7 +259,6 @@ const getNodeSequence = async (nodeName) => {
         documentName: articles[i]
       });
     }
-    
     tableData.value = formattedData;
   } catch (error) {
     console.error("获取节点序列数据失败:", error);
