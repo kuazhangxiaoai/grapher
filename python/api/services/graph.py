@@ -249,17 +249,16 @@ async def get_graph_from_article(article: str):
         edges_df = _db.df_query_sql(query)
         edges, edge_names = [], []
         for i, row in edges_df.iterrows():
-            if row.get("predicate_name") not in edge_names:
-                edges.append({
-                    "name": row.get("predicate_name"),
-                    "sequence": row.get("sequence"),
-                    "from_node_name": row.get("from_node_name"),
-                    "from_node_label": row.get("from_node_label"),
-                    "to_node_name": row.get("to_node_name"),
-                    "to_node_label": row.get("to_node_label"),
-                    "create_time": row.get("create_time")
-                })
-                edge_names.append(row.get("predicate_name"))
+            edges.append({
+                "name": row.get("predicate_name"),
+                "sequence": row.get("sequence"),
+                "from_node_name": row.get("from_node_name"),
+                "from_node_label": row.get("from_node_label"),
+                "to_node_name": row.get("to_node_name"),
+                "to_node_label": row.get("to_node_label"),
+                "create_time": row.get("create_time")
+            })
+
         graph = {
             "article": article,
             "nodes": nodes,
@@ -336,17 +335,16 @@ async def get_global_graph():
         edges_df = _db.df_query_sql(query)
         edges, edge_names = [], []
         for i, row in edges_df.iterrows():
-            if row.get("predicate_name") not in edge_names:
-                edges.append({
-                    "name": row.get("predicate_name"),
-                    "sequence": row.get("sequence"),
-                    "from_node_name": row.get("from_node_name"),
-                    "from_node_label": row.get("from_node_label"),
-                    "to_node_name": row.get("to_node_name"),
-                    "to_node_label": row.get("to_node_label"),
-                    "create_time": row.get("create_time")
-                })
-                edge_names.append(row.get("predicate_name"))
+            edges.append({
+                "name": row.get("predicate_name"),
+                "sequence": row.get("sequence"),
+                "from_node_name": row.get("from_node_name"),
+                "from_node_label": row.get("from_node_label"),
+                "to_node_name": row.get("to_node_name"),
+                "to_node_label": row.get("to_node_label"),
+                "create_time": row.get("create_time")
+            })
+
         graph = {
             "article": article,
             "nodes": nodes,
@@ -598,16 +596,28 @@ async def commit(commit: Commity):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        #处理删除节点
         node_names = [node.name for node in nodes]
+        #检查节点数据
+        for i, node_name in enumerate(node_names):
+            node_df = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' ''' % node_name)
+            node_label = nodes[i].label
+            if len(node_df) > 0:
+                for i, row in node_df.iterrows():
+                    if row.get("node_label") != node_label:
+                        raise HTTPException(500, detail='node error: ' + node_name)
+
+        #处理删除节点
         exsisted_nodes_df = _db.df_query_sql('''SELECT * FROM t_node WHERE sequence='%s' ''' % (sequence))
         for i, row in exsisted_nodes_df.iterrows():
             if (row.get("node_name") not in node_names): #需要删除节点
                 n, l = row.get("node_name"), row.get("node_label")
                 _db.delete_one('''DELETE FROM t_node WHERE node_name='%s' AND sequence='%s' ''' % (row.get("node_name"), sequence))
                 existed = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' ''' % (row.get("node_name")))
-                if len(existed) == 0:
+                if len(existed) == 0:   #如果在关系库中不存在，即视为全局不存在，则在图数据库中删除
                     _gdb.delete_node(l, n)
+                #删除该节点对应的边
+                _db.delete_one('''DELETE FROM t_predicate WHERE from_node_name='%s' AND sequence='%s' ''' % (row.get("node_name"), sequence))
+                _db.delete_one('''DELETE FROM t_predicate WHERE to_node_name='%s' AND sequence='%s' ''' % (row.get("node_name"), sequence))
 
         #处理新增节点
         for i, node in enumerate(nodes):
@@ -667,4 +677,4 @@ async def commit(commit: Commity):
                                (edge.name, edge.sequence, edge.from_node_name, edge.from_node_label, edge.to_node_name, edge.to_node_label, edge.article, datetime.now()))
 
     except Exception as e:
-        return e
+        raise HTTPException(500, detail=str(e))
