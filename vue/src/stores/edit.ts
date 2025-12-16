@@ -37,6 +37,9 @@ export const useEditStore = defineStore('editStore', {
         deleteNode(node: Node) {
             this.nodes.splice(this.nodes.indexOf(node), 1);
         },
+        deleteNodeByName(name: string) {
+            this.nodes = this.nodes.filter(node => node.name != name);
+        },
         updateNode(old_node: Node, new_node: Node) {
             const ind = this.nodes.findIndex(x => old_node.name === x.name)
             this.nodes[ind] = new_node;
@@ -295,7 +298,7 @@ export const useEditStore = defineStore('editStore', {
                     to_node_label: edge.to_node_label,
                     to_node_name: edge.to_node_name,
                     sequence: edge.sequence,
-                    article: edge.article,
+                    article: this.article,
                 }
                 edgeObjs.push(seq_obj);
             })
@@ -305,6 +308,8 @@ export const useEditStore = defineStore('editStore', {
                 edges: edgeObjs,
             }).then((res) => {
                 Message.success("上传数据成功")
+            }).catch((error) => {
+                Message.error(error.response.data.detail);
             })
 
             axios.post("/api/text/uploadSentences", rectObjs).then((res) => {

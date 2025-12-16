@@ -437,6 +437,7 @@ const handleNodeCancel = () => {
 
 // 删除节点
 const handleDeleteNode = async (target) => {
+  if(!target){return;}
   const elementData = graph.value.getElementData(target.id);
 
   try {
@@ -458,6 +459,7 @@ const handleDeleteNode = async (target) => {
 
       onBeforeOk: (done) => {
         if (target.type == "node") {
+          useEditStore().deleteNodeByName(elementData.id)
           graph.value.removeNodeData([elementData.id]);
         } else {
           graph.value.removeEdgeData([elementData.id]);
