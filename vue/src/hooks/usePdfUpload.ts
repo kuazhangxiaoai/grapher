@@ -44,11 +44,12 @@ export function usePdfUpload() {
       Message.error('请选择文件');
       return;
     }
-
+    const project = localStorage.getItem('grapher-project') as string;
     axios.post('/api/text/upload', {
-      title,
+      title: title,
       publishtime: publishTime,
-      filename
+      filename: filename,
+      project: project
     })
     .then(res => {
       Message.success('文件信息提交成功');

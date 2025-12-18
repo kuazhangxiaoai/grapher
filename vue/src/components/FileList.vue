@@ -49,7 +49,12 @@ const filelistCancel = () => {
 const filelistOK = () => {
   const title = page_data.value[current_index.value].title
   editStore.setArticleTitle(title)
-  axios.get("/api/text/getPDFPreviewUrl", {params: {title:title}}).then((res) => {
+  axios.get("/api/text/getPDFPreviewUrl", {
+    params: {
+      title:title,
+      project: localStorage.getItem("grapher-project")
+    }
+  }).then((res) => {
     const server = editStore.server;
     const url = res.data.url;
     editStore.setPDFPreviewUrl(server + url);

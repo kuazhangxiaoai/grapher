@@ -328,7 +328,12 @@ watch(() => route.params.id || route.query.graphId, (newGraphId) => {
 
 watch(article, (newVal) => {
   if(newVal) {
-    axios.get("/api/graph/getGraphFromArticle", {params:{article: newVal}}).then((res) => {
+    axios.get("/api/graph/getGraphFromArticle", {
+      params:{
+        article: newVal,
+        project: localStorage.getItem("grapher-project")
+      }
+    }).then((res) => {
       let graph_data = {
         nodes: [],
         edges: [],

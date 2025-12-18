@@ -108,6 +108,7 @@ export const useEditStore = defineStore('editStore', {
                         params: {
                             article: this.article,
                             page: this.currentPDFPage,
+                            project: localStorage.getItem("grapher-project") as string,
                         }
                     }).then(res => {
                     res.data.forEach((item) => {
@@ -145,6 +146,7 @@ export const useEditStore = defineStore('editStore', {
                         params: {
                             article: this.article,
                             page: this.currentPDFPage,
+                            project: localStorage.getItem("grapher-project") as string,
                         }
                     }).then(res => {
                         let newRects: Rectangle[] = [];
