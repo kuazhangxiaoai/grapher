@@ -329,7 +329,7 @@ async def add_node_type(node_type: NodeType):
                             DB_Config().port)
         query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % node_type.project
         project_id_df = _db.df_query_sql(query)
-        project_id = project_id_df.loc[0, 'project_id']
+        project_id = project_id_df.loc[0, 'project_id'].item()
         query = '''INSERT INTO t_node_type (node_type_name, node_type_color, project_name, project_id) VALUES (%s, %s, %s, %s)'''
         _db.create_one(query, (node_type.name, node_type.color, node_type.project, project_id))
         return JSONResponse(content={"message": "success"}, status_code=200)
@@ -397,7 +397,7 @@ async def commit(commit: Commity):
 
         query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % project
         project_id_df = _db.df_query_sql(query)
-        project_id = project_id_df.loc[0, 'project_id']
+        project_id = project_id_df.loc[0, 'project_id'].item()
         node_names = [node.name for node in nodes]
         #检查节点数据
         for i, node_name in enumerate(node_names):

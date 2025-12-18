@@ -8,6 +8,8 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 
+from spyder.plugins.help.utils.conf import project
+
 from python.api.config.db_config import DB_Config
 from python.api.config.graph_config import Graph_Config
 from python.api.db.postgre_helper import PostgreHelper
@@ -39,14 +41,14 @@ async def test():
     return "hello"
 
 @router.get("/getPDFPreviewUrl")
-async def getPDFPreviewUrl(title: str):
+async def getPDFPreviewUrl(title: str, project: str):
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        query = '''SELECT filename FROM t_article WHERE title='%s' ''' % title
+        query = '''SELECT filename FROM t_article WHERE title='%s' AND project_name='%s' ''' % (title, project)
         filename = _db.df_query_sql(query).iloc[0,0]
         url = f"/assets/{filename}"
         return JSONResponse(content={"message": "success", "url": url}, status_code=200)
@@ -67,7 +69,7 @@ async def upload(fileUpload: FileUpload):
         assert len(exist) == 0, "The file is already exist."
         query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % fileUpload.project
         project_id_df = _db.df_query_sql(query)
-        project_id = project_id_df.loc[0, 'project_id']
+        project_id = project_id_df.loc[0, 'project_id'].item()
 
         query = '''INSERT INTO t_article (title, create_time, publish_time, filename, project_name, project_id) VALUES (%s, %s, %s, %s, %s, %s)'''
         _db.create_one(
@@ -106,7 +108,7 @@ async def write_sentence(sentence: Sentence):
                             DB_Config().port)
         query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % sentence.project
         project_id_df = _db.df_query_sql(query)
-        project_id = project_id_df.loc[0, 'project_id']
+        project_id = project_id_df.loc[0, 'project_id'].item()
         query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page, project_name, project_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'''
         _db.create_one(query,
                        (sentence.text,
@@ -133,7 +135,7 @@ async def write_sentences(sentences: List[Sentence]):
                             DB_Config().port)
         query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % sentences[0].project
         project_id_df = _db.df_query_sql(query)
-        project_id = project_id_df.loc[0, 'project_id']
+        project_id = project_id_df.loc[0, 'project_id'].item()
 
         for i in range(len(sentences)):
             query = ('''SELECT * FROM t_sequence WHERE sequence='%s' AND x0=%s AND y0=%s AND x1=%s AND y1=%s AND article='%s' AND page=%s''' %

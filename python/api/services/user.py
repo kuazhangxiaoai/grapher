@@ -141,7 +141,7 @@ async def get_graph_db_use_info(graph_db: str):
         if len(graph_df) == 0:
             return {"exist": False, "available": False, "project": None}
         elif len(graph_df) == 1:
-            proj = graph_df.loc[0, 'project_name']
+            proj = graph_df.loc[0, 'project_name'].item()
             if proj is None:
                 return {"exist": True, "available": False, "project": proj}
             else:

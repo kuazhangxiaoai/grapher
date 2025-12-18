@@ -36,7 +36,7 @@ export const useUserStore = defineStore('userStore', {
     },
 
     logout() {
-      user.value = null;
+      this.user = null;
       localStorage.removeItem('grapher-user');
     },
 
