@@ -558,44 +558,21 @@ onMounted(() => {
   useEditStore().getAllNodeTypes()
   nextTick(() => {
     initGraph();
-    /*setTimeout(() => {
-      const seq = useEditStore().getSequence()
-      if (seq) {
-        const nodes = useEditStore().nodes
-        const edges = useEditStore().edges
-
-        nodes.forEach(node => {
-          graph.value.addNodeData([{
-            id: node.name,
-            data: {
-              name: node.name,
-              description: "",
-              entityType: node.label || "默认",
-            },
-            style: {
-              labelText: node.name,
-              fill: node.color,
-            },
-          }]);
-
-        })
-        edges.forEach(edge => {
-          graph.value.addEdgeData([{
-            id: "edge-" + Date.now(),
-            data: {name: edge.name},
-            target: edge.to_node_name,
-            source: edge.from_node_name,
-          }])
-        })
+    setTimeout(() => {
+      useEditStore().initProject()
+      let project_name = useEditStore().project
+      if (!project_name) {
+        project_name = localStorage.getItem("grapher-project");
+        useEditStore().setProjectName(project_name);
       }
+
       if (props.fitView) {
         graph.value.fitView();
       }
 
       graph.value.layout();
-      //graph.value.updateData()
       graph.value.render();
-    },100)*/
+    },100)
 
   });
 });

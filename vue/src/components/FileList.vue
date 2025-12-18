@@ -36,7 +36,10 @@ const current_page = ref(1)
 const current_index = ref(-1)
 const page_size = 25
 const editStore = useEditStore();
-editStore.getAllFileInfoList();
+
+const project = localStorage.getItem("grapher-project");
+useEditStore().getAllFileInfoList(project);
+
 const {fileinfos} = storeToRefs(editStore)
 const activeIdex = ref(null)
 const filelistCancel = () => {

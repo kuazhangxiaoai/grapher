@@ -1,5 +1,4 @@
 from numba.cuda.cudadrv.driver import driver
-
 from python.api.config.graph_config import Graph_Config
 from neo4j import GraphDatabase
 
@@ -10,7 +9,7 @@ class Neo4jHelper:
         self.password = passwd
         self.database = database
         self.port = port
-        self.driver = GraphDatabase.driver(f"neo4j://{host}:{port}", auth=(self.user, self.password))
+        self.driver = GraphDatabase.driver(f"neo4j://{host}:{port}", auth=(self.user, self.password), database=self.database)
 
     # 执行查询node，返回node 函数
     def query_node_function(self, tx, node_label, node_name):
@@ -115,6 +114,16 @@ class Neo4jHelper:
             n = session.execute_write(self.update_node_function,old_node_label, old_node_name, new_node_label, new_node_name)
 
         return n
+
+    def clear_function(self, tx):
+        cypher = f"""
+            MATCH (n) DETACH DELETE n
+        """
+        tx.run(cypher)
+
+    def clear(self):
+        with self.driver.session() as session:
+            session.execute_write(self.clear_function)
 
 
 

@@ -25,6 +25,7 @@ export const useEditStore = defineStore('editStore', {
         pdfPreviewUrl: null as string,
         server: "http://localhost:8088",
         graphRequestCancelToken: null as any,
+        project: null as string,
     }),
     getters: {
         getCurrentPage: (state) => { },
@@ -70,8 +71,8 @@ export const useEditStore = defineStore('editStore', {
         setSequence(sequence) {
             this.sequence = sequence
         },
-        getAllFileInfoList(): FileInfo[] {
-            axios.get("/api/text/articletitles").then(res => {
+        getAllFileInfoList(project: string): FileInfo[] {
+            axios.get("/api/text/articletitles", {params: {project: project}}).then(res => {
                 this.fileinfos = res.data
                 return this.fileinfos
             })
@@ -269,6 +270,17 @@ export const useEditStore = defineStore('editStore', {
                 }
             })
         },
+        initProject(){
+            const storedProject = localStorage.getItem('grapher-project')
+            if (storedProject) {
+                this.project = storedProject;
+            }
+        },
+
+        setProjectName(projectName: string) {
+            this.projectName = projectName;
+        },
+
         commit() {
             let nodeObjs = []
             let rectObjs = [];

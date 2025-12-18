@@ -21,6 +21,7 @@ class FileUpload(BaseModel):
     title: str
     publishtime: str
     filename: str
+    project: str
 
 class Sentence(BaseModel):
     text: str
@@ -30,6 +31,7 @@ class Sentence(BaseModel):
     y1: float
     article: str
     page: int
+    project: str
 
 
 @router.get("/test")
@@ -60,18 +62,23 @@ async def upload(fileUpload: FileUpload):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        query = '''SELECT title FROM t_article WHERE title='%s' ''' % fileUpload.title
+        query = '''SELECT title FROM t_article WHERE title='%s' AND project_name='%s' ''' % (fileUpload.title, fileUpload.project)
         exist = _db.df_query_sql(query)
         assert len(exist) == 0, "The file is already exist."
+        query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % fileUpload.project
+        project_id_df = _db.df_query_sql(query)
+        project_id = project_id_df.loc[0, 'project_id']
 
-        query = '''INSERT INTO t_article (title, create_time, publish_time, filename) VALUES (%s, %s, %s, %s)'''
+        query = '''INSERT INTO t_article (title, create_time, publish_time, filename, project_name, project_id) VALUES (%s, %s, %s, %s, %s, %s)'''
         _db.create_one(
             query,
             (
                 fileUpload.title,
                 datetime.now(),
                 datetime.strptime(fileUpload.publishtime, "%Y-%m-%d"),
-                fileUpload.filename
+                fileUpload.filename,
+                fileUpload.project,
+                project_id
             )
         )
         return JSONResponse(content={"message": "success"}, status_code=200)
@@ -92,13 +99,25 @@ async def uploadfile(file: UploadFile=File(...)):
 @router.post("/uploadSentence")
 async def write_sentence(sentence: Sentence):
     try:
-        query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page) VALUES (%s, %s, %s, %s, %s, %s, %s)'''
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        _db.create_one(query, (sentence.text, sentence.x0, sentence.y0, sentence.x1, sentence.y1, sentence.article, sentence.page))
+        query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % sentence.project
+        project_id_df = _db.df_query_sql(query)
+        project_id = project_id_df.loc[0, 'project_id']
+        query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page, project_name, project_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'''
+        _db.create_one(query,
+                       (sentence.text,
+                        sentence.x0,
+                        sentence.y0,
+                        sentence.x1,
+                        sentence.y1,
+                        sentence.article,
+                        sentence.page,
+                        sentence.project,
+                        project_id))
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
@@ -112,20 +131,38 @@ async def write_sentences(sentences: List[Sentence]):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
+        query = '''SELECT project_id FROM t_project WHERE project_name='%s' ''' % sentences[0].project
+        project_id_df = _db.df_query_sql(query)
+        project_id = project_id_df.loc[0, 'project_id']
 
         for i in range(len(sentences)):
             query = ('''SELECT * FROM t_sequence WHERE sequence='%s' AND x0=%s AND y0=%s AND x1=%s AND y1=%s AND article='%s' AND page=%s''' %
-                     (sentences[i].text, int(sentences[i].x0), int(sentences[i].y0), int(sentences[i].x1), int(sentences[i].y1), sentences[i].article, sentences[i].page))
+                     (sentences[i].text,
+                      int(sentences[i].x0),
+                      int(sentences[i].y0),
+                      int(sentences[i].x1),
+                      int(sentences[i].y1),
+                      sentences[i].article,
+                      sentences[i].page))
             existed = _db.df_query_sql(query)
             if len(existed) == 0:
-                query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page) VALUES (%s, %s, %s, %s, %s, %s, %s)'''
-                _db.create_one(query, (sentences[i].text, int(sentences[i].x0), int(sentences[i].y0), int(sentences[i].x1), int(sentences[i].y1), sentences[i].article, sentences[i].page))
+                query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page, project_name, project_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'''
+                _db.create_one(query,
+                               (sentences[i].text,
+                                int(sentences[i].x0),
+                                int(sentences[i].y0),
+                                int(sentences[i].x1),
+                                int(sentences[i].y1),
+                                sentences[i].article,
+                                sentences[i].page,
+                                sentences[i].project,
+                                project_id))
 
     except Exception as e:
         raise  HTTPException(status_code=404, detail=str(e))
 
 @router.get("/querySentences")
-async def query_sentences(article: str, page: int):
+async def query_sentences(article: str, page: int, project: str):
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -134,7 +171,7 @@ async def query_sentences(article: str, page: int):
                             DB_Config().port)
 
 
-        query = '''SELECT * FROM t_sequence WHERE article='%s' AND page='%s' ''' % (article, page)
+        query = '''SELECT * FROM t_sequence WHERE article='%s' AND page='%s' AND project_name='%s' ''' % (article, page, project)
         sequence_df = _db.df_query_sql(query)
         seq_list = []
         for i, row in sequence_df.iterrows():
@@ -154,11 +191,11 @@ async def query_sentences(article: str, page: int):
 
 
 @router.get("/articletitles")
-async def get_article_titles():
+async def get_article_titles(project: str):
     try:
         query = '''
-            SELECT title, publish_time FROM t_article
-        '''
+            SELECT title, publish_time FROM t_article WHERE project_name='%s'
+        ''' % project
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,
@@ -178,11 +215,11 @@ async def get_article_titles():
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/getSequenceByNode")
-async def get_seq_by_node(name: str):
+async def get_seq_by_node(name: str, project):
     try:
         query = '''
-            SELECT node_name, node_label, sequence, article FROM t_node WHERE node_name='%s'
-        ''' % name
+            SELECT node_name, node_label, sequence, article FROM t_node WHERE node_name='%s' AND project_name='%s'
+        ''' % (name, project)
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,

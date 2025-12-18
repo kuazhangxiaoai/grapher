@@ -2,7 +2,7 @@
   <div class="demo-list-page">
     <card-list
       title="项目列表"
-      :items="projectList"
+      :items="projects"
       add-button-text="新增项目"
       @add="handleAdd"
       @edit="handleEdit"
@@ -16,29 +16,14 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import CardList from './CardList.vue';
-
+import {useUserStore} from "@/stores/user.ts";
+import {useEditStore} from "@/stores/edit.ts";
+import {storeToRefs} from "pinia";
 const router = useRouter();
-
+const userStore = useUserStore();
+const editStore = useEditStore();
 // 项目列表数据
-const projectList = ref([
-  {
-    id: '1',
-    name: '项目1',
-    description: '这是第一个项目',
-    createTime: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: '项目2',
-    description: '这是第二个项目，用于测试',
-    createTime: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: '3',
-    name: '项目3',
-    createTime: new Date(Date.now() - 172800000).toISOString()
-  }
-]);
+const {projects} = storeToRefs(userStore);
 
 // 生成唯一ID
 const generateId = () => {
@@ -51,9 +36,11 @@ const handleAdd = (newItem: any) => {
     ...newItem,
     id: generateId()
   };
-  projectList.value.push(item);
+  const username = JSON.parse(localStorage.getItem('grapher-user')).username;
+  //projectList.value = userStore.createProject(item, username);
+
   // 新增成功后跳转到Home页面
-  router.push('/');
+  //router.push('/');
 };
 
 // 编辑项目
@@ -66,15 +53,25 @@ const handleEdit = (updatedItem: any) => {
 };
 
 // 删除项目
-const handleDelete = (id: string | number) => {
-  projectList.value = projectList.value.filter(item => item.id !== id);
+const handleDelete = (name: string | number) => {
+  //projectList.value = projectList.value.filter(item => item.id !== id);
+  //userStore.deleteProject(id);
 };
 
 // 跳转到编辑页面
 const handleNavigateToEdit = (item: any) => {
   // 跳转到Home页面
+  const project_name = item.name;
+  editStore.setProjectName(project_name);
+  localStorage.setItem('grapher-project', project_name)
   router.push('/');
 };
+
+onMounted(() => {
+  const username = JSON.parse(localStorage.getItem('grapher-user')).username;
+  userStore.getProjectList(username)
+})
+
 </script>
 
 <style scoped>

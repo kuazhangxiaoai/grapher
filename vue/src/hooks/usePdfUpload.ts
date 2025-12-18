@@ -64,7 +64,8 @@ export function usePdfUpload() {
         const url = res.data.url;
         const server = useEditStore().server;
         useEditStore().setPDFPreviewUrl(server + url);
-        useEditStore().getAllFileInfoList();
+        const project = localStorage.getItem("grapher-project");
+        useEditStore().getAllFileInfoList(project);
         
         // 重置表单
         resetUploadFileForm();

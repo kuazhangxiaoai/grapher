@@ -12,7 +12,7 @@ class Graph_Config:
         self.port = 7687
         self.user = "neo4j"
         self.password = "12345678"
-        self.databasename = "graph_db"
+        self.databasename = "neo4j"
 
     def load(self, host, port, user, password, databasename):
         """
@@ -28,5 +28,7 @@ class Graph_Config:
         self.user = user
         self.password = password
         self.databasename = databasename
+
+
 
 

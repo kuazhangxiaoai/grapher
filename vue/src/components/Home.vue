@@ -70,6 +70,7 @@ import { Message } from "@arco-design/web-vue";
 import Editor from "./Editor.vue";
 import {storeToRefs} from "pinia";
 import {useEditStore} from "@/stores/edit.ts";
+import {useUserStore} from "@/stores/user.ts";
 import FileList from "./FileList.vue";
 import axios from "axios";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
@@ -77,7 +78,9 @@ import axios from "axios";
 const route = useRoute();
 const router = useRouter();
 const editStore = useEditStore();
-editStore.getAllFileInfoList()
+const userStore = useUserStore();
+const project = localStorage.getItem("grapher-project");
+useEditStore().getAllFileInfoList(project);
 const {editGraph, fileList, article} = storeToRefs(editStore);
 
 // 返回列表页面
@@ -212,14 +215,14 @@ watch(showShortestPath, (newValue) => {
 });
 
 // 获取数据详情
-const getGraphDetail = async (graphId?: string) => {
+const getGraphDetail = async (project) => {
   try {
      //graphData.value = await getGraphData(graphId);
     const article = editStore.getArticleTitle()
     const sequence = editStore.getSequence()
     console.log(article)
     if (article === null && sequence === null){
-      axios.get("/api/graph/getGlobalGraph").then((res) => {
+      axios.get("/api/graph/getGlobalGraph", {params: {project: project}}).then((res) => {
         let graph_data = {
           nodes: [],
           edges: [],
@@ -318,7 +321,8 @@ const getAllNodeList = async (graphId?: string) => {
 
 // 监听路由变化，更新图谱数据
 watch(() => route.params.id || route.query.graphId, (newGraphId) => {
-  getGraphDetail(newGraphId as string);
+  const project = localStorage.getItem("grapher-project");
+  getGraphDetail(project as string);
   getAllNodeList(newGraphId as string);
 });
 
@@ -362,7 +366,8 @@ watch(article, (newVal) => {
 
 onMounted(() => {
   const graphId = route.params.id || route.query.graphId;
-  getGraphDetail(graphId as string);
+  const project = localStorage.getItem("grapher-project");
+  getGraphDetail(project as string);
   getAllNodeList(graphId as string);
 });
 const handleAddNode = async (nodeData) => {

@@ -26,7 +26,7 @@
       >
         <div class="card-content">
           <h3 class="item-name">{{ item.name }}</h3>
-          <p class="item-description" v-if="item.description">{{ item.description }}</p>
+          <p class="item-description" v-if="item.descript">{{ item.descript }}</p>
           <p class="item-description empty" v-else>无描述</p>
           <div class="meta-info">
             <span class="create-time">创建时间: {{ formatDate(item.createTime) }}</span>
@@ -72,17 +72,24 @@
             placeholder="请选择创建时间"
           />
         </a-form-item>
+        <a-form-item label="图数据库名称">
+          <a-select
+              v-model="formData.graph_db"
+              placeholder="请选择图数据库名称"
+              :options="availableGraphDB"></a-select>
+        </a-form-item>
       </a-form>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits } from 'vue';
+import {ref, defineProps, defineEmits, onMounted} from 'vue';
 import { useRouter } from 'vue-router';
 import { Message, Modal } from '@arco-design/web-vue';
 import { IconPlus } from '@arco-design/web-vue/es/icon';
 import { useUserStore } from '@/stores/user';
+import axios from "axios";
 
 const router = useRouter();
 // 定义组件属性
@@ -91,7 +98,7 @@ const props = defineProps<{
   items: Array<{
     id: string | number;
     name: string;
-    description?: string;
+    descript?: string;
     createTime: string | Date;
   }>;
   addButtonText?: string;
@@ -114,13 +121,15 @@ const emit = defineEmits<{
 // 弹窗状态
 const showModal = ref(false);
 const isEditMode = ref(false);
+const availableGraphDB = ref([] as string[]);
 
 // 表单数据
 const formData = ref({
   id: '',
   name: '',
   description: '',
-  createTime: new Date()
+  createTime: new Date(),
+  graph_db: ''
 });
 
 // 格式化日期
@@ -169,6 +178,9 @@ const handleDelete = (id: string | number, name: string) => {
     type: 'warning',
     onOk: () => {
       emit('delete', id);
+      const project = useUserStore().getProjectByName(name)
+      const username = JSON.parse(localStorage.getItem('grapher-user')).username;
+      useUserStore().deleteProject(project, username)
       Message.success('项目删除成功');
     }
   });
@@ -191,7 +203,23 @@ const handleSubmit = () => {
     Message.success('项目编辑成功');
   } else {
     emit('add', item);
-    Message.success('项目创建成功');
+    const username = JSON.parse(localStorage.getItem('grapher-user')).username;
+    const project_info = {
+      id: formData.value.name,
+      name: formData.value.name,
+      descript: formData.value.description,
+      graph_db: formData.value.graph_db,
+      create_time: formData.value.createTime.toISOString()
+    } as Project
+    userStore.createProject(project_info, username.toString())
+    //axios.post("/api/user/createProject", {
+    //  project_name: project_name,
+    //  graph_db: graph_db,
+    //  username: username
+    //}).then(res => {
+    //  Message.success('项目创建成功');
+    //})
+
   }
 
   resetForm();
@@ -204,10 +232,18 @@ const resetForm = () => {
     id: '',
     name: '',
     description: '',
-    createTime: new Date()
+    createTime: new Date(),
+    graph_db: ''
   };
   isEditMode.value = false;
 };
+
+onMounted(()=>{
+  axios.get('/api/user/getAvailGraphDB').then(res => {
+    availableGraphDB.value = res.data;
+  })
+})
+
 </script>
 
 <style scoped>
