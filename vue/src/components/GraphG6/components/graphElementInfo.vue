@@ -159,7 +159,7 @@ const columns = ref([
     width: 100,
   },
   { 
-    title: '关系', 
+    title: '标签',
     dataIndex: 'nodeRelation', 
     key: 'nodeRelation',
     ellipsis: true,
@@ -241,11 +241,11 @@ const handleUserEdit = () => {
 // 获取节点序列数据
 const getNodeSequence = async (nodeName) => {
   if (!nodeName) return;
-  
+  const project = localStorage.getItem("grapher-project")
   loading.value = true;
   try {
     const response = await apiClient.get("/text/getSequenceByNode", {
-      params: { name: nodeName }
+      params: { name: nodeName , project: project },
     });
     
     // 转换数据格式为表格所需

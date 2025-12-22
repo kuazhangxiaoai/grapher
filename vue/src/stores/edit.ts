@@ -26,6 +26,7 @@ export const useEditStore = defineStore('editStore', {
         server: "http://localhost:8088",
         graphRequestCancelToken: null as any,
         project: null as string,
+        committing: false,
     }),
     getters: {
         getCurrentPage: (state) => { },
@@ -180,8 +181,9 @@ export const useEditStore = defineStore('editStore', {
         },
         getAllNodeTypes() {
             localStorage.removeItem('nodeTypes');
+            const project = localStorage.getItem("grapher-project");
             const node_types: NodeType[] = [];
-            axios.get("/api/graph/getAllNodeType").then((res) => {
+            axios.get("/api/graph/getNodeTypeByProject", {params: {project: project}}).then((res) => {
                 res.data.forEach(item => {
                     node_types.push({ id: item.id, name: item.name, color: item.color } as NodeType);
                 })
@@ -219,6 +221,80 @@ export const useEditStore = defineStore('editStore', {
             this.currentPDFPage = page;
             this.clearAllRects();  
         },
+        queryGraphByArticle(article: string){
+            this.article = article;
+            this.sequence = null;
+            return new Promise((resolve, reject)=>{
+                axios.get("/api/graph/getGraphFromArticle", {
+                    params:{
+                        article: article,
+                        project: localStorage.getItem("grapher-project")
+                    }
+                }).then((res) => {
+                    const nodes = []
+                    const edges = []
+
+                    // for render
+                    let graph_data = {
+                        nodes: [],
+                        edges: [],
+                    }
+                    res.data.nodes.forEach((node) => {
+                        graph_data.nodes.push({
+                            id: node.name,
+                            data: {
+                                name: node.name,
+                                description: "",
+                                entityType: node.label || "默认",
+                            },
+                            style: {
+                                labelText: node.name,
+                                fill: node.color,
+                            },
+                        });
+                    })
+                    res.data.edges.forEach((edge, index) => {
+                        graph_data.edges.push({
+                            id: "edge-" + index.toString(),
+                            data: {name: edge.name},
+                            target: edge.to_node_name,
+                            source: edge.from_node_name,
+                        })
+                    })
+
+                    //for restore
+                    res.data.nodes.forEach(node => {
+                        const n: Node = {
+                            label: node.label,
+                            name: node.name,
+                            sequence: node.sequence,
+                            article: node.article,
+                            color: node.color // 添加color字段，确保节点颜色能正确传递
+                        }
+                        nodes.push(n);
+                    })
+
+                    res.data.edges.forEach(edge => {
+                        const e: Edge = {
+                            name: edge.name,
+                            from_node_name: edge.from_node_name,
+                            from_node_label: edge.from_node_label,
+                            to_node_name: edge.to_node_name,
+                            to_node_label: edge.to_node_label,
+                            sequence: edge.sequence,
+                            article: edge.article
+                        }
+                        edges.push(e);
+                    })
+                    this.nodes = nodes;
+                    this.edges = edges;
+
+                    resolve(graph_data) ;
+                })
+            })
+
+        },
+
         queryGraphBySeq(seq: string) {
             this.sequence = seq;
             
@@ -231,7 +307,10 @@ export const useEditStore = defineStore('editStore', {
             this.graphRequestCancelToken = axios.CancelToken.source();
             
             axios.get("/api/graph/getGraphFromSeq", {
-                params: {sequence: seq},
+                params: {
+                    sequence: seq,
+                    project: localStorage.getItem("grapher-project") as string,
+                },
                 cancelToken: this.graphRequestCancelToken.token
             }).then((res) => {
                 console.log(res.data);
@@ -290,6 +369,7 @@ export const useEditStore = defineStore('editStore', {
             this.nodes.forEach(node => {
                 let node_str = JSON.stringify(node);
                 let node_obj = JSON.parse(node_str);
+                node_obj.project = this.project;
                 nodeObjs.push(node_obj);
             })
             this.rects.forEach(rectangle => {
@@ -301,6 +381,7 @@ export const useEditStore = defineStore('editStore', {
                     y1: rectangle.top + rectangle.height,
                     article: this.article,
                     page: this.currentPDFPage,
+                    project: this.project,
                 }
                 rectObjs.push(seq_obj);
             })
@@ -313,6 +394,7 @@ export const useEditStore = defineStore('editStore', {
                     to_node_name: edge.to_node_name,
                     sequence: edge.sequence,
                     article: this.article,
+                    project: this.project,
                 }
                 edgeObjs.push(seq_obj);
             })
@@ -331,7 +413,11 @@ export const useEditStore = defineStore('editStore', {
                 this.queryRects()
                 Message.success("上传标记成功")
             })
-        }
+        },
+        setCommitting(flag: boolean) {
+            this.commiting = flag;
+        },
+
     }
 
 

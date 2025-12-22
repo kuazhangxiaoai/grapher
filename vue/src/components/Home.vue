@@ -81,7 +81,7 @@ const editStore = useEditStore();
 const userStore = useUserStore();
 const project = localStorage.getItem("grapher-project");
 useEditStore().getAllFileInfoList(project);
-const {editGraph, fileList, article} = storeToRefs(editStore);
+const {editGraph, fileList, article, committing} = storeToRefs(editStore);
 
 // 返回列表页面
 const handleBack = () => {
@@ -221,6 +221,7 @@ const getGraphDetail = async (project) => {
     const article = editStore.getArticleTitle()
     const sequence = editStore.getSequence()
     console.log(article)
+    console.log(project)
     if (article === null && sequence === null){
       axios.get("/api/graph/getGlobalGraph", {params: {project: project}}).then((res) => {
         let graph_data = {
@@ -326,44 +327,21 @@ watch(() => route.params.id || route.query.graphId, (newGraphId) => {
   getAllNodeList(newGraphId as string);
 });
 
-watch(article, (newVal) => {
-  if(newVal) {
-    axios.get("/api/graph/getGraphFromArticle", {
-      params:{
-        article: newVal,
-        project: localStorage.getItem("grapher-project")
-      }
-    }).then((res) => {
-      let graph_data = {
-        nodes: [],
-        edges: [],
-      }
-      res.data.nodes.forEach((node) => {
-        graph_data.nodes.push({
-          id: node.name,
-          data: {
-            name: node.name,
-            description: "",
-            entityType: node.label || "默认",
-          },
-          style: {
-            labelText: node.name,
-            fill: node.color,
-          },
-        });
-      })
-      res.data.edges.forEach((edge, index) => {
-        graph_data.edges.push({
-          id: "edge-" + index.toString(),
-          data: {name: edge.name},
-          target: edge.to_node_name,
-          source: edge.from_node_name,
-        })
-      })
-      graphData.value.nodes = graph_data.nodes;
-      graphData.value.edges = graph_data.edges;
+watch(committing, async (newValue) => {
+  if (newValue) {
+    const article = useEditStore().article
+    const graph_data = await useEditStore().queryGraphByArticle(article);
+    graphData.value.nodes = graph_data.nodes;
+    graphData.value.edges = graph_data.edges;
+    useEditStore().setCommiting(false);
+  }
+})
 
-    })
+watch(article, async (newVal) => {
+  if(newVal) {
+    const graph_data = await useEditStore().queryGraphByArticle(newVal);
+    graphData.value.nodes = graph_data.nodes;
+    graphData.value.edges = graph_data.edges;
   }else{
     graphData.value = {}
   }

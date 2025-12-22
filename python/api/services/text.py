@@ -217,7 +217,7 @@ async def get_article_titles(project: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/getSequenceByNode")
-async def get_seq_by_node(name: str, project):
+async def get_seq_by_node(name: str, project: str):
     try:
         query = '''
             SELECT node_name, node_label, sequence, article FROM t_node WHERE node_name='%s' AND project_name='%s'

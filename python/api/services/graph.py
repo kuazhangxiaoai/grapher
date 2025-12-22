@@ -96,17 +96,16 @@ async def get_graph_by_seq(sequence: str, project: str):
         edges_df = _db.df_query_sql(query)
         edges, edge_names = [], []
         for i, row in edges_df.iterrows():
-            if row.get("predicate_name") not in edge_names:
-                edges.append({
-                    "name": row.get("predicate_name"),
-                    "sequence": row.get("sequence"),
-                    "from_node_name": row.get("from_node_name"),
-                    "from_node_label": row.get("from_node_label"),
-                    "to_node_name": row.get("to_node_name"),
-                    "to_node_label": row.get("to_node_label"),
-                    "create_time": row.get("create_time")
-                })
-                edge_names.append(row.get("predicate_name"))
+            edges.append({
+                "name": row.get("predicate_name"),
+                "sequence": row.get("sequence"),
+                "from_node_name": row.get("from_node_name"),
+                "from_node_label": row.get("from_node_label"),
+                "to_node_name": row.get("to_node_name"),
+                "to_node_label": row.get("to_node_label"),
+                "create_time": row.get("create_time")
+            })
+
         graph = {
             "sequence": sequence,
             "nodes": nodes,
@@ -267,6 +266,7 @@ async def get_global_graph(project: str):
         }
         return graph
     except Exception as e:
+        raise HTTPException(500, detail=str(e))
         return e
 
 
@@ -295,8 +295,32 @@ async def get_all_node_type():
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+@router.get("/getNodeTypeByProject")
+async def get_node_type_by_project(project: str):
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''
+                    SELECT * FROM t_node_type WHERE project_name='%s'
+                ''' % project
+        node_type_df = _db.df_query_sql(query)
+        node_types = []
+        for i, row in node_type_df.iterrows():
+            node_types.append({
+                "id": row.get("node_type_id"),
+                "name": row.get("node_type_name"),
+                "color": row.get("node_type_color")
+            })
+        return node_types
+
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
+
 @router.get("/getNodeType")
-async def get_all_node_type(node_type_name: str, project: str):
+async def get_node_type(node_type_name: str, project: str):
     try:
         query = '''
             SELECT * FROM t_node_type WHERE node_type_name='%s' AND project_name='%s'

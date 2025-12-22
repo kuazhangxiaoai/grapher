@@ -360,7 +360,7 @@ watch([props.pdfUrl, currentPDFPage], async ([newA, newB]) => {
 });
 
 watch(rects, async (newVal) => {
-  if (newVal.length > 0 && pdfInstance) {
+  if (pdfInstance) {
     const currentPage = editStore.currentPDFPage;
     updateHightLightLayer(currentPage, newVal);
   }
