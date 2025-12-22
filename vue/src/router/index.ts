@@ -34,6 +34,11 @@ const routes = [
     path: '/auth',
     name: 'Auth',
     component: AuthForm
+  },
+  {
+    path: '/debug',
+    name: 'Debug',
+    component: () => import('@/components/DebugLocalStorage.vue')
   }
 ];
 
@@ -45,25 +50,32 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   // 在路由守卫中使用Pinia store需要确保Pinia已经初始化
-  // 使用getActivePinia()获取当前激活的Pinia实例
   const userStore = useUserStore();
   
   // 初始化用户状态
   userStore.initUser();
   
-  // 检查是否需要认证
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  // 检查是否需要认证 - 明确检查requiresAuth是否为true
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth === true);
+  
+  console.log('路由守卫调试信息：');
+  console.log('当前路由:', to.path);
+  console.log('是否需要认证:', requiresAuth);
+  console.log('用户是否登录:', userStore.isLoggedIn);
   
   if (requiresAuth) {
     if (!userStore.isLoggedIn) {
       // 未登录，跳转到登录页
+      console.log('未登录，跳转到登录页');
       next({ name: 'Auth' });
     } else {
       // 已登录，继续导航
+      console.log('已登录，继续导航');
       next();
     }
   } else {
     // 不需要认证，直接导航
+    console.log('不需要认证，直接导航');
     next();
   }
 });

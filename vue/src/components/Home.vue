@@ -422,8 +422,8 @@ const handleAddNodeFromDocument = (nodeData) => {
 
 .home-header {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 0px;
+  right:53%;
   z-index: 100;
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.9);

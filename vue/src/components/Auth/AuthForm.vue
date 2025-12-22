@@ -78,15 +78,13 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate();
     if (isLogin.value) {
-      // const success = await login(form.username, form.password);
-      // if (success) {
-        // 设置用户状态
-        userStore.login({ id: '1', username: form.username, password:form.password ,token: 'dummy-token' });
+      const success = await userStore.login({ id: '1', username: form.username, password:form.password ,token: 'dummy-token' });
+      if (success) {
         Message.success('登录成功');
         router.push('/list');
-      // } else {
-      //   Message.error('用户名或密码错误');
-      // }
+      } else {
+        Message.error('用户名或密码错误');
+      }
     } else {
       const success = await register(form.username, form.password);
       if (success) {

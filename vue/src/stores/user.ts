@@ -23,16 +23,19 @@ export const useUserStore = defineStore('userStore', {
       }
     },
 
-    login(user: User) {
-      axios.post("/api/user/login", {
-        username: user.username,
-        password: user.password,
-      }).then(res => {
+    async login(user: User) {
+      try {
+        await axios.post("/api/user/login", {
+          username: user.username,
+          password: user.password,
+        });
         this.user = user;
         localStorage.setItem('grapher-user', JSON.stringify(user));
-      }).catch(err => {
-        Message.error("用户名或密码错误")
-      })
+        return true;
+      } catch (err) {
+        Message.error("用户名或密码错误");
+        return false;
+      }
     },
 
     logout() {
