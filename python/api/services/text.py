@@ -8,8 +8,6 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 
-from spyder.plugins.help.utils.conf import project
-
 from python.api.config.db_config import DB_Config
 from python.api.config.graph_config import Graph_Config
 from python.api.db.postgre_helper import PostgreHelper

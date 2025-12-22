@@ -229,7 +229,7 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
       // 更新节点
       graph.updateNodeData([
         {
-          id: nodeId,
+          id: nodeData.name,
           data: {
             name: nodeData.name,
             description: nodeData.description || "",

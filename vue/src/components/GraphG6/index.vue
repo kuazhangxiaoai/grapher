@@ -438,6 +438,7 @@ const handleNodeCancel = () => {
 // 删除节点
 const handleDeleteNode = async (target) => {
   if(!target){return;}
+
   const elementData = graph.value.getElementData(target.id);
 
   try {

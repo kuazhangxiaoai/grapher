@@ -66,7 +66,7 @@ watch([nodes, edges], ([newNodes, newEdges]) => {
   
   newEdges.forEach((edge, index) => {
     edges_data.push({
-      id: "edge-" + index.toString(),
+      id: edge.name,
       data: {name: edge.name},
       target: edge.to_node_name,
       source: edge.from_node_name,

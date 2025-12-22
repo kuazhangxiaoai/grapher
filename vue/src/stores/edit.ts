@@ -405,7 +405,7 @@ export const useEditStore = defineStore('editStore', {
             }).then((res) => {
                 Message.success("上传数据成功")
             }).catch((error) => {
-                Message.error(error.response.data.detail);
+                Message.error(error);
             })
 
             axios.post("/api/text/uploadSentences", rectObjs).then((res) => {
