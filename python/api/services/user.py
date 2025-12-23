@@ -190,7 +190,7 @@ async def delete_project(project: Project):
             port=graph_db_config.port
         )
         #删除图数据库内的内容
-        _gdb.clear()
+        # _gdb.clear()
 
         #删除对应项目的所有节点, 关系, 标记， 文章
         _db.delete_one('''DELETE FROM t_node WHERE project_name='%s' ''' % project.project_name)
