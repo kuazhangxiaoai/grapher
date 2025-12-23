@@ -463,11 +463,25 @@ const handleDeleteNode = async (target) => {
           useEditStore().deleteNodeByName(elementData.id)
           graph.value.removeNodeData([elementData.id]);
         } else {
+          // 删除边时也需要从store中删除
+          const edgeData = graph.value.getEdgeData(target.id);
+          if (edgeData) {
+            const editStore = useEditStore();
+            // 找到对应的边并删除
+            const edgeToDelete = editStore.edges.find(edge => 
+              edge.name === elementData.data.name &&
+              edge.from_node_name === edgeData.source &&
+              edge.to_node_name === edgeData.target
+            );
+            if (edgeToDelete) {
+              editStore.deleteEdge(edgeToDelete);
+            }
+          }
           graph.value.removeEdgeData([elementData.id]);
         }
 
         done(true);
-        emit("deleteElementSuccess");
+        emit("deleteElementSuccess", elementData.id, target.type);
         graph.value.render();
       },
     });

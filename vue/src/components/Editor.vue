@@ -133,7 +133,12 @@ const handleShortestPath = () => {
 const handleGraphReady = (graph) => {
   graphInstance = graph;
   // 添加getGraphData方法，防止某些地方错误调用
-  graphInstance.getGraphData = graphInstance.getData;
+  graphInstance.getData = () => {
+    return {
+      nodes: graphInstance.getNodesData?.() || [],
+      edges: graphInstance.getEdgesData?.() || []
+    };
+  };
 };
 
 // 处理导出三元组CSV
