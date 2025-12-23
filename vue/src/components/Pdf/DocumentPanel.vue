@@ -19,12 +19,7 @@
         >
           选择PDF文档
         </label>
-        <!--<div class="file-info mt-2 text-sm text-gray-600" v-if="selectedFileName">
-          已选择: {{ selectedFileName }}
-          <span class="ml-2 text-xs text-gray-500"
-          >(提示：框选PDF文字后按 Ctrl+C 复制，自动弹出节点添加窗口)</span
-          >
-        </div>-->
+    
         <div class="file-list-button" @click="handleFileList">
           文件列表
         </div>
@@ -33,8 +28,6 @@
         <div class="jump-page-button" @click="jumpPDFPage">跳页至</div>
         <div class="edit-button" @click="handleCopyToOpenModal">自由编辑</div>
       </div>
-
-      <!--<div style="display: flex ;position: relative; left: 0px; top: 0px; width: 50px; height: 20px; background-color: #1890ff"></div>-->
     </div>
 
     <!-- 文档内容显示区域 -->

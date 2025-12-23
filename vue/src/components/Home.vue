@@ -86,6 +86,7 @@ const {editGraph, fileList, article, committing} = storeToRefs(editStore);
 // 返回列表页面
 const handleBack = () => {
   editStore.closeFileList() //关闭文件列表
+  editStore.resetState() // 重置store状态，确保下次进入画布页面显示新项目内容
   router.push('/list');
 };
 // 图数据

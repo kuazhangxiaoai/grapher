@@ -101,6 +101,7 @@ import { ref, computed } from "vue";
 import { downloadImage, downloadCustomImage, changeLayout } from "../utils";
 import {useEditStore} from "@/stores/edit.js";
 import {RectangleType} from "../../../types/rect.js";
+import { Modal } from "@arco-design/web-vue";
 
 const props = defineProps({
   graph: {
@@ -371,10 +372,45 @@ const customToolbarData = ref([
     onClick: () => {
       if (props.enables.close)
       {
-        useEditStore().queryRects()
-        useEditStore().deleteEditingRect()
-        useEditStore().closeGraphEditor()
-        useEditStore().setCommitting(true)
+        const editStore = useEditStore();
+        // 检查是否有未提交的节点或边
+        const hasNodes = editStore.nodes && editStore.nodes.length > 0;
+        const hasEdges = editStore.edges && editStore.edges.length > 0;
+        const hasRects = editStore.rects && editStore.rects.length > 0;
+        
+        if (hasNodes || hasEdges || hasRects) {
+          // 使用Arco Design的Modal.confirm
+          Modal.confirm({
+            title: '确认关闭',
+            content: '您有未提交的修改，是否先提交更改然后关闭？',
+            okText: '提交并关闭',
+            cancelText: '直接关闭',
+            onOk: () => {
+              // 确认提交，先执行提交方法，然后关闭
+              editStore.commit();
+              // 提交后关闭界面
+              setTimeout(() => {
+                editStore.queryRects();
+                editStore.deleteEditingRect();
+                editStore.closeGraphEditor();
+                editStore.setCommitting(true);
+              }, 500); // 延迟关闭，确保提交完成
+            },
+            onCancel: () => {
+              // 取消提交，直接关闭
+              editStore.queryRects();
+              editStore.deleteEditingRect();
+              editStore.closeGraphEditor();
+              editStore.setCommitting(true);
+            }
+          });
+        } else {
+          // 没有未提交的修改，直接关闭
+          editStore.queryRects();
+          editStore.deleteEditingRect();
+          editStore.closeGraphEditor();
+          editStore.setCommitting(true);
+        }
       }
     }
   }

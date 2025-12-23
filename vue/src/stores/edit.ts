@@ -142,6 +142,13 @@ export const useEditStore = defineStore('editStore', {
         },
         queryRects(){
             return new Promise((resolve) => {
+                // 只有当article存在时才调用API，否则返回空数组
+                if (!this.article) {
+                    this.setRects([]);
+                    resolve([]);
+                    return;
+                }
+                
                 axios.get("/api/text/querySentences",
                     {
                         params: {
@@ -438,6 +445,9 @@ export const useEditStore = defineStore('editStore', {
             this.nodes = [];
             this.edges = [];
             this.rects = [];
+            this.pdfPreviewUrl = null;
+            this.currentPDFPage = 1;
+            this.totalPages = 1;
             this.article = null;
             this.sequence = null;
         },
