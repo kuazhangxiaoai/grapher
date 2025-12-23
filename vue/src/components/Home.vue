@@ -127,8 +127,8 @@ const handleElementClick = (element, targetType) => {
   elementTargetType.value = targetType;
   if (targetType === "node" || targetType === "edge") {
     elementInfo.value = {
-      ...graphInstance.value.getElementData(element.id),
-      style: { ...graphInstance.value.getElementRenderStyle(element.id) },
+      ...graphInstance.getElementData(element.id),
+      style: { ...graphInstance.getElementRenderStyle(element.id) },
     };
     activePanel.value = "elementInfo";
     expandElementInfoPanel.value = true;
@@ -143,7 +143,7 @@ const handleElementClick = (element, targetType) => {
     elements.forEach((element) => {
       states[element.id] = "";
     });
-    graphInstance.value.setElementState(states);
+    graphInstance.setElementState(states);
   }
 };
 
@@ -170,20 +170,20 @@ const handleUpdateElementInfo = async (updatedData) => {
     //   await updateEdge(updatedData.id, updatedData);
     // }
 
-    graphInstance.value[updateMethod]([updatedData]);
+    graphInstance[updateMethod]([updatedData]);
     Message.success('更新成功');
     // 更新最新的elementInfo
     elementInfo.value = {
       ...updatedData,
     };
-    graphInstance.value.render();
+    graphInstance.render();
   } catch (error) {
     // elementInfo数据回滚
     elementInfo.value = {
       ...oldData,
     };
     // 回滚画布信息
-    graphInstance.value[updateMethod]([reverseObj]);
+    graphInstance[updateMethod]([reverseObj]);
     Message.error(error.message || '更新数据失败');
   }
 };
@@ -271,8 +271,8 @@ const handleSearchNode = (searchNode) => {
     elements.forEach((element) => {
       states[element.id] = "";
     });
-    graphInstance.value.setElementState(states);
-    graphInstance.value.fitView();
+    graphInstance.setElementState(states);
+    graphInstance.fitView();
     return;
   }
 
@@ -282,21 +282,21 @@ const handleSearchNode = (searchNode) => {
   });
 
   // 更新状态并聚焦
-  graphInstance.value.setElementState(states);
-  graphInstance.value.focusElement(searchNode, {
+  graphInstance.setElementState(states);
+  graphInstance.focusElement(searchNode, {
     duration: 300,
     easing: "ease-in-out",
   });
 
   // 延迟放大
   setTimeout(() => {
-    graphInstance.value.zoomTo(1.5);
+    graphInstance.zoomTo(1.5);
   }, 300);
 
   // 更新节点信息面板
   elementInfo.value = {
-    ...graphInstance.value.getElementData(searchNode),
-    style: { ...graphInstance.value.getElementRenderStyle(searchNode) },
+    ...graphInstance.getElementData(searchNode),
+    style: { ...graphInstance.getElementRenderStyle(searchNode) },
   };
   activePanel.value = "elementInfo";
   elementTargetType.value = "node";

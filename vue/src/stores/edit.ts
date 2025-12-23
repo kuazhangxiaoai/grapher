@@ -239,8 +239,11 @@ export const useEditStore = defineStore('editStore', {
                         nodes: [],
                         edges: [],
                     }
+                    // 创建节点映射，方便快速查找
+                    const nodeMap = new Map();
+                    
                     res.data.nodes.forEach((node) => {
-                        graph_data.nodes.push({
+                        const nodeItem = {
                             id: node.name,
                             data: {
                                 name: node.name,
@@ -251,15 +254,23 @@ export const useEditStore = defineStore('editStore', {
                                 labelText: node.name,
                                 fill: node.color,
                             },
-                        });
+                        };
+                        graph_data.nodes.push(nodeItem);
+                        nodeMap.set(node.name, nodeItem);
                     })
+                    
                     res.data.edges.forEach((edge, index) => {
-                        graph_data.edges.push({
-                            id: "edge-" + index.toString(),
-                            data: {name: edge.name},
-                            target: edge.to_node_name,
-                            source: edge.from_node_name,
-                        })
+                        // 只添加有效的边，即源节点和目标节点都存在的边
+                        if (nodeMap.has(edge.from_node_name) && nodeMap.has(edge.to_node_name)) {
+                            graph_data.edges.push({
+                                id: "edge-" + index.toString(),
+                                data: {name: edge.name},
+                                target: edge.to_node_name,
+                                source: edge.from_node_name,
+                            })
+                        } else {
+                            console.warn(`Skipping invalid edge: ${edge.name} (source: ${edge.from_node_name}, target: ${edge.to_node_name}) - one or both nodes not found`);
+                        }
                     })
 
                     //for restore

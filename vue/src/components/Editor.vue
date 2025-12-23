@@ -28,7 +28,7 @@ const editStore = useEditStore();
 const { sequence, nodes, edges } = storeToRefs(editStore);
 const graphData: any = ref({ nodes: [], edges: [] }); //图数据，初始化为空数组，防止节点提前显示
 const layoutConfig = ref(); // 布局类型配置
-let graphInstance = null; //图实例
+let graphInstance:any = null; //图实例
 const enableObj = ref({
   zoomOut: true,
   zoomReset: true,
@@ -49,8 +49,11 @@ watch([nodes, edges], ([newNodes, newEdges]) => {
   let node_data = [];
   let edges_data = [];
   
+  // 创建节点映射，方便快速查找
+  const nodeMap = new Map();
+  
   newNodes.forEach(node => {
-    node_data.push({
+    const nodeItem = {
       id: node.name,
       data: {
         name: node.name,
@@ -61,16 +64,23 @@ watch([nodes, edges], ([newNodes, newEdges]) => {
         labelText: node.name,
         fill: node.color,
       },
-    });
+    };
+    node_data.push(nodeItem);
+    nodeMap.set(node.name, nodeItem);
   });
   
   newEdges.forEach((edge, index) => {
-    edges_data.push({
-      id: edge.name,
-      data: {name: edge.name},
-      target: edge.to_node_name,
-      source: edge.from_node_name,
-    });
+    // 只添加有效的边，即源节点和目标节点都存在的边
+    if (nodeMap.has(edge.from_node_name) && nodeMap.has(edge.to_node_name)) {
+      edges_data.push({
+        id: edge.name,
+        data: {name: edge.name},
+        target: edge.to_node_name,
+        source: edge.from_node_name,
+      });
+    } else {
+      console.warn(`Skipping invalid edge: ${edge.name} (source: ${edge.from_node_name}, target: ${edge.to_node_name}) - one or both nodes not found`);
+    }
   });
   
   graphData.value.nodes = node_data;
@@ -97,23 +107,18 @@ const handleElementClick = (element, targetType) => {
   elementTargetType.value = targetType;
   if (targetType === "node" || targetType === "edge") {
     elementInfo.value = {
-      ...graphInstance.value.getElementData(element.id),
-      style: { ...graphInstance.value.getElementRenderStyle(element.id) },
+      ...graphInstance.getElementData(element.id),
+      style: { ...graphInstance.getElementRenderStyle(element.id) },
     };
     activePanel.value = "elementInfo";
     expandElementInfoPanel.value = true;
   } else {
     activePanel.value = null;
     expandElementInfoPanel.value = false;
-
-    let states = {};
-    const elements = [...graphData.value.nodes, ...graphData.value.edges];
-
-    // 清空搜索状态
-    elements.forEach((element) => {
-      states[element.id] = "";
-    });
-    graphInstance.value.setElementState(states);
+    // 点击画布空白处，重新渲染图即可
+    if (graphInstance.render) {
+      graphInstance.render();
+    }
   }
 };
 
@@ -127,6 +132,8 @@ const handleShortestPath = () => {
 // 图实例初始化完成后的回调
 const handleGraphReady = (graph) => {
   graphInstance = graph;
+  // 添加getGraphData方法，防止某些地方错误调用
+  graphInstance.getGraphData = graphInstance.getData;
 };
 
 // 处理导出三元组CSV
@@ -138,7 +145,7 @@ const handleExportGraphCsv = async () => {
 const getAllNodeList = () => {
   // 从graph实例中获取最新的节点列表
   if (graphInstance) {
-    const data = graphInstance.getGraphData();
+    const data = graphInstance.getData();
     return data.nodes || [];
   }
   return [];
