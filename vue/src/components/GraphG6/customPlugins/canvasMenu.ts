@@ -226,8 +226,10 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
       // 保存原始数据
       this.originalNodeData = graph.getNodeData(nodeId);
       const color = getNodeTypeColor(nodeData.nodeType)
-      // 更新节点
-      graph.updateNodeData([
+      // 先删除临时节点
+      graph.removeNodeData([nodeId]);
+      // 然后添加新节点
+      graph.addNodeData([
         {
           id: nodeData.name,
           data: {
@@ -237,6 +239,8 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
           },
           style: {
             labelText: nodeData.name,
+            x: this.currentPos.x,
+            y: this.currentPos.y,
             // 根据节点类型设置不同样式
             fill: color,
           },
