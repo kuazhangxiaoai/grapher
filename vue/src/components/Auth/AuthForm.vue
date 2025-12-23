@@ -60,8 +60,8 @@ const rules = {
     { 
       validator: (rule: any, value: string) => {
         const password = typeof form.password === 'string' ? form.password.trim() : '';
-        const confirmPwd = typeof value === 'string' ? value.trim() : '';
-        if (!value || password === confirmPwd) {
+        const confirmPwd = typeof form.confirmPassword === 'string' ? form.confirmPassword.trim() : '';
+        if (!confirmPwd || password === confirmPwd) {
           return Promise.resolve();
         }
         return Promise.reject('两次输入密码不一致');
@@ -73,6 +73,12 @@ const rules = {
 
 const toggleMode = () => {
   isLogin.value = !isLogin.value;
+  // 清空表单数据
+  form.username = '';
+  form.password = '';
+  form.confirmPassword = '';
+  // 重置表单验证状态
+  formRef.value?.resetFields();
 };
 
 const handleSubmit = async () => {
