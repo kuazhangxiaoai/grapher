@@ -62,6 +62,8 @@ const handleDelete = (name: string | number) => {
 const handleNavigateToEdit = (item: any) => {
   // 跳转到Home页面
   const project_name = item.name;
+  // 重置editStore状态，确保每次进入画布页面都显示当前项目的初始状态
+  editStore.resetState();
   editStore.setProjectName(project_name);
   localStorage.setItem('grapher-project', project_name)
   router.push('/');

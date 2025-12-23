@@ -59,7 +59,9 @@ const rules = {
     { required: true, message: '请再次输入密码', trigger: 'blur' },
     { 
       validator: (rule: any, value: string) => {
-        if (!value || form.password === value) {
+        const password = typeof form.password === 'string' ? form.password.trim() : '';
+        const confirmPwd = typeof value === 'string' ? value.trim() : '';
+        if (!value || password === confirmPwd) {
           return Promise.resolve();
         }
         return Promise.reject('两次输入密码不一致');

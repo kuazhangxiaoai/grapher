@@ -193,15 +193,17 @@ export const useEditStore = defineStore('editStore', {
             })
         },
         addNodeType(type: NodeType) {
+            const project = localStorage.getItem("grapher-project");
             axios.post("/api/graph/addNodeType",
-                { name: type.name, color: type.color })
+                { name: type.name, color: type.color, project })
                 .then((res) => {
                     return res.data;
                 })
         },
         updateNodeType(type: NodeType) {
-            axios.post("/api/graph/addNodeType",
-                { id: type.id, name: type.name, color: type.color })
+            const project = localStorage.getItem("grapher-project");
+            axios.post("/api/graph/updateNodeType",
+                { id: type.id, name: type.name, color: type.color, project })
                 .then((res) => {
                     return res.data;
                 })
@@ -427,6 +429,17 @@ export const useEditStore = defineStore('editStore', {
         },
         setCommitting(flag: boolean) {
             this.commiting = flag;
+        },
+
+        // 重置状态，确保每次进入画布页面都显示当前项目的初始状态
+        resetState() {
+            this.article = null;
+            this.sequence = null;
+            this.nodes = [];
+            this.edges = [];
+            this.rects = [];
+            this.article = null;
+            this.sequence = null;
         },
 
     }

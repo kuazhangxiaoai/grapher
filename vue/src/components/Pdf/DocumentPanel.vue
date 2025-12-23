@@ -68,14 +68,14 @@
     @cancel="hanleFileUploadCancel"
     width="500px"
   >
-    <a-form layout="vertical">
-      <a-form-item label="文章标题:">
-        <a-input v-model="FileUploadForm.title" placeholder="请输入文章标题"></a-input>
-      </a-form-item>
-      <a-form-item label="发表时间:">
-        <a-date-picker v-model="FileUploadForm.publishTime" style="width: 100%;"></a-date-picker>
-      </a-form-item>
-    </a-form>
+    <a-form layout="vertical" :model="FileUploadForm">
+        <a-form-item label="文章标题:">
+          <a-input v-model="FileUploadForm.title" placeholder="请输入文章标题"></a-input>
+        </a-form-item>
+        <a-form-item label="发表时间:">
+          <a-date-picker v-model="FileUploadForm.publishTime" style="width: 100%;"></a-date-picker>
+        </a-form-item>
+      </a-form>
   </a-modal>
 </template>
 

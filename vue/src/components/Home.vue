@@ -85,6 +85,7 @@ const {editGraph, fileList, article, committing} = storeToRefs(editStore);
 
 // 返回列表页面
 const handleBack = () => {
+  editStore.closeFileList() //关闭文件列表
   router.push('/list');
 };
 // 图数据
@@ -323,6 +324,8 @@ const getAllNodeList = async (graphId?: string) => {
 // 监听路由变化，更新图谱数据
 watch(() => route.params.id || route.query.graphId, (newGraphId) => {
   const project = localStorage.getItem("grapher-project");
+  // 重置graphData状态，确保每次进入画布页面都显示当前项目的初始状态
+  graphData.value = { nodes: [], edges: [] };
   getGraphDetail(project as string);
   getAllNodeList(newGraphId as string);
 });

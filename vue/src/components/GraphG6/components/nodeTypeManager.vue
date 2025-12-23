@@ -61,15 +61,12 @@
             </a-form-item>
             <a-form-item label="背景颜色" field="color">
               <div class="flex items-center">
-                <a-input
+                <a-color-picker
                   v-model="form.color"
-                  placeholder="请输入颜色值，如 #1783FF"
-                  class="w-1/2 mr-3"
+                  showText
+                  size="medium"
+                  placeholder="请选择颜色值"
                 />
-                <div
-                  class="color-preview w-12 h-12 rounded-lg border"
-                  :style="{ backgroundColor: form.color }"
-                ></div>
               </div>
             </a-form-item>
           </a-space>
@@ -159,8 +156,12 @@ const handleDeleteType = async (id: string) => {
 
 // 保存节点类型
 const handleSaveType = async () => {
-  const valid = await formRef.value.validate();
-  //if (!valid) return;
+  // const valid = await formRef.value.validate();
+  if(!form.value.name){
+    Message.error('请输入节点类型名称');
+    return;
+  }
+  // if (!valid) return;
 
   saving.value = true;
   try {
@@ -173,22 +174,22 @@ const handleSaveType = async () => {
       }
       await editStore.updateNodeType(nodeType);
       Message.success('节点类型更新成功');
-      // 编辑成功后重新加载节点类型数据
-      editStore.getAllNodeTypes();
     } else {
       // 使用form.value代替this.form
-      await axios.post("/api/graph/addNodeType", {
+      const nodeType: NodeType = {
         name: form.value.name,
-        color: form.value.color,
-      });
+        color: form.value.color
+      }
+      await editStore.addNodeType(nodeType);
       Message.success('节点类型添加成功');
-      // 新增成功后重新加载节点类型数据
-      useEditStore().getAllNodeTypes();
     }
+    // 保存成功后重新加载节点类型数据
+    editStore.getAllNodeTypes();
     handleResetForm();
     emit('refresh');
   } catch (error) {
     Message.error('操作失败，请重试');
+    console.error('保存节点类型失败:', error);
   } finally {
     saving.value = false;
   }
