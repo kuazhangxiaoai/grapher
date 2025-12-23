@@ -179,6 +179,8 @@ const handleDeleteElement = async (elementId, type) => {
     // await deleteElement(elementId, type);
     Message.success(`${type === "node" ? "节点" : "边"}删除成功`);
     getAllNodeList();
+    // 删除成功后调用commit方法，将变更提交到服务器
+    editStore.commit();
   } catch (error) {
     Message.error(error.message);
   }
