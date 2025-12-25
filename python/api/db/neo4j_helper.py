@@ -9,7 +9,7 @@ class Neo4jHelper:
         self.password = passwd
         self.database = database
         self.port = port
-        self.driver = GraphDatabase.driver(f"neo4j://{host}:{port}", auth=(self.user, self.password), database=self.database)
+        self.driver = GraphDatabase.driver(f"bolt://{host}:{port}", auth=(self.user, self.password), database=self.database)
 
     # 执行查询node，返回node 函数
     def query_node_function(self, tx, node_label, node_name):

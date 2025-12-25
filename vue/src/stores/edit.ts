@@ -383,6 +383,9 @@ export const useEditStore = defineStore('editStore', {
         },
 
         commit() {
+            // 设置committing状态为true，触发Home.vue中的watcher更新画布
+            this.committing = true;
+            
             let nodeObjs = []
             let rectObjs = [];
             let edgeObjs = [];

@@ -9,12 +9,18 @@
               退出
             </a-button>
           </div>
-          <a-button type="primary" @click="showModal = true" class="add-button">
+          <a-button 
+            type="primary" 
+            @click="handleAddClick" 
+            class="add-button"
+            :disabled="items.length >= 20"
+          >
             <template #icon>
               <icon-plus />
             </template>
             {{ addButtonText || '新增项目' }}
           </a-button>
+          <div v-if="items.length >= 20" class="limit-hint">最多只能创建20个项目</div>
         </div>
     </div>
 
@@ -193,6 +199,12 @@ const handleSubmit = () => {
     return;
   }
 
+  // 检查项目数量限制
+  if (!isEditMode.value && props.items.length >= 20) {
+    Message.error('最多只能创建20个项目');
+    return;
+  }
+
   const item = {
     ...formData.value,
     createTime: formData.value.createTime.toISOString()
@@ -223,6 +235,13 @@ const handleSubmit = () => {
   }
 
   resetForm();
+};
+
+// 处理添加项目点击
+const handleAddClick = () => {
+  if (props.items.length < 20) {
+    showModal.value = true;
+  }
 };
 
 // 重置表单
@@ -322,6 +341,13 @@ onMounted(()=>{
 .add-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.limit-hint {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #ff4d4f;
+  line-height: 32px;
 }
 
 .card-list {

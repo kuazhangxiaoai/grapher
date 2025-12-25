@@ -1,5 +1,6 @@
 import shutil
-import fitz
+import os
+import re
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from pathlib import Path
@@ -13,7 +14,7 @@ from python.api.config.graph_config import Graph_Config
 from python.api.db.postgre_helper import PostgreHelper
 from python.api.db.neo4j_helper import Neo4jHelper
 
-UploadDir = Path("python/assets")
+UploadDir = Path("D:/workspace/grapher/python/assets")
 UploadDir.mkdir(exist_ok=True)
 router = APIRouter()
 
@@ -89,11 +90,15 @@ async def upload(fileUpload: FileUpload):
 #将文件上传至后端
 @router.post("/uploadfile")
 async def uploadfile(file: UploadFile=File(...)):
-    savepath = UploadDir / file.filename
+    #filename = os.path.basename(file.filename)
+    #filename = re.sub(r'[\\/:*?"<>|]', '_', filename)
+    filename = file.filename
+    savepath = UploadDir / filename
+    os.remove(savepath) if os.path.exists(savepath) else None
     with open(savepath, 'wb') as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    data = {"message": 'OK', 'url': f"/assets/{file.filename}"}
+    data = {"message": 'OK', 'url': f"/assets/{filename}"}
     return JSONResponse(content=data, status_code=200)
 
 @router.post("/uploadSentence")

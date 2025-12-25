@@ -15,6 +15,7 @@
         :data="graphData"
         :layout-config="layoutConfig"
         :enableObject="enableObj"
+        :readOnly="true"
         @elementClick="handleElementClick"
         @ready="handleGraphReady"
         @shortestPath="handleShortestPath"
@@ -128,9 +129,11 @@ const elementTargetType = ref("node");
 const handleElementClick = (element, targetType) => {
   elementTargetType.value = targetType;
   if (targetType === "node" || targetType === "edge") {
+    // 根据元素类型使用不同的方法获取数据
+    const getElementMethod = targetType === "node" ? "getNodeData" : "getEdgeData";
     elementInfo.value = {
-      ...graphInstance.getElementData(element.id),
-      style: { ...graphInstance.getElementRenderStyle(element.id) },
+      ...graphInstance[getElementMethod](element.id),
+      // G6 V5 中不需要手动获取样式，样式会自动从数据中提取
     };
     activePanel.value = "elementInfo";
     expandElementInfoPanel.value = true;
@@ -297,8 +300,8 @@ const handleSearchNode = (searchNode) => {
 
   // 更新节点信息面板
   elementInfo.value = {
-    ...graphInstance.getElementData(searchNode),
-    style: { ...graphInstance.getElementRenderStyle(searchNode) },
+    ...graphInstance.getNodeData(searchNode),
+    // G6 V5 中不需要手动获取样式，样式会自动从数据中提取
   };
   activePanel.value = "elementInfo";
   elementTargetType.value = "node";
