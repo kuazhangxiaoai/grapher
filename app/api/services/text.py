@@ -1,6 +1,5 @@
 import shutil
 import os
-import re
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from pathlib import Path
@@ -9,12 +8,13 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 
-from python.api.config.db_config import DB_Config
-from python.api.config.graph_config import Graph_Config
-from python.api.db.postgre_helper import PostgreHelper
-from python.api.db.neo4j_helper import Neo4jHelper
+from app.api.config.db_config import DB_Config
+from app.api.config.graph_config import Graph_Config
+from app.api.db.postgre_helper import PostgreHelper
+from app.api.db.neo4j_helper import Neo4jHelper
+from app.api.utils.general import get_project_info
 
-UploadDir = Path("D:/workspace/grapher/python/assets")
+UploadDir = Path("/usr/assets")
 UploadDir.mkdir(exist_ok=True)
 router = APIRouter()
 
@@ -34,6 +34,9 @@ class Sentence(BaseModel):
     page: int
     project: str
 
+class Article(BaseModel):
+    title: str
+    project: str
 
 @router.get("/test")
 async def test():
@@ -247,4 +250,103 @@ async def get_seq_by_node(name: str, project: str):
         return res
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/deleteArticle")
+async def delete_article(article: Article):
+    try:
+        graph_db_config = Graph_Config()
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        graph_db, host, port, username, password = get_project_info(article.project)
+        graph_db_config.load(host, port, username, password, graph_db)
+        _gdb = Neo4jHelper(
+            host=graph_db_config.host,
+            user=graph_db_config.user,
+            passwd=graph_db_config.password,
+            database=graph_db_config.databasename,
+            port=graph_db_config.port
+        )
+        query = '''
+                    SELECT * FROM t_node WHERE article='%s AND project_name=%s'
+                ''' % (article.title, article.project)
+
+        nodes_df = _db.df_query_sql(query)
+        nodes = []
+        for i, row in nodes_df.iterrows():
+            nodes.append({"name": row.get("node_name"), "label": row.get("node_label")})
+
+        query = '''
+                    DELETE FROM t_node WHERE article='%s' AND project_name=%s'
+                ''' % (article.title, article.project)
+        _db.delete_one(query)
+
+        query = '''
+                    DELETE FROM t_predicate WHERE article='%s' AND project_name=%s' 
+                ''' % (article.title, article.project)
+
+        _db.delete_one(query)
+
+        for node in nodes:
+            query = ''' SELECT * FROM t_node WHERE project_name=%s' ''' % (article.project)
+            _df = _db.df_query_sql(query)
+            if(len(_df) == 0):
+                _gdb.delete_node(node["label"], node["name"])
+
+        return JSONResponse(content={"message": "success"}, status_code=200)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/deleteSequence")
+async def delete_sequence(sequence: Sentence):
+    try:
+        graph_db_config = Graph_Config()
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        graph_db, host, port, username, password = get_project_info(sequence.project)
+        graph_db_config.load(host, port, username, password, graph_db)
+        _gdb = Neo4jHelper(
+            host=graph_db_config.host,
+            user=graph_db_config.user,
+            passwd=graph_db_config.password,
+            database=graph_db_config.databasename,
+            port=graph_db_config.port
+        )
+        query = '''
+                    SELECT * FROM t_node WHERE sequence='%s' AND article='%s AND project_name=%s'
+                ''' % (sequence.text, sequence.article, sequence.project)
+
+        nodes_df = _db.df_query_sql(query)
+        nodes = []
+        for i, row in nodes_df.iterrows():
+            nodes.append({"name": row.get("node_name"), "label": row.get("node_label")})
+
+        query = '''
+                    DELETE FROM t_node WHERE sequence='%s' AND article='%s' AND project_name=%s'
+                ''' % (sequence.text, sequence.article, sequence.project)
+        _db.delete_one(query)
+
+        query = '''
+                    DELETE FROM t_predicate WHERE sequence='%s' AND article='%s' AND project_name=%s' 
+                ''' % (sequence.text, sequence.article, sequence.project)
+
+        _db.delete_one(query)
+
+        for node in nodes:
+            query = ''' SELECT * FROM t_node WHERE project_name=%s' ''' % (sequence.project)
+            _df = _db.df_query_sql(query)
+            if(len(_df) == 0):
+                _gdb.delete_node(node["label"], node["name"])
+
+        return JSONResponse(content={"message": "success"}, status_code=200)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

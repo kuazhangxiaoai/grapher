@@ -2,12 +2,12 @@ from altair import sequence
 from dominate.tags import article
 from spyder.plugins.help.utils.conf import project
 
-from python.api.utils.logger import LOGGER
-from python.api.config.db_config import DB_Config
-from python.api.config.graph_config import Graph_Config
-from python.api.db.postgre_helper import PostgreHelper
-from python.api.db.neo4j_helper import Neo4jHelper
-from python.api.utils.general import get_project_info
+from app.api.utils.logger import LOGGER
+from app.api.config.db_config import DB_Config
+from app.api.config.graph_config import Graph_Config
+from app.api.db.postgre_helper import PostgreHelper
+from app.api.db.neo4j_helper import Neo4jHelper
+from app.api.utils.general import get_project_info
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from typing import List

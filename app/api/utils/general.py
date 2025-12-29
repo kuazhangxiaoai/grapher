@@ -1,5 +1,5 @@
-from python.api.db.postgre_helper import PostgreHelper
-from python.api.config.db_config import DB_Config
+from app.api.db.postgre_helper import PostgreHelper
+from app.api.config.db_config import DB_Config
 
 def get_project_info(project_name: str):
     try:

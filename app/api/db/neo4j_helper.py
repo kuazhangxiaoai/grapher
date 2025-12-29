@@ -1,5 +1,3 @@
-from numba.cuda.cudadrv.driver import driver
-from python.api.config.graph_config import Graph_Config
 from neo4j import GraphDatabase
 
 class Neo4jHelper:
