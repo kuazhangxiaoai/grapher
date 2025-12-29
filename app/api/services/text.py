@@ -280,14 +280,18 @@ async def delete_article(article: Article):
             nodes.append({"name": row.get("node_name"), "label": row.get("node_label")})
 
         query = '''
-                    DELETE FROM t_node WHERE article='%s' AND project_name=%s'
+                    DELETE FROM t_node WHERE article='%s' AND project_name='%s'
                 ''' % (article.title, article.project)
         _db.delete_one(query)
 
         query = '''
-                    DELETE FROM t_predicate WHERE article='%s' AND project_name=%s' 
+                    DELETE FROM t_predicate WHERE article='%s' AND project_name='%s' 
                 ''' % (article.title, article.project)
+        _db.delete_one(query)
 
+        query = '''
+                            DELETE FROM t_sequence WHERE article='%s' AND project_name='%s' 
+                        ''' % (article.title, article.project)
         _db.delete_one(query)
 
         for node in nodes:
@@ -338,6 +342,11 @@ async def delete_sequence(sequence: Sentence):
                     DELETE FROM t_predicate WHERE sequence='%s' AND article='%s' AND project_name=%s' 
                 ''' % (sequence.text, sequence.article, sequence.project)
 
+        _db.delete_one(query)
+
+        query = '''
+                    DELETE FROM t_sequence WHERE sequence='%s' AND article='%s' AND project_name=%s' 
+                ''' % (sequence.text, sequence.article, sequence.project)
         _db.delete_one(query)
 
         for node in nodes:

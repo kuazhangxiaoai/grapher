@@ -8,7 +8,7 @@ class Graph_Config:
         """
             initial function to define graph database link parameter
         """
-        self.host = "localhost"
+        self.host = "10.11.52.199"
         self.port = 7687
         self.user = "neo4j"
         self.password = "12345678"
