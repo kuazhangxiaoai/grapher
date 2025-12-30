@@ -455,6 +455,32 @@ export const useEditStore = defineStore('editStore', {
             this.sequence = null;
         },
 
+        //删除语句
+        deleteSequence(sequence: string) {
+            axios.post("/api/text/deleteSequence", {
+                text: sequence,
+                x0: 0,
+                y0: 0,
+                x1: 0,
+                y1: 0,
+                article: this.article,
+                page: 0,
+                project: localStorage.getItem("grapher-project") as string,
+            }).then((res) => {
+                Message.success("删除成功")
+            })
+            this.rects = this.rects.filter(rectangle => rectangle.text != sequence);
+        },
+
+        //删除文章
+        deleteArticle(article: string) {
+            axios.post("/api/text/deleteArticle", {
+                article: article,
+                project: localStorage.getItem("grapher-project") as string,
+            }).then(res => {
+                Message.success("删除成功")
+            })
+        }
     }
 
 
