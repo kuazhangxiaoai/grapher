@@ -41,6 +41,7 @@ const enableObj = ref({
   layout: true,
   undo: true,
   redo: true,
+  delete: true,
   commit: true,
   close: true,
 });

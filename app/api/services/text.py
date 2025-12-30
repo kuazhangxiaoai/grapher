@@ -15,6 +15,7 @@ from app.api.db.neo4j_helper import Neo4jHelper
 from app.api.utils.general import get_project_info
 
 UploadDir = Path("/usr/assets")
+# UploadDir = Path("D:/workspace/grapher/static")
 UploadDir.mkdir(exist_ok=True)
 router = APIRouter()
 

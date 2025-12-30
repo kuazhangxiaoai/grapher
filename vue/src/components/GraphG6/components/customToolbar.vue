@@ -349,6 +349,18 @@ const customToolbarData = ref([
     },
   },
   {
+    id: "delete",
+    icon: "icon-delete",
+    title: "删除",
+    enabled: props.enables.delete,
+    onClick: () => {
+      const editStore = useEditStore();
+      if (editStore.sequence) {
+        editStore.deleteSequence(editStore.sequence);
+      }
+    },
+  },
+  {
     id: "commit",
     icon: "icon-commit",
     title: "提交",
