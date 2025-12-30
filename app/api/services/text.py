@@ -294,6 +294,11 @@ async def delete_article(article: Article):
                 ''' % (article.title, article.project)
         _db.delete_one(query)
 
+        query = '''
+                    DELETE FROM t_article WHERE article='%s" AND project_name='%s'
+                ''' % (article.title, article.project)
+        _db.delete_one(query)
+
         for node in nodes:
             query = ''' SELECT * FROM t_node WHERE project_name=%s' ''' % (article.project)
             _df = _db.df_query_sql(query)

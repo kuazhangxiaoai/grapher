@@ -80,6 +80,12 @@ async def create_project(project: Project):
         assert len(proj_df) == 0
 
         query = '''
+                    SELECT * FROM t_project WHERE project_name='%s'
+                ''' % project.project_name
+        proj_name_df = _db.df_query_sql(query)
+        assert len(proj_name_df) == 0
+
+        query = '''
             SELECT * FROM t_graph_db WHERE graph_db_name='%s'
         ''' % project.graph_db
         graph_df = _db.df_query_sql(query)
