@@ -330,7 +330,7 @@ async def delete_sequence(sequence: Sentence):
             port=graph_db_config.port
         )
         query = '''
-                    SELECT * FROM t_node WHERE sequence='%s' AND article='%s AND project_name=%s'
+                    SELECT * FROM t_node WHERE sequence='%s' AND article='%s' AND project_name='%s'
                 ''' % (sequence.text, sequence.article, sequence.project)
 
         nodes_df = _db.df_query_sql(query)
@@ -339,23 +339,23 @@ async def delete_sequence(sequence: Sentence):
             nodes.append({"name": row.get("node_name"), "label": row.get("node_label")})
 
         query = '''
-                    DELETE FROM t_node WHERE sequence='%s' AND article='%s' AND project_name=%s'
+                    DELETE FROM t_node WHERE sequence='%s' AND article='%s' AND project_name='%s'
                 ''' % (sequence.text, sequence.article, sequence.project)
         _db.delete_one(query)
 
         query = '''
-                    DELETE FROM t_predicate WHERE sequence='%s' AND article='%s' AND project_name=%s' 
+                    DELETE FROM t_predicate WHERE sequence='%s' AND article='%s' AND project_name='%s' 
                 ''' % (sequence.text, sequence.article, sequence.project)
 
         _db.delete_one(query)
 
         query = '''
-                    DELETE FROM t_sequence WHERE sequence='%s' AND article='%s' AND project_name=%s' 
+                    DELETE FROM t_sequence WHERE sequence='%s' AND article='%s' AND project_name='%s' 
                 ''' % (sequence.text, sequence.article, sequence.project)
         _db.delete_one(query)
 
         for node in nodes:
-            query = ''' SELECT * FROM t_node WHERE project_name=%s' ''' % (sequence.project)
+            query = ''' SELECT * FROM t_node WHERE project_name='%s' ''' % (sequence.project)
             _df = _db.df_query_sql(query)
             if(len(_df) == 0):
                 _gdb.delete_node(node["label"], node["name"])
