@@ -47,6 +47,7 @@ setuptools>=70.0.0 # Snyk vulnerability fix
 # tritonclient[all]~=2.24.0
 
 # Server ----------------------------------------------------------------------
+python-multipart
 fastapi>=0.115.6
 uvicorn>=0.34.0
 

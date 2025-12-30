@@ -1,7 +1,4 @@
 from datetime import datetime
-
-from aiohttp.abc import HTTPException
-
 from app.api.utils.logger import LOGGER
 from app.api.config.db_config import key
 from app.api.config.db_config import DB_Config
