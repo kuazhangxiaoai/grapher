@@ -290,8 +290,8 @@ async def delete_article(article: Article):
         _db.delete_one(query)
 
         query = '''
-                            DELETE FROM t_sequence WHERE article='%s' AND project_name='%s' 
-                        ''' % (article.title, article.project)
+                    DELETE FROM t_sequence WHERE article='%s' AND project_name='%s' 
+                ''' % (article.title, article.project)
         _db.delete_one(query)
 
         for node in nodes:
