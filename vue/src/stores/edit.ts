@@ -475,7 +475,7 @@ export const useEditStore = defineStore('editStore', {
         //删除文章
         deleteArticle(article: string) {
             axios.post("/api/text/deleteArticle", {
-                article: article,
+                title: article,
                 project: localStorage.getItem("grapher-project") as string,
             }).then(res => {
                 Message.success("删除成功")
