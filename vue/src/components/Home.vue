@@ -15,7 +15,8 @@
         :data="graphData"
         :layout-config="layoutConfig"
         :enableObject="enableObj"
-        :readOnly="true"
+        :readOnly="false"
+        :showContextMenu="false"
         @elementClick="handleElementClick"
         @ready="handleGraphReady"
         @shortestPath="handleShortestPath"
@@ -50,9 +51,10 @@
     <div v-if="editGraph" class="graph-editor">
       <Editor></Editor>
     </div>
-    <div v-if="fileList" class="file-list">
-      <FileList></FileList>
-    </div>
+    <!-- <div v-if="fileList" class="file-list"> -->
+      <!-- 文件列表 -->
+    <FileList></FileList>
+    <!-- </div> -->
   </div>
 </template>
 
@@ -456,14 +458,5 @@ const handleAddNodeFromDocument = (nodeData) => {
   overflow: hidden;
 }
 
-.file-list{
-  position: absolute;
-  left: 20%;
-  top: 20%;
-  width: 35%;
-  height: 65%;
-  background-color: antiquewhite;
-  opacity: 0.9;
-  border-radius: 5px;
-}
+
 </style>
