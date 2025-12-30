@@ -295,7 +295,7 @@ async def delete_article(article: Article):
         _db.delete_one(query)
 
         query = '''
-                    DELETE FROM t_article WHERE article='%s" AND project_name='%s'
+                    DELETE FROM t_article WHERE title='%s' AND project_name='%s'
                 ''' % (article.title, article.project)
         _db.delete_one(query)
 
