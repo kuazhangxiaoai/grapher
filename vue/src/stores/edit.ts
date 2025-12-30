@@ -5,7 +5,7 @@ import type { FileInfo } from "@/types/text.ts";
 import type { Rectangle } from "@/types/rect.ts";
 import type { NodeType } from "./nodeTypes.ts";
 import type {Edge} from "@/types/edges.ts";
-import { Message } from "@arco-design/web-vue";
+import { Message, Modal } from "@arco-design/web-vue";
 import { RectangleType } from "@/types/rect.ts";
 import {RectangleColorType} from "../types/rect.ts";
 
@@ -21,7 +21,7 @@ export const useEditStore = defineStore('editStore', {
         rects: [] as Rectangle,
         editGraph: false,
         fileList: false,
-        fileinfos: [] as FileInfo,
+        fileinfos: [] as FileInfo[],
         pdfPreviewUrl: null as string,
         server: "http://localhost:8088",
         graphRequestCancelToken: null as any,
@@ -58,6 +58,7 @@ export const useEditStore = defineStore('editStore', {
         closeGraphEditor() {
             this.nodes = [] as NodeType[];
             this.edges = [] as Edge[];
+             this.sequence = null;
             this.editGraph = false
         },
         openFileList() {
@@ -72,10 +73,9 @@ export const useEditStore = defineStore('editStore', {
         setSequence(sequence) {
             this.sequence = sequence
         },
-        getAllFileInfoList(project: string): FileInfo[] {
+        getAllFileInfoList(project: string) {
             axios.get("/api/text/articletitles", {params: {project: project}}).then(res => {
                 this.fileinfos = res.data
-                return this.fileinfos
             })
         },
         setPDFPreviewUrl(url: string) {
@@ -457,29 +457,64 @@ export const useEditStore = defineStore('editStore', {
 
         //删除语句
         deleteSequence(sequence: string) {
-            axios.post("/api/text/deleteSequence", {
-                text: sequence,
-                x0: 0,
-                y0: 0,
-                x1: 0,
-                y1: 0,
-                article: this.article,
-                page: 0,
-                project: localStorage.getItem("grapher-project") as string,
-            }).then((res) => {
-                Message.success("删除成功")
-            })
-            this.rects = this.rects.filter(rectangle => rectangle.text != sequence);
+            // 从当前rects中找到对应的矩形，获取位置和页面信息
+            const targetRect = this.rects.find(rect => rect.text === sequence);
+            const x0 = targetRect?.left || 0;
+            const y0 = targetRect?.top || 0;
+            const x1 = targetRect?.right || 0;
+            const y1 = targetRect?.bottom || 0;
+            const page = targetRect?.page || this.currentPDFPage;
+            
+            Modal.confirm({
+                title: '确认删除',
+                content: '确定要删除当前句子吗？',
+                okText: '删除',
+                cancelText: '取消',
+                okButtonProps: {
+                    status: 'danger',
+                },
+                onOk: () => {
+                    axios.post("/api/text/deleteSequence", {
+                        text: sequence,
+                        x0,
+                        y0,
+                        x1,
+                        y1,
+                        article: this.article,
+                        page,
+                        project: localStorage.getItem("grapher-project") as string,
+                    }).then((res) => {
+                        Message.success("删除成功");
+                        // 删除成功后，关闭编辑器并重新加载PDF信息
+                        this.closeGraphEditor();
+                        this.queryRects();
+                    })
+                    this.rects = this.rects.filter(rectangle => rectangle.text != sequence);
+                },
+            });
         },
 
         //删除文章
         deleteArticle(article: string) {
-            axios.post("/api/text/deleteArticle", {
-                title: article,
-                project: localStorage.getItem("grapher-project") as string,
-            }).then(res => {
-                Message.success("删除成功")
-            })
+            Modal.confirm({
+                title: '确认删除',
+                content: '确定要删除这篇文章吗？',
+                okText: '删除',
+                cancelText: '取消',
+                okButtonProps: {
+                    status: 'danger',
+                },
+                onOk: () => {
+                    axios.post("/api/text/deleteArticle", {
+                        title: article,
+                        project: localStorage.getItem("grapher-project") as string,
+                    }).then(res => {
+                        Message.success("删除成功")
+                        // 删除成功后重新获取文件列表
+                        this.getAllFileInfoList(localStorage.getItem("grapher-project") as string);
+                    })
+                },
+            });
         }
     }
 
