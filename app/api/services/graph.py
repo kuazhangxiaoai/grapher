@@ -1,6 +1,3 @@
-from altair import sequence
-from dominate.tags import article
-from spyder.plugins.help.utils.conf import project
 
 from app.api.utils.logger import LOGGER
 from app.api.config.db_config import DB_Config
@@ -260,7 +257,6 @@ async def get_global_graph(project: str):
             })
 
         graph = {
-            "article": article,
             "nodes": nodes,
             "edges": edges
         }

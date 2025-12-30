@@ -1,7 +1,6 @@
 import os
-
 from starlette.staticfiles import StaticFiles
-from api.utils.logger import LOGGER
+from app.api.utils.logger import LOGGER
 from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 import uvicorn

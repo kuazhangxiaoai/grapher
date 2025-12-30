@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-WORKDIR /app
+WORKDIR /
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -23,4 +23,4 @@ ENV PYTHONUNBUFFERED=1 \
 
   EXPOSE 8088
 
-  CMD ["uvicorn", "app.main:main", "--host", "0.0.0.0", "--port", "8088"]
+  CMD ["uvicorn", "app:main", "--host", "0.0.0.0", "--port", "8088"]
