@@ -27,13 +27,7 @@
               :key="type.name"
               :value="type.name"
             >
-              <div class="flex items-center">
-                <div
-                  class="type-color w-8 h-4 rounded-full mr-2"
-                  :style="{ backgroundColor: type.color }"
-                ></div>
-                {{ type.name }}
-              </div>
+              {{ type.name }}
             </a-option>
           </a-select>
           <a-button

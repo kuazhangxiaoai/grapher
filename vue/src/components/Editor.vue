@@ -6,6 +6,7 @@
       :data="graphData"
       :layout-config="layoutConfig"
       :enableObject="enableObj"
+      :showContextMenu="true"
       @elementClick="handleElementClick"
       @ready="handleGraphReady"
       @shortestPath="handleShortestPath"

@@ -116,6 +116,11 @@ const props = defineProps({
   readOnly: {
     type: Boolean,
     default: false,
+  },
+  // 是否显示右键菜单
+  showContextMenu: {
+    type: Boolean,
+    default: false,
   }
 });
 
@@ -281,12 +286,13 @@ const initGraph = () => {
           }
         },
       },
-      // 只有非只读模式下才包含编辑相关行为
+      {
+        type: "drag-element",
+        key: "drag-element",
+        enable: !props.readOnly,
+      },
+      // 只有非只读模式下才包含其他编辑相关行为
       ...(props.readOnly ? [] : [
-        {
-          type: "drag-element",
-          key: "drag-element",
-        },
         {
           type: "brush-select",
           key: "brush-select",
@@ -323,83 +329,86 @@ const initGraph = () => {
           type: "history",
           key: "history",
         },
-        // 画布右键菜单插件
-        {
-          type: "canvas-menu",
-          key: "canvas-menu",
-          nodeFill: "#1783FF",
-          menuBackground: "#FFFFFF",
-          menuTextColor: "#333333",
-          menuHoverBackground: "#F5F5F5",
-          onShowNodeModal: (nodeId) => {
-            // 保存当前节点ID并显示模态框
-            currentNodeId.value = nodeId;
-            openNodeAddModal.value = true;
+        // 根据属性决定是否显示右键菜单
+        ...(props.showContextMenu ? [
+          // 画布右键菜单插件
+          {
+            type: "canvas-menu",
+            key: "canvas-menu",
+            nodeFill: "#1783FF",
+            menuBackground: "#FFFFFF",
+            menuTextColor: "#333333",
+            menuHoverBackground: "#F5F5F5",
+            onShowNodeModal: (nodeId) => {
+              // 保存当前节点ID并显示模态框
+              currentNodeId.value = nodeId;
+              openNodeAddModal.value = true;
+            },
           },
-        },
-        // 右键菜单
-        {
-          type: "contextmenu",
-          trigger: "contextmenu", // 'click' or 'contextmenu'
-          onClick: (value, target, current) => {
-            if (value == "deleteNode") {
-              handleDeleteNode(current);
-            }
-            if(current == null) {
-              return;
-            }
-            if (value == "addEdge" && current.type == "node") {
-              graph.value.updateBehavior({
-                key: "create-edge",
-                enable: (event) => {
-                  console.log(event);
-                  return event.targetType == "node"; // 在节点上启用连接
-                },
-                onFinish: (edge) => {
-                  const canCreate = canCreateEdge(
-                    graph.value,
-                    edge.source,
-                    edge.target
-                  );
-                  if (!canCreate) {
-                    // 如果验证不通过,删除已创建的边
-                    graph.value.removeEdgeData([edge.id]);
-                    if (edge.source === edge.target) {
-                      Message.warning("节点不能连接自己");
-                    } else {
-                      Message.warning("已存在连线,不能重复创建");
+          // 右键菜单
+          {
+            type: "contextmenu",
+            trigger: "contextmenu", // 'click' or 'contextmenu'
+            onClick: (value, target, current) => {
+              if (value == "deleteNode") {
+                handleDeleteNode(current);
+              }
+              if(current == null) {
+                return;
+              }
+              if (value == "addEdge" && current.type == "node") {
+                graph.value.updateBehavior({
+                  key: "create-edge",
+                  enable: (event) => {
+                    console.log(event);
+                    return event.targetType == "node"; // 在节点上启用连接
+                  },
+                  onFinish: (edge) => {
+                    const canCreate = canCreateEdge(
+                      graph.value,
+                      edge.source,
+                      edge.target
+                    );
+                    if (!canCreate) {
+                      // 如果验证不通过,删除已创建的边
+                      graph.value.removeEdgeData([edge.id]);
+                      if (edge.source === edge.target) {
+                        Message.warning("节点不能连接自己");
+                      } else {
+                        Message.warning("已存在连线,不能重复创建");
+                      }
+                      return;
                     }
-                    return;
-                  }
-                  openEdgeNameModal.value = true;
-                  currentEdge.value = edge;
-                },
-              });
-              nextTick(() => {
-                // 触发 node:click 事件
-                graph.value.emit("node:click", {
-                  target: current,
-                  targetType: "node",
-                  item: current,
-                  itemType: "node",
+                    openEdgeNameModal.value = true;
+                    currentEdge.value = edge;
+                  },
                 });
-              });
-            }
+                nextTick(() => {
+                  // 触发 node:click 事件
+                  graph.value.emit("node:click", {
+                    target: current,
+                    targetType: "node",
+                    item: current,
+                    itemType: "node",
+                  });
+                });
+              }
+            },
+            getItems: () => {
+              return [
+                {
+                  name: `<i class="iconfont icon-lujing text-[14px] mr-2 pointer-events-none"></i>添加连线`,
+                  value: "addEdge",
+                },
+                {
+                  name: "<i class='iconfont icon-delete1 text-[14px] mr-2 pointer-events-none'></i>删除",
+                  value: "deleteNode",
+                },
+              ];
+            },
+            enable: (e) => e.targetType === "node" || e.targetType === "edge",
           },
-          getItems: () => {
-            return [
-              {
-                name: `<i class="iconfont icon-lujing text-[14px] mr-2 pointer-events-none"></i>添加连线`,
-                value: "addEdge",
-              },
-              {
-                name: "<i class='iconfont icon-delete1 text-[14px] mr-2 pointer-events-none'></i>删除",
-                value: "deleteNode",
-              },
-            ];
-          },
-          enable: (e) => e.targetType === "node" || e.targetType === "edge",
-        },
+        ] : []),
       ]),
     ],
     transforms: ["process-parallel-edges"],
