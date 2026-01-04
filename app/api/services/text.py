@@ -14,8 +14,8 @@ from app.api.db.postgre_helper import PostgreHelper
 from app.api.db.neo4j_helper import Neo4jHelper
 from app.api.utils.general import get_project_info
 
-UploadDir = Path("/usr/assets")
-# UploadDir = Path("D:/workspace/grapher/static")
+#UploadDir = Path("/usr/assets")
+UploadDir = Path("/media/yanggang/847C02507C023D84/python_workspace/grapher/assets")
 UploadDir.mkdir(exist_ok=True)
 router = APIRouter()
 
@@ -145,14 +145,12 @@ async def write_sentences(sentences: List[Sentence]):
         project_id = project_id_df.loc[0, 'project_id'].item()
 
         for i in range(len(sentences)):
-            query = ('''SELECT * FROM t_sequence WHERE sequence='%s' AND x0=%s AND y0=%s AND x1=%s AND y1=%s AND article='%s' AND page=%s''' %
-                     (sentences[i].text,
-                      int(sentences[i].x0),
+            query = ('''SELECT * FROM t_sequence WHERE x0=%s AND y0=%s AND article='%s' AND page=%s AND project_name=%s''' %
+                     (int(sentences[i].x0),
                       int(sentences[i].y0),
-                      int(sentences[i].x1),
-                      int(sentences[i].y1),
                       sentences[i].article,
-                      sentences[i].page))
+                      sentences[i].page,
+                      sentences[i].project))
             existed = _db.df_query_sql(query)
             if len(existed) == 0:
                 query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page, project_name, project_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'''
@@ -178,7 +176,6 @@ async def query_sentences(article: str, page: int, project: str):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-
 
         query = '''SELECT * FROM t_sequence WHERE article='%s' AND page='%s' AND project_name='%s' ''' % (article, page, project)
         sequence_df = _db.df_query_sql(query)
@@ -347,7 +344,6 @@ async def delete_sequence(sequence: Sentence):
         query = '''
                     DELETE FROM t_predicate WHERE sequence='%s' AND article='%s' AND project_name='%s' 
                 ''' % (sequence.text, sequence.article, sequence.project)
-
         _db.delete_one(query)
 
         query = '''

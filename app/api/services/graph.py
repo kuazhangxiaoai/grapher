@@ -421,12 +421,13 @@ async def commit(commit: Commity):
         node_names = [node.name for node in nodes]
         #检查节点数据
         for i, node_name in enumerate(node_names):
+            #已存在节点
             node_df = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' AND project_name='%s' ''' % (node_name, project))
-            node_label = nodes[i].label
+            node_label = nodes[i].label #提交的节点的label
             if len(node_df) > 0:
                 for i, row in node_df.iterrows():
-                    if row.get("node_label") != node_label:
-                        raise HTTPException(500, detail='node error: ' + node_name)
+                    if row.get("node_label") != node_label: #目前不允许修改节点类型, 只能一个个删除后，重新添加
+                        raise HTTPException(500, detail='node type error: ' + node_name)
 
         #处理删除节点
         exsisted_nodes_df = _db.df_query_sql('''SELECT * FROM t_node WHERE sequence='%s' AND project_name='%s' ''' % (sequence, project))
