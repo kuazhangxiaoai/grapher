@@ -24,7 +24,7 @@ import { storeToRefs } from "pinia";
 import { useEditStore } from "../stores/edit.ts";
 import GraphG6 from "@/components/GraphG6/index.vue";
 import { Message } from "@arco-design/web-vue";
-
+import {v4 as uuidv4} from "uuid"
 const editStore = useEditStore();
 const { sequence, nodes, edges } = storeToRefs(editStore);
 const graphData: any = ref({ nodes: [], edges: [] }); //图数据，初始化为空数组，防止节点提前显示
@@ -74,7 +74,7 @@ watch([nodes, edges], ([newNodes, newEdges]) => {
   newEdges.forEach((edge, index) => {
     // 只添加有效的边，即源节点和目标节点都存在的边
     if (nodeMap.has(edge.from_node_name) && nodeMap.has(edge.to_node_name)) {
-      const eid = "edge_" + new Date().getTime()
+      const eid = "edge_" + uuidv4().toString()
       edges_data.push({
         id: eid,
         data: {name: edge.name},
