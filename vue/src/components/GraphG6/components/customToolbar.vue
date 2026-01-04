@@ -354,9 +354,11 @@ const customToolbarData = ref([
     title: "删除",
     enabled: props.enables.delete,
     onClick: () => {
-      const editStore = useEditStore();
-      if (editStore.sequence) {
-        editStore.deleteSequence(editStore.sequence);
+      if (props.enables.delete) {
+        const editStore = useEditStore();
+        if (editStore.sequence) {
+          editStore.deleteSequence(editStore.sequence);
+        }
       }
     },
   },

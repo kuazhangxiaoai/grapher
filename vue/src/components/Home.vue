@@ -108,6 +108,8 @@ const enableObj = ref({
   layout: true,
   undo: true,
   redo: true,
+  delete: false,
+  commit: false,
   close: false,
 })
 
@@ -342,7 +344,7 @@ watch(committing, async (newValue) => {
     const graph_data = await useEditStore().queryGraphByArticle(article);
     graphData.value.nodes = graph_data.nodes;
     graphData.value.edges = graph_data.edges;
-    useEditStore().setCommiting(false);
+    // useEditStore().setCommiting(false);
   }
 })
 

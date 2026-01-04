@@ -1,6 +1,6 @@
 <template>
   <div class="file-list-container">
-    <a-modal
+    <Modal
        v-model:visible="showFileListModal" 
        title="文件列表" 
        :bordered="true" 
@@ -11,7 +11,7 @@
        :hide-cancel="true"
        class="file-panel"
       >
-      <a-table
+      <Table
         :columns="columns"
         :data="page_data"
         :pagination="pagination"
@@ -20,11 +20,11 @@
         :bordered="true"
       >
         <template #operation="{ record }">
-          <a-button type="primary" @click="handleConfirm(record)">确认</a-button>
-          <a-button type="danger" @click="handleDelete(record)">删除</a-button>
+          <Button type="primary" @click="handleConfirm(record)">确认</Button>
+          <Button type="danger" @click="handleDelete(record)">删除</Button>
         </template>
-      </a-table>
-    </a-modal>
+      </Table>
+    </Modal>
   </div>
 </template>
 
@@ -35,14 +35,9 @@ import {storeToRefs} from "pinia";
 import axios from "axios";
 import message from '@arco-design/web-vue/es/message';
 import { 
-  Modal as AModal, 
-  Table as ATable, 
-  Button as AButton, 
-  Form as AForm,
-  FormItem as AFormItem,
-  Input as AInput,
-  Select as ASelect,
-  Option as AOption
+  Modal, 
+  Table, 
+  Button, 
 } from '@arco-design/web-vue';
 
 const props = defineProps({
@@ -130,8 +125,6 @@ const handleConfirm = (record: any) => {
 const handleDelete = (record: any) => {
   // 调用store中的删除方法
   editStore.deleteArticle(record.title);
-  // 重新获取文件列表，刷新页面
-  editStore.getAllFileInfoList(localStorage.getItem("grapher-project") as string);
 }
 
 </script>
