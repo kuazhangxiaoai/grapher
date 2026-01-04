@@ -75,7 +75,7 @@ const props = defineProps({
   // 图数据
   data: {
     type: Object as () => GraphData,
-    default: () => ({ nodes: [], edges: [] }),
+    default: () => ({ nodes: [], edges: [],  combos:[] }),
   },
   // 是否自适应视图
   fitView: {
@@ -360,7 +360,7 @@ const initGraph = () => {
                 graph.value.updateBehavior({
                   key: "create-edge",
                   enable: (event) => {
-                    console.log(event);
+                    //console.log(event);
                     return event.targetType == "node"; // 在节点上启用连接
                   },
                   onFinish: (edge) => {

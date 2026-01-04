@@ -381,6 +381,9 @@ export const useEditStore = defineStore('editStore', {
         setProjectName(projectName: string) {
             this.projectName = projectName;
         },
+        setCommiting(flag: boolean) {
+            this.commiting = flag;
+        },
 
         commit() {
             // 设置committing状态为true，触发Home.vue中的watcher更新画布
