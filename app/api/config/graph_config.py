@@ -1,6 +1,8 @@
 # author: yanggang
 # time: 2025/11/25
 # Description: This file is designed for database configuration
+import os
+
 
 class Graph_Config:
     # Graph database configuration including host, port, user, password, databasename
@@ -8,7 +10,7 @@ class Graph_Config:
         """
             initial function to define graph database link parameter
         """
-        self.host = "10.11.52.199"
+        self.host = os.environ.get('PUBLIC_HOST')
         self.port = 7687
         self.user = "neo4j"
         self.password = "12345678"

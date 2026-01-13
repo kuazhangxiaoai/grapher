@@ -446,7 +446,9 @@ async def commit(commit: Commity):
         for i, node in enumerate(nodes):
             exsisted_nodes_context_df = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' AND project_name='%s' ''' % (node.name, project))
             exsisted_nodes_seq_df = _db.df_query_sql('''SELECT * FROM t_node WHERE node_name='%s' AND sequence='%s' AND project_name='%s' ''' % (node.name, sequence, project))
-            if len(exsisted_nodes_context_df) == 0: #全文没有该节点
+
+            exsisted_nodes_context_gdf = _gdb.query_node(nodes[i].label, nodes[i].name)
+            if len(exsisted_nodes_context_df) == 0 and exsisted_nodes_context_gdf is None: #全文没有该节点
                 _gdb.create_node(nodes[i].label, nodes[i].name)
             if len(exsisted_nodes_seq_df) == 0: #语句没有该节点
                 _db.create_one(

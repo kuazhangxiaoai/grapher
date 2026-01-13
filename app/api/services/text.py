@@ -2,21 +2,19 @@ import shutil
 import os
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
-from pathlib import Path
+
 from datetime import datetime
 
 from pydantic import BaseModel
 from typing import List
-
+from pathlib import Path
 from app.api.config.db_config import DB_Config
 from app.api.config.graph_config import Graph_Config
 from app.api.db.postgre_helper import PostgreHelper
 from app.api.db.neo4j_helper import Neo4jHelper
 from app.api.utils.general import get_project_info
+from app.api.utils.logger import LOGGER
 
-#UploadDir = Path("/usr/assets")
-UploadDir = Path("/media/yanggang/847C02507C023D84/python_workspace/grapher/assets")
-UploadDir.mkdir(exist_ok=True)
 router = APIRouter()
 
 class FileUpload(BaseModel):
@@ -41,7 +39,26 @@ class Article(BaseModel):
 
 @router.get("/test")
 async def test():
-    return "hello"
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_article '''
+        _db.df_query_sql(query)
+        LOGGER.info(f"Connect database OK: {DB_Config().host}")
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+        _gdb.test()
+        LOGGER.info(f"Connect graph database OK: {Graph_Config().host}")
+        return "ok"
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/getPDFPreviewUrl")
 async def getPDFPreviewUrl(title: str, project: str):
@@ -89,13 +106,13 @@ async def upload(fileUpload: FileUpload):
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 #将文件上传至后端
 @router.post("/uploadfile")
 async def uploadfile(file: UploadFile=File(...)):
-    #filename = os.path.basename(file.filename)
-    #filename = re.sub(r'[\\/:*?"<>|]', '_', filename)
+    UploadDir = Path(os.environ.get('upload'))
+    UploadDir.mkdir(exist_ok=True)
     filename = file.filename
     savepath = UploadDir / filename
     os.remove(savepath) if os.path.exists(savepath) else None
@@ -130,7 +147,7 @@ async def write_sentence(sentence: Sentence):
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/uploadSentences")
 async def write_sentences(sentences: List[Sentence]):
@@ -145,7 +162,7 @@ async def write_sentences(sentences: List[Sentence]):
         project_id = project_id_df.loc[0, 'project_id'].item()
 
         for i in range(len(sentences)):
-            query = ('''SELECT * FROM t_sequence WHERE x0=%s AND y0=%s AND article='%s' AND page=%s AND project_name=%s''' %
+            query = ('''SELECT * FROM t_sequence WHERE x0=%s AND y0=%s AND article='%s' AND page=%s AND project_name='%s' ''' %
                      (int(sentences[i].x0),
                       int(sentences[i].y0),
                       sentences[i].article,
@@ -166,7 +183,7 @@ async def write_sentences(sentences: List[Sentence]):
                                 project_id))
 
     except Exception as e:
-        raise  HTTPException(status_code=404, detail=str(e))
+        raise  HTTPException(status_code=500, detail=str(e))
 
 @router.get("/querySentences")
 async def query_sentences(article: str, page: int, project: str):
@@ -193,7 +210,7 @@ async def query_sentences(article: str, page: int, project: str):
         return seq_list
 
     except Exception as e:
-        raise  HTTPException(status_code=404, detail=str(e))
+        raise  HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/articletitles")

@@ -123,7 +123,14 @@ class Neo4jHelper:
         with self.driver.session() as session:
             session.execute_write(self.clear_function)
 
-
+    def test_function(self, tx):
+        cypher = f"""
+            MATCH (n) RETURN n
+        """
+        tx.run(cypher)
+    def test(self):
+        with self.driver.session() as session:
+            session.execute_write(self.test_function)
 
 #if __name__ == '__main__':
     #_gdb = Neo4jHelper(Graph_Config().host,

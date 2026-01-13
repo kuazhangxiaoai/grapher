@@ -1,7 +1,7 @@
 # author: yanggang
 # time: 2025/11/25
 # Description: This file is designed for database configuration
-
+import os
 key = 'BISM'
 
 class DB_Config:
@@ -10,7 +10,7 @@ class DB_Config:
         """
             initial function to define database link parameter
         """
-        self.host = "10.11.52.199"
+        self.host = os.environ.get('PUBLIC_HOST')
         self.port = 5432
         self.user = "postgres"
         self.password = "ZGCATT"
