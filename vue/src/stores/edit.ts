@@ -27,6 +27,7 @@ export const useEditStore = defineStore('editStore', {
         graphRequestCancelToken: null as any,
         project: null as string,
         committing: false,
+        deleting: false,
     }),
     getters: {
         getCurrentPage: (state) => { },
@@ -45,7 +46,9 @@ export const useEditStore = defineStore('editStore', {
             this.nodes.splice(this.nodes.indexOf(node), 1);
         },
         deleteNodeByName(name: string) {
+            this.edges = this.edges.filter(edge => edge.from_node_name != name && edge.to_node_name != name);
             this.nodes = this.nodes.filter(node => node.name != name);
+
         },
         updateNode(old_node: Node, new_node: Node) {
             const ind = this.nodes.findIndex(x => old_node.name === x.name)
@@ -447,6 +450,10 @@ export const useEditStore = defineStore('editStore', {
         },
         setCommitting(flag: boolean) {
             this.commiting = flag;
+        },
+
+        setDeleting(flag: boolean) {
+            this.deleting = flag;
         },
 
         // 重置状态，确保每次进入画布页面都显示当前项目的初始状态

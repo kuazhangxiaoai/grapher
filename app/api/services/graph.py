@@ -372,7 +372,7 @@ async def update_node_type(node_type: NodeType):
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/deleteNodeType")
 async def delete_node_type(node_type: NodeType):
@@ -389,7 +389,7 @@ async def delete_node_type(node_type: NodeType):
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/commit")
 async def commit(commit: Commity):
@@ -397,6 +397,7 @@ async def commit(commit: Commity):
         sequence = commit.sequence
         nodes = commit.nodes
         edges = commit.edges
+
         project = nodes[0].project
 
         graph_db_config = Graph_Config()
@@ -492,14 +493,20 @@ async def commit(commit: Commity):
             existed_edges_context_df = _db.df_query_sql(
                 '''SELECT * FROM t_predicate WHERE predicate_name='%s' AND from_node_name='%s' AND to_node_name='%s' AND project_name='%s' ''' % (name, fnn, tnn, project))
 
-            if len(existed_edges_context_df) == 0:
-                _gdb.create_edge(name, fnn, fnl, tnn, tnl)
-
-            existed_edges_seq_df = _db.df_query_sql('''SELECT * FROM t_predicate WHERE predicate_name='%s' AND sequence='%s' AND from_node_name='%s' AND to_node_name='%s' AND project_name='%s' ''' % (name, sequence, fnn, tnn, project))
+            existed_edges_seq_df = _db.df_query_sql(
+                '''SELECT * FROM t_predicate WHERE predicate_name='%s' AND sequence='%s' AND from_node_name='%s' AND to_node_name='%s' AND project_name='%s' ''' % (
+                name, sequence, fnn, tnn, project))
             if len(existed_edges_seq_df) == 0:
                 query = '''INSERT INTO t_predicate (predicate_name, sequence, from_node_name, from_node_label, to_node_name, to_node_label, article, project_name, project_id, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
                 _db.create_one(query,
-                               (edge.name, edge.sequence, edge.from_node_name, edge.from_node_label, edge.to_node_name, edge.to_node_label, edge.article, project, project_id, datetime.now()))
+                               (edge.name, edge.sequence, edge.from_node_name, edge.from_node_label, edge.to_node_name,
+                                edge.to_node_label, edge.article, project, project_id, datetime.now()))
+
+            if len(existed_edges_context_df) == 0:
+                _gdb.create_edge(name, fnn, fnl, tnn, tnl)
+
+
 
     except Exception as e:
+        LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))

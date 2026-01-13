@@ -121,7 +121,10 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(["shortestPath", "exportGraphCsv"]);
+const emit = defineEmits([
+    "shortestPath",
+    "exportGraphCsv",
+    "commit"]);
 
 const zoomLevel = ref(100);
 const isFullScreen = ref(false);
@@ -356,8 +359,10 @@ const customToolbarData = ref([
     onClick: () => {
       if (props.enables.delete) {
         const editStore = useEditStore();
+        editStore.setDeleting(false);
         if (editStore.sequence) {
           editStore.deleteSequence(editStore.sequence);
+          editStore.setDeleting(true);
         }
       }
     },
@@ -371,8 +376,10 @@ const customToolbarData = ref([
       //提交知识图谱
       if (props.enables.commit)
       {
+        useEditStore().setCommiting(false)
         useEditStore().commit()
         useEditStore().closeGraphEditor()
+        emit("commit")
       }
     }
 

@@ -24,6 +24,7 @@
         @addNodeSuccess="handleAddNode"
         @addEdgeSuccess="handleAddEdge"
         @deleteElementSuccess="handleDeleteElement"
+        @updateGraph="hanleGraphUpdate"
       />
 
       <!-- 节点信息面板 -->
@@ -84,7 +85,7 @@ const editStore = useEditStore();
 const userStore = useUserStore();
 const project = localStorage.getItem("grapher-project");
 useEditStore().getAllFileInfoList(project);
-const {editGraph, fileList, article, committing} = storeToRefs(editStore);
+const {editGraph, fileList, article, committing, deleting} = storeToRefs(editStore);
 
 // 返回列表页面
 const handleBack = () => {
@@ -236,6 +237,7 @@ const getGraphDetail = async (project) => {
         let graph_data = {
           nodes: [],
           edges: [],
+          combos:[]
         }
         res.data.nodes.forEach((node) => {
           graph_data.nodes.push({
@@ -261,6 +263,7 @@ const getGraphDetail = async (project) => {
         })
         graphData.value.edges = graph_data.edges;
         graphData.value.nodes = graph_data.nodes;
+        graphData.value.combos = []
       })
     }
    } catch (error) {
@@ -338,14 +341,14 @@ watch(() => route.params.id || route.query.graphId, (newGraphId) => {
   getAllNodeList(newGraphId as string);
 });
 
-watch(committing, async (newValue) => {
-  if (newValue) {
-    const article = useEditStore().article
-    const graph_data = await useEditStore().queryGraphByArticle(article);
-    graphData.value.nodes = graph_data.nodes;
-    graphData.value.edges = graph_data.edges;
-    // useEditStore().setCommiting(false);
-  }
+watch([committing, deleting], async ([committed, deleted]) => {
+  const article = useEditStore().article
+  console.log("grapher update", article)
+  const graph_data = await useEditStore().queryGraphByArticle(article);
+  graphData.value.nodes = graph_data.nodes;
+  graphData.value.edges = graph_data.edges;
+  useEditStore().setCommiting(false);
+  useEditStore().setDeleting(false);
 })
 
 watch(article, async (newVal) => {
@@ -418,6 +421,10 @@ const handleAddNodeFromDocument = (nodeData) => {
   
   console.log('从文档添加节点到图谱:', nodeData);
 };
+
+const hanleGraphUpdate = async (typename) => {
+
+}
 
 </script>
 

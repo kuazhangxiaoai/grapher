@@ -12,6 +12,7 @@
       :enables="enableObject"
       @shortestPath="handleShortestPath"
       @exportGraphCsv="handleExportGraphCsv"
+      @commit="handleCommit"
     />
   </div>
 
@@ -143,6 +144,8 @@ const emit = defineEmits([
   "addNodeSuccess",
   "addEdgeSuccess",
   "deleteElementSuccess",
+  "updateGraph",
+  "deleteNode",
 ]);
 
 const zoomLevel = ref(100);
@@ -427,6 +430,16 @@ const initGraph = () => {
 };
 // ** 节点相关 **
 
+const delay = (ms: number) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+//处理提交
+const handleCommit = () => {
+  console.log("handleCommit");
+  emit("updateGraph", "commit");
+}
+
 // 节点添加模态框的确认和取消处理
 const handleNodeOk = async (nodeData) => {
   // 获取自定义插件实例
@@ -505,6 +518,8 @@ const handleDeleteNode = async (target) => {
         done(true);
         emit("deleteElementSuccess", elementData.id, target.type);
         graph.value.render();
+        emit("deleteNode")
+        //useEditStore().closeGraphEditor()
       },
     });
   } catch (err) {
