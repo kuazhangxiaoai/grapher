@@ -523,7 +523,8 @@ export const useEditStore = defineStore('editStore', {
                     })
                 },
             });
-        }
+        },
+
     }
 
 
