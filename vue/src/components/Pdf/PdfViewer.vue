@@ -368,6 +368,7 @@ watch(rects, async (newVal) => {
 
 onBeforeUnmount(() => {
   if (mouseUpHandler) document.removeEventListener("mouseup", mouseUpHandler);
+  useEditStore().getServer()
   uninstallGlobalClickHandler();
 });
 </script>

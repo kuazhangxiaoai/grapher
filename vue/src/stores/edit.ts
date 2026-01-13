@@ -33,6 +33,11 @@ export const useEditStore = defineStore('editStore', {
         getCurrentPageItem: (state) => { },
     },
     actions: {
+        getServer(){
+            this.server = axios.get("/api/user/server").then(res => {
+                this.server = res.data;
+            });
+        },
         addNode(node: Node) {
             this.nodes.push(node);
         },
@@ -58,7 +63,7 @@ export const useEditStore = defineStore('editStore', {
         closeGraphEditor() {
             this.nodes = [] as NodeType[];
             this.edges = [] as Edge[];
-             this.sequence = null;
+            this.sequence = null;
             this.editGraph = false
         },
         openFileList() {
@@ -409,7 +414,7 @@ export const useEditStore = defineStore('editStore', {
                     page: this.currentPDFPage,
                     project: this.project,
                 }
-                rectObjs.push(seq_obj);
+                rectObjs.push(seq_obj)
             })
             this.edges.forEach(edge => {
                 let seq_obj: object = {
