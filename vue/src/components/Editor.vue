@@ -14,6 +14,8 @@
       @addNodeSuccess="handleAddNode"
       @addEdgeSuccess="handleAddEdge"
       @deleteElementSuccess="handleDeleteElement"
+      @updateGraph="hanleGraphUpdate"
+      @deleteNode="handleDeleteNode"
     />
   </div>
 </template>
@@ -24,10 +26,10 @@ import { storeToRefs } from "pinia";
 import { useEditStore } from "../stores/edit.ts";
 import GraphG6 from "@/components/GraphG6/index.vue";
 import { Message } from "@arco-design/web-vue";
-
+import {v4 as uuidv4} from "uuid"
 const editStore = useEditStore();
 const { sequence, nodes, edges } = storeToRefs(editStore);
-const graphData: any = ref({ nodes: [], edges: [] }); //图数据，初始化为空数组，防止节点提前显示
+const graphData: any = ref({ nodes: [], edges: [], combos:[] }); //图数据，初始化为空数组，防止节点提前显示
 const layoutConfig = ref(); // 布局类型配置
 let graphInstance:any = null; //图实例
 const enableObj = ref({
@@ -74,8 +76,9 @@ watch([nodes, edges], ([newNodes, newEdges]) => {
   newEdges.forEach((edge, index) => {
     // 只添加有效的边，即源节点和目标节点都存在的边
     if (nodeMap.has(edge.from_node_name) && nodeMap.has(edge.to_node_name)) {
+      const eid = "edge_" + uuidv4().toString()
       edges_data.push({
-        id: edge.name,
+        id: eid,
         data: {name: edge.name},
         target: edge.to_node_name,
         source: edge.from_node_name,
@@ -183,12 +186,25 @@ const handleDeleteElement = async (elementId, type) => {
     // await deleteElement(elementId, type);
     Message.success(`${type === "node" ? "节点" : "边"}删除成功`);
     getAllNodeList();
+
     // 删除成功后调用commit方法，将变更提交到服务器
-    editStore.commit();
+    //editStore.commit();
   } catch (error) {
     Message.error(error.message);
   }
 };
+
+const hanleGraphUpdate = async () => {
+
+}
+
+const handleDeleteNode = async () => {
+  // 组件挂载时，如果有article和sequence，就查询关系图数据
+  if(editStore.article && sequence.value) {
+
+    //editStore.queryGraphBySeq(sequence.value);
+  }
+}
 
 onMounted(()=>{
   // 组件挂载时，如果有article和sequence，就查询关系图数据

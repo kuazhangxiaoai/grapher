@@ -4,12 +4,15 @@ from app.api.utils.logger import LOGGER
 from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 import uvicorn
+from pathlib import Path
 
 from app.api.services import user
 from app.api.services import graph
 from app.api.services import text
-from app.api.services.text import UploadDir
 
+os.environ['mode'] = 'development' if not os.environ.get('mode') else os.environ['mode']
+LOGGER.info(f"This is {os.environ.get('mode')} environment")
+#UploadDir = Path(os.environ['upload'])
 app = FastAPI(title="grapher")
 
 @app.on_event("startup")
@@ -31,9 +34,21 @@ app.add_middleware(
 app.include_router(user.router, prefix="/user")
 app.include_router(graph.router, prefix="/graph")
 app.include_router(text.router, prefix="/text")
+try:
+    UploadDir = Path(os.environ['upload'])
+    app.mount("/assets", StaticFiles(directory=UploadDir), name='assets')
+except Exception as e:
+    LOGGER.info("This is not right environment")
 
-app.mount("/assets", StaticFiles(directory=UploadDir), name='assets')
 
 if __name__ == '__main__':
+    os.environ['mode'] = 'development'
+    os.environ['PUBLIC_PORT'] = str(8088)
+    os.environ['PUBLIC_HOST'] = '0.0.0.0'
+    os.environ['PUBLIC_BASE_URL'] = 'localhost'
+    os.environ['upload'] = "/media/yanggang/847C02507C023D84/python_workspace/grapher/assets"
+    UploadDir = Path(os.environ['upload'])
+    UploadDir.mkdir(exist_ok=True)
+    app.mount("/assets", StaticFiles(directory=UploadDir), name='assets')
     uvicorn.run(app, host="0.0.0.0", port=8088)
 

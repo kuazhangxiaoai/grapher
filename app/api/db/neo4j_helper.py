@@ -37,7 +37,11 @@ class Neo4jHelper:
             RETURN r
             """
         re = tx.run(cypher, from_node_name=from_node_name, to_node_name=to_node_name)
-        return re.single()["r"]
+        s = re.single()
+        if re.single() is not None:
+            return re.single()["r"]
+        else:
+            return None
 
     # 创建edge, 返回edge => 执行
     def create_edge(self, edge_name, from_node_name, from_node_label, to_node_name, to_node_label):
@@ -123,7 +127,14 @@ class Neo4jHelper:
         with self.driver.session() as session:
             session.execute_write(self.clear_function)
 
-
+    def test_function(self, tx):
+        cypher = f"""
+            MATCH (n) RETURN n
+        """
+        tx.run(cypher)
+    def test(self):
+        with self.driver.session() as session:
+            session.execute_write(self.test_function)
 
 #if __name__ == '__main__':
     #_gdb = Neo4jHelper(Graph_Config().host,

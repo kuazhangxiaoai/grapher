@@ -27,12 +27,18 @@ export const useEditStore = defineStore('editStore', {
         graphRequestCancelToken: null as any,
         project: null as string,
         committing: false,
+        deleting: false,
     }),
     getters: {
         getCurrentPage: (state) => { },
         getCurrentPageItem: (state) => { },
     },
     actions: {
+        getServer(){
+            this.server = axios.get("/api/user/server").then(res => {
+                this.server = res.data;
+            });
+        },
         addNode(node: Node) {
             this.nodes.push(node);
         },
@@ -40,7 +46,9 @@ export const useEditStore = defineStore('editStore', {
             this.nodes.splice(this.nodes.indexOf(node), 1);
         },
         deleteNodeByName(name: string) {
+            this.edges = this.edges.filter(edge => edge.from_node_name != name && edge.to_node_name != name);
             this.nodes = this.nodes.filter(node => node.name != name);
+
         },
         updateNode(old_node: Node, new_node: Node) {
             const ind = this.nodes.findIndex(x => old_node.name === x.name)
@@ -58,7 +66,7 @@ export const useEditStore = defineStore('editStore', {
         closeGraphEditor() {
             this.nodes = [] as NodeType[];
             this.edges = [] as Edge[];
-             this.sequence = null;
+            this.sequence = null;
             this.editGraph = false
         },
         openFileList() {
@@ -381,6 +389,9 @@ export const useEditStore = defineStore('editStore', {
         setProjectName(projectName: string) {
             this.projectName = projectName;
         },
+        setCommiting(flag: boolean) {
+            this.commiting = flag;
+        },
 
         commit() {
             // 设置committing状态为true，触发Home.vue中的watcher更新画布
@@ -406,7 +417,7 @@ export const useEditStore = defineStore('editStore', {
                     page: this.currentPDFPage,
                     project: this.project,
                 }
-                rectObjs.push(seq_obj);
+                rectObjs.push(seq_obj)
             })
             this.edges.forEach(edge => {
                 let seq_obj: object = {
@@ -439,6 +450,10 @@ export const useEditStore = defineStore('editStore', {
         },
         setCommitting(flag: boolean) {
             this.commiting = flag;
+        },
+
+        setDeleting(flag: boolean) {
+            this.deleting = flag;
         },
 
         // 重置状态，确保每次进入画布页面都显示当前项目的初始状态
@@ -515,7 +530,8 @@ export const useEditStore = defineStore('editStore', {
                     })
                 },
             });
-        }
+        },
+
     }
 
 

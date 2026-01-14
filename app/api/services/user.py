@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from app.api.config.host import Host_Config
 from app.api.utils.logger import LOGGER
 from app.api.config.db_config import key
 from app.api.config.db_config import DB_Config
@@ -8,6 +10,7 @@ from app.api.db.neo4j_helper import Neo4jHelper
 from app.api.utils.general import get_project_info
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
+import os
 from pydantic import BaseModel
 import uuid
 router = APIRouter()
@@ -23,6 +26,13 @@ class Project(BaseModel):
     graph_db: str
     descript: str
 
+@router.get("/server")
+async def getServer():
+    host_config = Host_Config()
+    ip, port = host_config.host, host_config.port
+    if ip == '0.0.0.0':
+        ip = os.environ.get('PUBLIC_BASE_URL')
+    return "http://" + ip + ":" + port
 
 @router.get("/test")
 async def test():
@@ -57,8 +67,10 @@ async def regist(user:User):
                             DB_Config().databasename,
                             DB_Config().port)
         _db.create_one(query, (uuid.uuid4(), user.username, user.password, key))
+        LOGGER.info("Regist ok")
         return True
     except Exception as e:
+        LOGGER.error(str(e))
         return e
 
 @router.post("/createProject")
@@ -81,13 +93,14 @@ async def create_project(project: Project):
                 ''' % project.project_name
         proj_name_df = _db.df_query_sql(query)
         assert len(proj_name_df) == 0
-
+        LOGGER.info("Check project exist ok")
         query = '''
             SELECT * FROM t_graph_db WHERE graph_db_name='%s'
         ''' % project.graph_db
         graph_df = _db.df_query_sql(query)
         assert len(graph_df) == 1
         assert graph_df.loc[0, 'project_name'] == None
+        LOGGER.info("Check graph database available ok")
 
         query = '''
             INSERT INTO t_project (project_name, username, graph_db, descript, create_time) VALUES (%s, %s, %s, %s, %s)
@@ -96,13 +109,16 @@ async def create_project(project: Project):
 
         project_id_df = _db.df_query_sql('''SELECT project_id FROM t_project WHERE project_name='%s' ''' % project.project_name)
         project_id = project_id_df.loc[0, 'project_id'].item()
+        LOGGER.info("Create project ok")
         # 分配图数据库
         query = '''
             UPDATE t_graph_db SET project_name=%s, project_id=%s WHERE graph_db_name=%s
         '''
         _db.updateById(query, (project.project_name, project_id, project.graph_db))
+        LOGGER.info("assign graph database to project ok")
 
     except Exception as e:
+        LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))
 
 @router.get("/getProjectList")
@@ -127,6 +143,7 @@ async def get_project_list(username: str):
         return project_list
 
     except Exception as e:
+        LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))
 
 @router.get("/getGraphDBUsrInfo")
@@ -151,6 +168,7 @@ async def get_graph_db_use_info(graph_db: str):
                 return {"exist": True, "available": True, "project": None}
 
     except Exception as e:
+        LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))
 
 @router.get("/getAvailGraphDB")
@@ -172,6 +190,7 @@ async def get_available_graph_db():
         return avail_graph_db_list
 
     except Exception as e:
+        LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))
 
 @router.post("/deleteProject")
@@ -194,7 +213,7 @@ async def delete_project(project: Project):
         )
         #删除图数据库内的内容
         _gdb.clear()
-
+        LOGGER.info("graph database has been clear.")
         #删除对应项目的所有节点, 关系, 标记， 文章
         _db.delete_one('''DELETE FROM t_node WHERE project_name='%s' ''' % project.project_name)
         _db.delete_one('''DELETE FROM t_predicate WHERE project_name='%s' ''' % project.project_name)
@@ -213,6 +232,7 @@ async def delete_project(project: Project):
 
         return 'OK'
     except Exception as e:
+        LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))
 
 @router.post("/updateProject")
@@ -235,6 +255,7 @@ async def update_project(project: Project):
         return 'OK'
 
     except Exception as e:
+        LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))
 
 

@@ -25,8 +25,8 @@
         </div>
         <div class="last-page-button" @click="lastPDFPage">上一页</div>
         <div class="next-page-button" @click="nextPDFPage">下一页</div>
-        <div class="jump-page-button" @click="jumpPDFPage">跳页至</div>
-        <div class="edit-button" @click="handleCopyToOpenModal">自由编辑</div>
+        <div class="jump-page-button" @click="showJumpWnd">跳页至</div>
+        <div class="edit-button" @click="handleCopyToOpenModal">管理</div>
       </div>
     </div>
 
@@ -70,11 +70,32 @@
         </a-form-item>
       </a-form>
   </a-modal>
+  <!--跳页模态框-->
+  <a-modal
+    v-model:visible="showPageModel"
+    title="跳页至"
+    @ok="hanleJumpPageOK"
+    @cancel="hanleJumpPageCancel"
+    width="500px"
+  >
+    <a-form-item label="当前页:">
+      <a-input v-model="currentPDFPage" disabled></a-input>
+    </a-form-item>
+    <a-form-item label="跳页至:">
+      <a-select
+          v-model:value="jumpPageValue"
+          :options="pageOptions"
+          placeholder="请选择"
+          @change="handlePageChange"
+      >
+      </a-select>
+    </a-form-item>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { watch } from "vue";
+import {ref, computed, onMounted, watch} from "vue";
 import PdfViewer from "./PdfViewer.vue";
 import { useEditStore } from "@/stores/edit.ts";
 import { usePdfUpload } from "@/hooks/usePdfUpload.ts";
@@ -86,6 +107,7 @@ const emit = defineEmits(["addNode"]);
 
 // 获取store状态
 const { pdfPreviewUrl } = storeToRefs(useEditStore());
+const pageOptions = ref([])
 
 // 使用hooks
 const {
@@ -98,11 +120,18 @@ const {
 } = usePdfUpload();
 
 const {
+  showPageModel,
+  totalPages,
+  jumpPageValue,
+  currentPDFPage,
   lastPDFPage,
   nextPDFPage,
   jumpPDFPage,
-  handleFileList
+  handleFileList,
+  hanleJumpPageOK,
+  hanleJumpPageCancel,
 } = usePdfNavigation();
+
 
 const {
   pdfContainer,
@@ -113,7 +142,6 @@ const {
   handleNodeModalCancel,
   resetNodeForm
 } = useTextSelection();
-
 
 // 处理节点模态框确认
 const handleNodeModalOk = () => {
@@ -127,6 +155,19 @@ const handleNodeModalOk = () => {
 watch(pdfPreviewUrl, (newVal) => {
   if (newVal) resetNodeForm();
 });
+
+const showJumpWnd = () => {
+  showPageModel.value = ~showPageModel.value
+  pageOptions.value = []
+  for(let i=0; i<totalPages.value; i++) {
+    pageOptions.value.push({value: i+1, page: i+1});
+  }
+}
+
+const handlePageChange = (val, opt) => {
+  jumpPageValue.value = val;
+}
+
 </script>
 
 <style scoped>

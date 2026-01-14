@@ -2,21 +2,19 @@ import shutil
 import os
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
-from pathlib import Path
+
 from datetime import datetime
 
 from pydantic import BaseModel
 from typing import List
-
+from pathlib import Path
 from app.api.config.db_config import DB_Config
 from app.api.config.graph_config import Graph_Config
 from app.api.db.postgre_helper import PostgreHelper
 from app.api.db.neo4j_helper import Neo4jHelper
 from app.api.utils.general import get_project_info
+from app.api.utils.logger import LOGGER
 
-UploadDir = Path("/usr/assets")
-# UploadDir = Path("D:/workspace/grapher/static")
-UploadDir.mkdir(exist_ok=True)
 router = APIRouter()
 
 class FileUpload(BaseModel):
@@ -41,7 +39,26 @@ class Article(BaseModel):
 
 @router.get("/test")
 async def test():
-    return "hello"
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_article '''
+        _db.df_query_sql(query)
+        LOGGER.info(f"Connect database OK: {DB_Config().host}")
+        _gdb = Neo4jHelper(Graph_Config().host,
+                           Graph_Config().user,
+                           Graph_Config().password,
+                           Graph_Config().databasename,
+                           Graph_Config().port)
+        _gdb.test()
+        LOGGER.info(f"Connect graph database OK: {Graph_Config().host}")
+        return "ok"
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/getPDFPreviewUrl")
 async def getPDFPreviewUrl(title: str, project: str):
@@ -89,13 +106,13 @@ async def upload(fileUpload: FileUpload):
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 #将文件上传至后端
 @router.post("/uploadfile")
 async def uploadfile(file: UploadFile=File(...)):
-    #filename = os.path.basename(file.filename)
-    #filename = re.sub(r'[\\/:*?"<>|]', '_', filename)
+    UploadDir = Path(os.environ.get('upload'))
+    UploadDir.mkdir(exist_ok=True)
     filename = file.filename
     savepath = UploadDir / filename
     os.remove(savepath) if os.path.exists(savepath) else None
@@ -130,7 +147,7 @@ async def write_sentence(sentence: Sentence):
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/uploadSentences")
 async def write_sentences(sentences: List[Sentence]):
@@ -145,14 +162,12 @@ async def write_sentences(sentences: List[Sentence]):
         project_id = project_id_df.loc[0, 'project_id'].item()
 
         for i in range(len(sentences)):
-            query = ('''SELECT * FROM t_sequence WHERE sequence='%s' AND x0=%s AND y0=%s AND x1=%s AND y1=%s AND article='%s' AND page=%s''' %
-                     (sentences[i].text,
-                      int(sentences[i].x0),
+            query = ('''SELECT * FROM t_sequence WHERE x0=%s AND y0=%s AND article='%s' AND page=%s AND project_name='%s' ''' %
+                     (int(sentences[i].x0),
                       int(sentences[i].y0),
-                      int(sentences[i].x1),
-                      int(sentences[i].y1),
                       sentences[i].article,
-                      sentences[i].page))
+                      sentences[i].page,
+                      sentences[i].project))
             existed = _db.df_query_sql(query)
             if len(existed) == 0:
                 query = '''INSERT INTO t_sequence (sequence, x0, y0, x1, y1, article, page, project_name, project_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'''
@@ -168,7 +183,7 @@ async def write_sentences(sentences: List[Sentence]):
                                 project_id))
 
     except Exception as e:
-        raise  HTTPException(status_code=404, detail=str(e))
+        raise  HTTPException(status_code=500, detail=str(e))
 
 @router.get("/querySentences")
 async def query_sentences(article: str, page: int, project: str):
@@ -178,7 +193,6 @@ async def query_sentences(article: str, page: int, project: str):
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-
 
         query = '''SELECT * FROM t_sequence WHERE article='%s' AND page='%s' AND project_name='%s' ''' % (article, page, project)
         sequence_df = _db.df_query_sql(query)
@@ -196,7 +210,7 @@ async def query_sentences(article: str, page: int, project: str):
         return seq_list
 
     except Exception as e:
-        raise  HTTPException(status_code=404, detail=str(e))
+        raise  HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/articletitles")
@@ -347,7 +361,6 @@ async def delete_sequence(sequence: Sentence):
         query = '''
                     DELETE FROM t_predicate WHERE sequence='%s' AND article='%s' AND project_name='%s' 
                 ''' % (sequence.text, sequence.article, sequence.project)
-
         _db.delete_one(query)
 
         query = '''

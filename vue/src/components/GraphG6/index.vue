@@ -12,6 +12,7 @@
       :enables="enableObject"
       @shortestPath="handleShortestPath"
       @exportGraphCsv="handleExportGraphCsv"
+      @commit="handleCommit"
     />
   </div>
 
@@ -75,7 +76,7 @@ const props = defineProps({
   // 图数据
   data: {
     type: Object as () => GraphData,
-    default: () => ({ nodes: [], edges: [] }),
+    default: () => ({ nodes: [], edges: [],  combos:[] }),
   },
   // 是否自适应视图
   fitView: {
@@ -143,6 +144,8 @@ const emit = defineEmits([
   "addNodeSuccess",
   "addEdgeSuccess",
   "deleteElementSuccess",
+  "updateGraph",
+  "deleteNode",
 ]);
 
 const zoomLevel = ref(100);
@@ -360,7 +363,7 @@ const initGraph = () => {
                 graph.value.updateBehavior({
                   key: "create-edge",
                   enable: (event) => {
-                    console.log(event);
+                    //console.log(event);
                     return event.targetType == "node"; // 在节点上启用连接
                   },
                   onFinish: (edge) => {
@@ -426,6 +429,16 @@ const initGraph = () => {
   emit("ready", graph.value);
 };
 // ** 节点相关 **
+
+const delay = (ms: number) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+//处理提交
+const handleCommit = () => {
+  console.log("handleCommit");
+  emit("updateGraph", "commit");
+}
 
 // 节点添加模态框的确认和取消处理
 const handleNodeOk = async (nodeData) => {
@@ -505,6 +518,8 @@ const handleDeleteNode = async (target) => {
         done(true);
         emit("deleteElementSuccess", elementData.id, target.type);
         graph.value.render();
+        emit("deleteNode")
+        //useEditStore().closeGraphEditor()
       },
     });
   } catch (err) {
