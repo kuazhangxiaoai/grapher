@@ -28,6 +28,7 @@ export const useEditStore = defineStore('editStore', {
         project: null as string,
         committing: false,
         deleting: false,
+        refreshing: false,
     }),
     getters: {
         getCurrentPage: (state) => { },
@@ -389,8 +390,13 @@ export const useEditStore = defineStore('editStore', {
         setProjectName(projectName: string) {
             this.projectName = projectName;
         },
+
         setCommiting(flag: boolean) {
             this.commiting = flag;
+        },
+
+        setRefreshing(flag: boolean) {
+            this.refreshing = flag;
         },
 
         commit() {

@@ -85,7 +85,7 @@ const editStore = useEditStore();
 const userStore = useUserStore();
 const project = localStorage.getItem("grapher-project");
 useEditStore().getAllFileInfoList(project);
-const {editGraph, fileList, article, committing, deleting} = storeToRefs(editStore);
+const {editGraph, fileList, article, committing, deleting, refreshing} = storeToRefs(editStore);
 
 // 返回列表页面
 const handleBack = () => {
@@ -360,6 +360,8 @@ watch(article, async (newVal) => {
     graphData.value = {}
   }
 })
+
+
 
 onMounted(() => {
   const graphId = route.params.id || route.query.graphId;

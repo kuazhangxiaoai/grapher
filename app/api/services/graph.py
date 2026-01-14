@@ -361,14 +361,14 @@ async def add_node_type(node_type: NodeType):
 async def update_node_type(node_type: NodeType):
     try:
         query = '''
-            UPDATE t_node_type SET node_type_name='%s' AND node_type_color='%s' WHERE node_type_name='%s'
-        ''' % node_type.new_name, node_type.new_color, node_type.name
+            UPDATE t_node_type SET node_type_color=%s WHERE project_name=%s AND node_type_name=%s
+        '''
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        _db.updateById(query, (node_type.name))
+        _db.updateById(query, (node_type.color, node_type.project, node_type.name))
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:
@@ -377,15 +377,23 @@ async def update_node_type(node_type: NodeType):
 @router.post("/deleteNodeType")
 async def delete_node_type(node_type: NodeType):
     try:
-        query = '''
-            DELETE FROM t_node_type WHERE node_type_name='%s' AND project_name='%s'
-        '''
+        #检验该节点是否存在，若存在，则不允许删除
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
                             DB_Config().password,
                             DB_Config().databasename,
                             DB_Config().port)
-        _db.delete_one(query, (node_type.name, node_type.project))
+        query = '''
+            SELECT * FROM t_node WHERE node_label='%s'
+        ''' % node_type.name
+        exist = _db.df_query_sql(query)
+        if len(exist) > 0:
+            raise HTTPException(status_code=500, detail="Failed to delete nodel type")
+        query = '''
+            DELETE FROM t_node_type WHERE node_type_name='%s' AND project_name='%s'
+        '''% (node_type.name, node_type.project)
+
+        _db.delete_one(query)
         return JSONResponse(content={"message": "success"}, status_code=200)
 
     except Exception as e:

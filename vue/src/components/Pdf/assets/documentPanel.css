@@ -149,3 +149,23 @@
 .edit-button:hover {
   cursor: pointer;
 }
+
+.refresh-button {
+  text-align: center;
+  place-content: center;
+  place-items: center;
+  position: relative;
+  left: 60px;
+  top: 0px;
+  width: 30px;
+  height: 100%;
+  background-color: skyblue;
+  border-radius: 5px;
+  font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+.refresh-button:hover {
+  cursor: pointer;
+}

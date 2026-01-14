@@ -27,6 +27,7 @@
         <div class="next-page-button" @click="nextPDFPage">下一页</div>
         <div class="jump-page-button" @click="showJumpWnd">跳页至</div>
         <div class="edit-button" @click="handleCopyToOpenModal">管理</div>
+        <div class="refresh-button" @click="handleRefresh"><icon-refresh></icon-refresh></div>
       </div>
     </div>
 
@@ -166,6 +167,11 @@ const showJumpWnd = () => {
 
 const handlePageChange = (val, opt) => {
   jumpPageValue.value = val;
+}
+
+const handleRefresh = () =>{
+  //手动刷新按钮
+  useEditStore().setRefreshing(true)
 }
 
 </script>
