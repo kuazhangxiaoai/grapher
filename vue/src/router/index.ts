@@ -38,7 +38,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.VITE_API_BASE_URL),
   routes
 });
 

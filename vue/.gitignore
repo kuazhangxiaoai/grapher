@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
+grapher_vue
 dist-ssr
 *.local
 .history/
