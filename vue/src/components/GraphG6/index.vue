@@ -170,7 +170,10 @@ const initGraph = () => {
   // 创建图实例 - 修改配置，适配G6 V5
   graph.value = new Graph({
     container: container.value,
-    data: props.data,
+    data: {
+      ...props.data,
+      combos: props.data.combos || []
+    },
     padding: 20,
     // animation: true,
     node: {
@@ -594,7 +597,12 @@ watch(
       if (graph.value.stopLayout) {
         graph.value.stopLayout();
       }
-      graph.value.setData(newData); // 使用setData替代data方法
+      // 确保newData包含combos属性
+      const dataWithCombos = {
+        ...newData,
+        combos: newData.combos || []
+      };
+      graph.value.setData(dataWithCombos); // 使用setData替代data方法
       graph.value.render();
       graph.value.once("afterrender", () => {
         graph.value.fitView();

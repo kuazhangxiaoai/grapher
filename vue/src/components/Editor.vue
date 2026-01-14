@@ -90,6 +90,7 @@ watch([nodes, edges], ([newNodes, newEdges]) => {
   
   graphData.value.nodes = node_data;
   graphData.value.edges = edges_data;
+  graphData.value.combos = [];
 }, { deep: true });
 
 // 监听sequence变化，重新查询关系图数据
@@ -143,7 +144,8 @@ const handleGraphReady = (graph) => {
   graphInstance.getData = () => {
     return {
       nodes: graphInstance.getNodesData?.() || [],
-      edges: graphInstance.getEdgesData?.() || []
+      edges: graphInstance.getEdgesData?.() || [],
+      combos: graphInstance.getCombosData?.() || []
     };
   };
 };
