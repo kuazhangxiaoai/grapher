@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Message } from '@arco-design/web-vue';
 
 const API_BASE_URL = import.meta.env.VITE_API_API_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -60,7 +61,8 @@ apiClient.interceptors.response.use(
       if (!window.location.pathname.includes('/auth')) {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
-        window.location.href = `${window.location.origin}/auth`;
+        // 使用环境变量中的基础路径，适应打包前缀
+        window.location.href = `${VITE_API_BASE_URL}/auth`;
       }
       return Promise.reject(error);
     }
@@ -82,7 +84,8 @@ apiClient.interceptors.response.use(
         // 延迟跳转，确保用户能看到错误提示
         setTimeout(() => {
           // 跳转登录页（兼容Vue Router和原生跳转）
-          window.location.href = `${window.location.origin}/auth`;
+          // 使用环境变量中的基础路径，适应打包前缀
+          window.location.href = `${VITE_API_BASE_URL}/auth`;
         }, 1500);
       }
     } else {

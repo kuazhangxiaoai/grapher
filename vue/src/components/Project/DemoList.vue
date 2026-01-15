@@ -45,9 +45,9 @@ const handleAdd = (newItem: any) => {
 
 // 编辑项目
 const handleEdit = (updatedItem: any) => {
-  const index = projectList.value.findIndex(item => item.id === updatedItem.id);
+  const index = projects.value.findIndex(item => item.id === updatedItem.id);
   if (index !== -1) {
-    projectList.value[index] = updatedItem;
+    projects.value[index] = updatedItem;
     // 修改成功后留在当前页面，不跳转
   }
 };
