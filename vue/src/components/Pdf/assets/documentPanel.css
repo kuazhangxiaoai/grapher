@@ -20,6 +20,11 @@
   display: inline-block;
   box-sizing: border-box;
   cursor: pointer;
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 .upload-btn:hover {
   background-color: #2563eb;
