@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
-import axios from "axios";
+import apiClient from '@/services/apiClient';
 import {useEditStore} from "@/stores/edit.ts";
 import { Message } from '@arco-design/web-vue';
 import type {NodeType} from "@/stores/nodeTypes.ts";
@@ -144,7 +144,7 @@ const handleEditType = (type: any) => {
 const handleDeleteType = async (id: string) => {
   try {
     // 调用删除节点类型的API
-    await axios.post("/api/graph/deleteNodeType", { id });
+    await apiClient.post("/api/graph/deleteNodeType", { id });
     Message.success('节点类型删除成功');
     // 删除成功后重新加载节点类型数据
     editStore.getAllNodeTypes();

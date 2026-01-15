@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import axios from 'axios';
+import apiClient from '@/services/apiClient';
 import { Message } from '@arco-design/web-vue';
 import { useEditStore } from '@/stores/edit.ts';
 
@@ -45,7 +45,7 @@ export function usePdfUpload() {
       return;
     }
     const project = localStorage.getItem('grapher-project') as string;
-    axios.post('/api/text/upload', {
+    apiClient.post('/api/text/upload', {
       title: title,
       publishtime: publishTime,
       filename: filename,
@@ -57,7 +57,7 @@ export function usePdfUpload() {
       const formData = new FormData();
       formData.append('file', fileInput.files[0]);
       
-      axios.post('/api/text/uploadfile', formData, {
+      apiClient.post('/api/text/uploadfile', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       .then(res => {

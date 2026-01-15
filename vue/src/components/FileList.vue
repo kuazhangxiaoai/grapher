@@ -32,7 +32,7 @@
 import { ref, computed } from "vue";
 import {useEditStore} from "../stores/edit.ts";
 import {storeToRefs} from "pinia";
-import axios from "axios";
+import apiClient from '@/services/apiClient';
 import message from '@arco-design/web-vue/es/message';
 import { 
   Modal, 
@@ -105,7 +105,7 @@ const handlePageChange = (page: number) => {
 
 const handleConfirm = (record: any) => {
   editStore.setArticleTitle(record.title)
-  axios.get("/api/text/getPDFPreviewUrl", {
+  apiClient.get("/api/text/getPDFPreviewUrl", {
     params: {
       title: record.title,
       project: localStorage.getItem("grapher-project")

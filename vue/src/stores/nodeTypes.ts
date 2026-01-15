@@ -1,5 +1,5 @@
 import { ref, reactive } from 'vue';
-import axios from "axios";
+import apiClient from '@/services/apiClient';
 
 // 节点类型接口
 export interface NodeType {
@@ -14,7 +14,7 @@ export function useNodeTypesStore() {
   const loadNodeTypes = (): NodeType[] => {
     //const stored = localStorage.getItem('nodeTypes');
     const nodes: NodeType[] = [];
-    axios.get("/api/graph/getAllNodeType").then((res) => {
+    apiClient.get("/api/graph/getAllNodeType").then((res) => {
       res.data.forEach(item => {
         nodes.push({id: item.id, name: item.name, color: item.color});
       })

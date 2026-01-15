@@ -18,18 +18,6 @@ const routes = [
     component: DemoList,
     meta: { requiresAuth: true }
   },
-  // {
-  //   path: '/',
-  //   name: 'GraphList',
-  //   component: GraphList,
-  //   meta: { requiresAuth: true }
-  // },
-  // {
-  //   path: '/graph/:id?',
-  //   name: 'Home',
-  //   component: Home,
-  //   meta: { requiresAuth: true }
-  // },
   {
     path: '/auth',
     name: 'Auth',
