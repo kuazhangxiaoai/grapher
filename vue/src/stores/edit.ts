@@ -40,6 +40,13 @@ export const useEditStore = defineStore('editStore', {
             });
         },
         addNode(node: Node) {
+            // 检查是否已存在同名节点
+            const isDuplicate = this.nodes.some(existingNode => existingNode.name === node.name);
+            if (isDuplicate) {
+                console.error('节点名称已存在:', node.name);
+                Message.error('节点名称已存在，请输入不同的名称');
+                return;
+            }
             this.nodes.push(node);
         },
         deleteNode(node: Node) {
