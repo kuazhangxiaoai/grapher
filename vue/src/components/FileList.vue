@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import {ref, computed, onMounted} from "vue";
 import {useEditStore} from "../stores/edit.ts";
 import {storeToRefs} from "pinia";
 import axios from "axios";
@@ -126,6 +126,10 @@ const handleDelete = (record: any) => {
   // 调用store中的删除方法
   editStore.deleteArticle(record.title);
 }
+
+onMounted(()=>{
+  editStore.getServer();
+})
 
 </script>
 

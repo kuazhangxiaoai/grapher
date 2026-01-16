@@ -38,6 +38,7 @@ export const useEditStore = defineStore('editStore', {
         getServer(){
             this.server = axios.get("/api/user/server").then(res => {
                 this.server = res.data;
+                return this.server;
             });
         },
         addNode(node: Node) {

@@ -40,8 +40,8 @@
           ref="pdfContainer"
           class="content-display h-full flex flex-col"
       >
-        <PdfViewer 
-          :pdfUrl="pdfPreviewUrl" 
+        <PdfViewer
+          :pdfUrl="pdfPreviewUrl"
           style="width: 100%; height: 600px;" 
         />
       </div>
@@ -154,7 +154,7 @@ const handleNodeModalOk = () => {
 
 // 监听PDF URL变化
 watch(pdfPreviewUrl, (newVal) => {
-  if (newVal) resetNodeForm();
+  resetNodeForm();
 });
 
 const showJumpWnd = () => {

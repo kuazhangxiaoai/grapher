@@ -18,10 +18,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "/package/pdf.worker.min.js";
 const props = defineProps<{
   pdfUrl: string | null;
 }>();
+
 const emit = defineEmits(["pdfRendered"]);
 
 const editStore = useEditStore();
-const { rects, currentPDFPage } = storeToRefs(editStore);
+const { rects, currentPDFPage, pdfPreviewUrl } = storeToRefs(editStore);
 
 const viewerRef = ref<HTMLDivElement>();
 let pdfInstance: any = null;
@@ -310,10 +311,9 @@ const updateHightLightLayer = async (pageIndex: number, rectList: any[]) => {
 
 // -------------------- 生命周期 --------------------
 onMounted(async () => {
-
-  if (props.pdfUrl) {
+  if (pdfPreviewUrl) {
     const loadingTask = pdfjsLib.getDocument({
-      url: props.pdfUrl,
+      url: pdfPreviewUrl.value,
       cMapUrl: "/package/cmaps/",
       cMapPacked: true,
     });
@@ -335,11 +335,11 @@ onMounted(async () => {
   }
 });
 
-watch([props.pdfUrl, currentPDFPage], async ([newA, newB]) => {
-  if (!newB || !props.pdfUrl) return;
+watch([pdfPreviewUrl, currentPDFPage], async ([newA, newB]) => {
+  if (!newB || !pdfPreviewUrl) return;
 
   const loadingTask = pdfjsLib.getDocument({
-    url: props.pdfUrl,
+    url: pdfPreviewUrl.value,
     cMapUrl: "/package/cmaps/",
     cMapPacked: true,
   });

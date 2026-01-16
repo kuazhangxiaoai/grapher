@@ -352,16 +352,11 @@ watch([committing, deleting], async ([committed, deleted]) => {
 })
 
 watch(article, async (newVal) => {
-  if(newVal) {
-    const graph_data = await useEditStore().queryGraphByArticle(newVal);
-    graphData.value.nodes = graph_data.nodes;
-    graphData.value.edges = graph_data.edges;
-  }else{
-    graphData.value = {}
-  }
+  const graph_data = await useEditStore().queryGraphByArticle(newVal);
+
+  graphData.value.nodes = graph_data.nodes;
+  graphData.value.edges = graph_data.edges;
 })
-
-
 
 onMounted(() => {
   const graphId = route.params.id || route.query.graphId;
@@ -427,6 +422,18 @@ const handleAddNodeFromDocument = (nodeData) => {
 const hanleGraphUpdate = async (typename) => {
 
 }
+
+watch(refreshing, async (newVal) => {
+  if (newVal) {
+    console.log("refreshing", newVal);
+    const article = useEditStore().article
+    console.log("grapher update", article)
+    const graph_data = await useEditStore().queryGraphByArticle(article);
+    graphData.value.nodes = graph_data.nodes;
+    graphData.value.edges = graph_data.edges;
+    useEditStore().setRefreshing(false);
+  }
+})
 
 </script>
 
