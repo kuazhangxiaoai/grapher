@@ -185,26 +185,53 @@ const handleAddEdge = async (edgeData) => {
 };
 const handleDeleteElement = async (elementId, type) => {
   try {
-    // await deleteElement(elementId, type);
+    if (type === "node") {
+      // 调用store的deleteNodeByName方法删除节点及其关联边
+      editStore.deleteNodeByName(elementId);
+    } else if (type === "edge") {
+      // 查找并删除对应的边
+      const edge = editStore.edges.find(e => {
+        // 生成唯一标识来匹配边
+        const edgeKey = `${e.from_node_name}-${e.to_node_name}-${e.name}`;
+        return elementId.includes(edgeKey);
+      });
+      if (edge) {
+        editStore.deleteEdge(edge);
+      }
+    }
     Message.success(`${type === "node" ? "节点" : "边"}删除成功`);
+    
+    // 更新节点列表
     getAllNodeList();
-
-    // 删除成功后调用commit方法，将变更提交到服务器
-    //editStore.commit();
+    
+    // 触发重新渲染
+    if (graphInstance) {
+      graphInstance.render();
+    }
   } catch (error) {
     Message.error(error.message);
   }
 };
 
 const hanleGraphUpdate = async () => {
-
+  // 触发重新渲染，确保图谱数据更新后视图能及时刷新
+  if (graphInstance) {
+    graphInstance.render();
+  }
 }
 
-const handleDeleteNode = async () => {
-  // 组件挂载时，如果有article和sequence，就查询关系图数据
-  if(editStore.article && sequence.value) {
-
-    //editStore.queryGraphBySeq(sequence.value);
+const handleDeleteNode = async (nodeName) => {
+  try {
+    // 删除节点及其关联边
+    editStore.deleteNodeByName(nodeName);
+    Message.success("节点删除成功");
+    
+    // 触发重新渲染
+    if (graphInstance) {
+      graphInstance.render();
+    }
+  } catch (error) {
+    Message.error(error.message);
   }
 }
 

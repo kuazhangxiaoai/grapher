@@ -94,7 +94,7 @@ const handleBack = () => {
   router.push('/list');
 };
 // 图数据
-const graphData: any = ref({});
+const graphData: any = ref({ nodes: [], edges: [], combos: [] });
 const graphG6 = ref(null);
 let graphInstance = null;
 
@@ -352,10 +352,14 @@ watch([committing, deleting], async ([committed, deleted]) => {
 })
 
 watch(article, async (newVal) => {
-  const graph_data = await useEditStore().queryGraphByArticle(newVal);
-
-  graphData.value.nodes = graph_data.nodes;
-  graphData.value.edges = graph_data.edges;
+  if(newVal) {
+    const graph_data = await useEditStore().queryGraphByArticle(newVal);
+    graphData.value.nodes = graph_data.nodes;
+    graphData.value.edges = graph_data.edges;
+  }else{
+    // 重置为初始状态，确保始终有 nodes 和 edges 属性
+    graphData.value = { nodes: [], edges: [], combos: [] };
+  }
 })
 
 onMounted(() => {
@@ -384,9 +388,30 @@ const handleAddEdge = async (edgeData) => {
 };
 const handleDeleteElement = async (elementId, type) => {
   try {
+    // 调用API更新到后端
     // await deleteElement(elementId, type);
-    Message.success(`${type === 'node' ? '节点' : '边'}删除成功`);
+
+    // 更新本地数据，确保视图及时刷新
+    if (type === 'node') {
+      // 删除节点及其关联边
+      graphData.value.nodes = graphData.value.nodes.filter(node => node.id !== elementId);
+      graphData.value.edges = graphData.value.edges.filter(edge =>
+        edge.source !== elementId && edge.target !== elementId
+      );
+    } else if (type === 'edge') {
+      // 删除边
+      graphData.value.edges = graphData.value.edges.filter(edge => edge.id !== elementId);
+    }
+
+    // 更新节点列表
     getAllNodeList();
+
+    // 触发重新渲染
+    if (graphInstance) {
+      graphInstance.render();
+    }
+
+    Message.success(`${type === 'node' ? '节点' : '边'}删除成功`);
   } catch (error) {
     Message.error(error.message);
   }
@@ -419,8 +444,11 @@ const handleAddNodeFromDocument = (nodeData) => {
   console.log('从文档添加节点到图谱:', nodeData);
 };
 
-const hanleGraphUpdate = async (typename) => {
-
+const hanleGraphUpdate = async () => {
+  // 触发重新渲染，确保图谱数据更新后视图能及时刷新
+  if (graphInstance) {
+    graphInstance.render();
+  }
 }
 
 watch(refreshing, async (newVal) => {

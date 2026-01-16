@@ -95,7 +95,7 @@ import { useRouter } from 'vue-router';
 import { Message, Modal } from '@arco-design/web-vue';
 import { IconPlus } from '@arco-design/web-vue/es/icon';
 import { useUserStore } from '@/stores/user';
-import axios from "axios";
+import apiClient from '@/services/apiClient';
 
 const router = useRouter();
 // 定义组件属性
@@ -258,7 +258,7 @@ const resetForm = () => {
 };
 
 onMounted(()=>{
-  axios.get('/api/user/getAvailGraphDB').then(res => {
+  apiClient.get('/api/user/getAvailGraphDB').then(res => {
     availableGraphDB.value = res.data;
   })
 })

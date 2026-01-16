@@ -104,6 +104,16 @@ const handleOk = async () => {
     const node_name = form.value.name;
     const node_label = form.value.nodeType;
 
+    // 检查是否已存在同名节点
+    const existingNodes = editStore.nodes;
+    const isDuplicate = existingNodes.some(node => node.name === node_name);
+    if (isDuplicate) {
+      // 使用Ant Design Vue的Message组件提示错误
+      const { Message } = await import('@arco-design/web-vue');
+      Message.error('节点名称已存在，请输入不同的名称');
+      return false;
+    }
+
     const node: Node = {
       label: node_label,
       name: node_name,

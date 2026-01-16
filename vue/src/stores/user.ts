@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from "axios";
-import {Message} from "@arco-design/web-vue";
+import apiClient from '@/services/apiClient';
 import type {User} from "@/types/user.ts"
 import type {Project} from "@/types/project.ts"
 
@@ -25,7 +24,7 @@ export const useUserStore = defineStore('userStore', {
 
     async login(user: User) {
       try {
-        await axios.post("/api/user/login", {
+        await apiClient.post("/api/user/login", {
           username: user.username,
           password: user.password,
         });
@@ -33,7 +32,6 @@ export const useUserStore = defineStore('userStore', {
         localStorage.setItem('grapher-user', JSON.stringify(user));
         return true;
       } catch (err) {
-        Message.error("用户名或密码错误");
         return false;
       }
     },
@@ -44,7 +42,7 @@ export const useUserStore = defineStore('userStore', {
     },
 
     getProjectList(username: string) {
-      axios.get("/api/user/getProjectList", {
+      apiClient.get("/api/user/getProjectList", {
         params: {username: username}
       }).then(res => {
         let project_list = []
@@ -62,7 +60,7 @@ export const useUserStore = defineStore('userStore', {
     },
 
     createProject(project: Project, username: string) {
-      axios.post("/api/user/createProject", {
+      apiClient.post("/api/user/createProject", {
         id: 9999,
         project_name: project.name,
         username: username,
@@ -74,7 +72,7 @@ export const useUserStore = defineStore('userStore', {
     },
 
     deleteProject(project: Project, username: string) {
-      axios.post("/api/user/deleteProject", {
+      apiClient.post("/api/user/deleteProject", {
         id: project.id,
         project_name: project.name,
         username: username,
