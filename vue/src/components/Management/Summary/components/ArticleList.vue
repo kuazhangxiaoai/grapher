@@ -75,4 +75,37 @@ const selectArticle = (articleId: string) => {
 .article-list {
   font-size: 14px;
 }
+
+/* 分组标题样式 */
+.article-list > div > div:first-child {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+/* 文章项样式 */
+.article-list > div > div:last-child > div {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+/* 选中状态样式 */
+.article-list > div > div:last-child > div.bg-blue-50 {
+  background-color: #dbeafe;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 悬停状态样式 */
+.article-list > div > div:last-child > div:hover:not(.bg-blue-50) {
+  background-color: #f9fafb;
+  transform: translateX(2px);
+}
 </style>
