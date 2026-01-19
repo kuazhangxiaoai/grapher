@@ -20,17 +20,17 @@ const routes = [
     component: () => import('@/components/Auth/AuthForm.vue')
   },
   {
-    path: '/summary',
+    path: '/management/summary',
     name: 'Summary',
     component: () => import('@/components/Management/Summary/index.vue')
   },
   {
-    path: '/map',
+    path: '/management/map',
     name: 'Map',
     component: () => import('@/components/Management/Map/index.vue')
   },
   {
-    path: '/traceBack',
+    path: '/management/traceBack',
     name: 'TraceBack',
     component: () => import('@/components/Management/TraceBack/index.vue')
   },
