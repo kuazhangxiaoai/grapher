@@ -3,7 +3,7 @@ import { useUserStore } from '@/stores/user';
 
 const routes = [
   {
-    path: '/',
+    path: '/home',
     name: 'Home',
     component: () => import('@/components/Home.vue'),
     meta: { requiresAuth: true }

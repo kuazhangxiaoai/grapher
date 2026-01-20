@@ -7,7 +7,7 @@
       v-if="disabled && !modelValue"
       class="flex items-center justify-center h-64 text-gray-400"
     >
-      请选择一篇文章进行编辑
+      请选择文章或分组进行总结
     </div>
     <div v-else class="graph-panel">
       <GraphG6

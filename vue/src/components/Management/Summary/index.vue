@@ -38,7 +38,8 @@
 import { ref } from 'vue';
 import ArticleList from './components/ArticleList.vue';
 import RichEditor from './components/RichEditor.vue';
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 // 模拟文章数据
 const articles = ref([
   {
@@ -116,6 +117,7 @@ const handleSave = () => {
 // 返回
 const handleBack = () => {
   console.log('返回');
+  router.replace('/home')
 };
 
 // 新建分组

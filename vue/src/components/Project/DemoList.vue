@@ -66,7 +66,7 @@ const handleNavigateToEdit = (item: any) => {
   editStore.resetState();
   editStore.setProjectName(project_name);
   localStorage.setItem('grapher-project', project_name)
-  router.push('/');
+  router.push('/home');
 };
 
 onMounted(() => {

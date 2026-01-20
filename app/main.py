@@ -50,8 +50,8 @@ if __name__ == '__main__':
     os.environ['PUBLIC_PORT'] = str(8088)
     os.environ['PUBLIC_HOST'] = '10.11.52.199'
     os.environ['PUBLIC_BASE_URL'] = '10.11.52.199'
+    # os.environ['upload'] = "D:/workspace/grapher/static"
     os.environ['upload'] = "/media/yanggang/847C02507C023D84/python_workspace/grapher/assets"
-    # os.environ['upload'] = "/media/yanggang/847C02507C023D84/python_workspace/grapher/assets"
     UploadDir = Path(os.environ['upload'])
     UploadDir.mkdir(exist_ok=True)
     app.mount("/assets", StaticFiles(directory=UploadDir), name='assets')
