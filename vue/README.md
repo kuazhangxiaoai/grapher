@@ -50,18 +50,8 @@
 - Node.js >= 16
 - npm >= 7
 
-### 安装
-
-```bash
-# 克隆项目
-git clone [项目地址]
-
-# 进入项目目录
-cd g6_arco_v3
-
-# 安装依赖
+### 安装依赖
 npm install
-```
 
 ### 开发
 
@@ -89,9 +79,21 @@ src/
 │       ├── components/        # 子组件
 │       ├── customBehavior/    # 自定义行为
 │       ├── customPlugins/     # 自定义插件
-│       └── utils/            # 工具函数
-├── assets/                   # 静态资源
-└── App.vue                  # 根组件
+│       └── utils/             # 工具函数
+├── Management/                # 管理
+    ├── [Statistics]           # 统计
+    ├── [Summary]              # 文章摘要
+    ├── [Q&A]                  # 问题回答
+    ├── [Search]               # 检索
+    ├── [TraceBack]            # 回溯
+    ├── [Map]                  # 地图 
+├── Auth/                      # 认证
+    ├── [AuthForm]             # 注册登录表单
+├── Project/                   # 项目管理
+    ├── [CardList]             # 项目卡片列表
+    ├── [DemoList]             # 项目详情列表
+├── assets/                    # 静态资源
+└── App.vue                    # 根组件
 ```
 
 ## 主要功能说明

@@ -1,28 +1,40 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Home from '@/components/Home.vue';
-import GraphList from '@/components/GraphList.vue';
-import AuthForm from '@/components/Auth/AuthForm.vue';
-import DemoList from '@/components/Project/DemoList.vue';
 import { useUserStore } from '@/stores/user';
 
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home,
+    component: () => import('@/components/Home.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/list',
     name: 'DemoList',
-    component: DemoList,
+    component: () => import('@/components/Project/DemoList.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/auth',
     name: 'Auth',
-    component: AuthForm
+    component: () => import('@/components/Auth/AuthForm.vue')
   },
+  {
+    path: '/management/summary',
+    name: 'Summary',
+    component: () => import('@/components/Management/Summary/index.vue')
+  },
+  {
+    path: '/management/map',
+    name: 'Map',
+    component: () => import('@/components/Management/Map/index.vue')
+  },
+  {
+    path: '/management/traceBack',
+    name: 'TraceBack',
+    component: () => import('@/components/Management/TraceBack/index.vue')
+  },
+
 ];
 
 const router = createRouter({

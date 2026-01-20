@@ -12,9 +12,37 @@
   padding-bottom: 5px;
   align-items: center;
   gap: 10px;
+  scrollbar-width: thin;
+}
+
+.upload-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.upload-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.upload-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.upload-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 启用鼠标滚轮水平滚动 */
+.upload-container {
+  scroll-behavior: smooth;
 }
 .upload-section {
   box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 .upload-btn {
   display: inline-block;
@@ -155,18 +183,17 @@
 
 .refresh-button {
   text-align: center;
-  place-content: center;
-  place-items: center;
-  position: relative;
-  left: 60px;
-  top: 0px;
-  width: 30px;
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 36px;
   background-color: skyblue;
   border-radius: 5px;
   font-family: Inter, "-apple-system", BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "noto sans", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: white;
+  flex-shrink: 0;
 }
 
 .refresh-button:hover {

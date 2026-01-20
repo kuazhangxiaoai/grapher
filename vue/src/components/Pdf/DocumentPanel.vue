@@ -5,29 +5,57 @@
     <!-- 文档上传区域 -->
     <div class="upload-section p-4 border-b border-gray-200">
       <h3 class="text-lg font-semibold mb-2">PDF文档上传</h3>
-      <div class="upload-container">
+      <div class="upload-container" ref="uploadContainerRef">
         <input
-            type="file"
-            id="document-upload"
-            accept=".pdf"
-            class="hidden"
-            @change="handleFileUpload"
+          type="file"
+          id="document-upload"
+          accept=".pdf"
+          class="hidden"
+          @change="handleFileUpload"
         />
         <label
-            for="document-upload"
-            class="upload-btn px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors"
+          for="document-upload"
+          class="upload-btn px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors"
         >
           选择PDF文档
         </label>
-    
-        <div class="file-list-button" @click="handleFileList">
-          文件列表
-        </div>
+
+        <div class="file-list-button" @click="handleFileList">文件列表</div>
         <div class="last-page-button" @click="lastPDFPage">上一页</div>
         <div class="next-page-button" @click="nextPDFPage">下一页</div>
         <div class="jump-page-button" @click="showJumpWnd">跳页至</div>
-        <div class="edit-button" @click="handleCopyToOpenModal">管理</div>
-        <div class="refresh-button" @click="handleRefresh"><icon-refresh></icon-refresh></div>
+        <a-dropdown :popup-max-height="false">
+          <template #content>
+            <a-menu>
+              <a-menu-item
+                key="summary"
+                @click="navigateToManagement('summary')"
+                >总结</a-menu-item
+              >
+              <a-menu-item
+                key="statistics"
+                @click="navigateToManagement('statistics')"
+                >统计</a-menu-item
+              >
+              <a-menu-item key="qa" @click="navigateToManagement('qa')"
+                >问答</a-menu-item
+              >
+              <a-menu-item key="search" @click="navigateToManagement('search')"
+                >检索</a-menu-item
+              >
+              <a-menu-item key="trace" @click="navigateToManagement('trace')"
+                >回溯</a-menu-item
+              >
+              <a-menu-item key="map" @click="navigateToManagement('map')"
+                >地图</a-menu-item
+              >
+            </a-menu>
+          </template>
+          <div class="edit-button cursor-pointer">管理</div>
+        </a-dropdown>
+        <div class="refresh-button" @click="handleRefresh">
+          刷新
+        </div>
       </div>
     </div>
 
@@ -35,15 +63,12 @@
     <div class="document-content flex-1 overflow-hidden">
       <!-- PDF预览区域（vue-office-pdf） -->
       <div
-          id="pdfPreviewer"
-          v-if="pdfPreviewUrl"
-          ref="pdfContainer"
-          class="content-display h-full flex flex-col"
+        id="pdfPreviewer"
+        v-if="pdfPreviewUrl"
+        ref="pdfContainer"
+        class="content-display h-full flex flex-col"
       >
-        <PdfViewer
-          :pdfUrl="pdfPreviewUrl"
-          style="width: 100%; height: 600px;" 
-        />
+        <PdfViewer :pdfUrl="pdfPreviewUrl" style="width: 100%; height: 600px" />
       </div>
 
       <!-- 空状态 -->
@@ -63,13 +88,19 @@
     width="500px"
   >
     <a-form layout="vertical" :model="FileUploadForm">
-        <a-form-item label="文章标题:">
-          <a-input v-model="FileUploadForm.title" placeholder="请输入文章标题"></a-input>
-        </a-form-item>
-        <a-form-item label="发表时间:">
-          <a-date-picker v-model="FileUploadForm.publishTime" style="width: 100%;"></a-date-picker>
-        </a-form-item>
-      </a-form>
+      <a-form-item label="文章标题:">
+        <a-input
+          v-model="FileUploadForm.title"
+          placeholder="请输入文章标题"
+        ></a-input>
+      </a-form-item>
+      <a-form-item label="发表时间:">
+        <a-date-picker
+          v-model="FileUploadForm.publishTime"
+          style="width: 100%"
+        ></a-date-picker>
+      </a-form-item>
+    </a-form>
   </a-modal>
   <!--跳页模态框-->
   <a-modal
@@ -84,10 +115,10 @@
     </a-form-item>
     <a-form-item label="跳页至:">
       <a-select
-          v-model:value="jumpPageValue"
-          :options="pageOptions"
-          placeholder="请选择"
-          @change="handlePageChange"
+        v-model:value="jumpPageValue"
+        :options="pageOptions"
+        placeholder="请选择"
+        @change="handlePageChange"
       >
       </a-select>
     </a-form-item>
@@ -96,19 +127,32 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import {ref, computed, onMounted, watch} from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import PdfViewer from "./PdfViewer.vue";
 import { useEditStore } from "@/stores/edit.ts";
 import { usePdfUpload } from "@/hooks/usePdfUpload.ts";
 import { usePdfNavigation } from "@/hooks/usePdfNavigation.ts";
 import { useTextSelection } from "@/hooks/useTextSelection.ts";
 
+// 处理水平滚动
+const uploadContainerRef = ref<HTMLElement | null>(null);
+
+onMounted(() => {
+  if (uploadContainerRef.value) {
+    uploadContainerRef.value.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      uploadContainerRef.value!.scrollLeft += event.deltaY;
+    });
+  }
+});
+
 // 定义emit事件
 const emit = defineEmits(["addNode"]);
 
 // 获取store状态
 const { pdfPreviewUrl } = storeToRefs(useEditStore());
-const pageOptions = ref([])
+const pageOptions = ref([]);
 
 // 使用hooks
 const {
@@ -117,7 +161,7 @@ const {
   FileUploadForm,
   handleFileUpload,
   hanleFileUploadOk,
-  hanleFileUploadCancel
+  hanleFileUploadCancel,
 } = usePdfUpload();
 
 const {
@@ -133,7 +177,6 @@ const {
   hanleJumpPageCancel,
 } = usePdfNavigation();
 
-
 const {
   pdfContainer,
   showNodeModal,
@@ -141,7 +184,7 @@ const {
   handleCopyToOpenModal,
   handleNodeModalOk: handleNodeModalOkHook,
   handleNodeModalCancel,
-  resetNodeForm
+  resetNodeForm,
 } = useTextSelection();
 
 // 处理节点模态框确认
@@ -152,28 +195,34 @@ const handleNodeModalOk = () => {
   }
 };
 
+// 路由导航
+const router = useRouter();
+
+const navigateToManagement = (type) => {
+  router.push(`/management/${type}`);
+};
+
 // 监听PDF URL变化
 watch(pdfPreviewUrl, (newVal) => {
   resetNodeForm();
 });
 
 const showJumpWnd = () => {
-  showPageModel.value = ~showPageModel.value
-  pageOptions.value = []
-  for(let i=0; i<totalPages.value; i++) {
-    pageOptions.value.push({value: i+1, page: i+1});
+  showPageModel.value = ~showPageModel.value;
+  pageOptions.value = [];
+  for (let i = 0; i < totalPages.value; i++) {
+    pageOptions.value.push({ value: i + 1, page: i + 1 });
   }
-}
+};
 
 const handlePageChange = (val, opt) => {
   jumpPageValue.value = val;
-}
+};
 
-const handleRefresh = () =>{
+const handleRefresh = () => {
   //手动刷新按钮
-  useEditStore().setRefreshing(true)
-}
-
+  useEditStore().setRefreshing(true);
+};
 </script>
 
 <style scoped>
