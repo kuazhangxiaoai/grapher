@@ -1,10 +1,10 @@
 <template>
   <div class="summary-container h-screen flex overflow-hidden">
-    <!-- 左侧目录和文章列表 -->
+    <!-- 左侧分组和文章列表 -->
     <div class="left-panel w-1/3 border-r border-gray-200 bg-white overflow-y-auto">
       <div class="p-4">
-        <h2 class="text-lg font-semibold mb-4">目录管理</h2>
-        <!-- 目录和文章列表组件 -->
+        <h2 class="text-lg font-semibold mb-4">分组管理</h2>
+        <!-- 分组和文章列表组件 -->
         <ArticleList 
           :articles="articles" 
           @select-article="selectArticle"
@@ -64,6 +64,19 @@ const articles = ref([
     group: '技术文档',
     content: '<h1>API接口</h1><p>系统提供的API接口...</p>'
   }
+  ,
+  {
+    id: '5',
+    title: '技术架构',
+    group: '技术文档',
+    content: '<h1>技术架构</h1><p>系统采用的技术架构...</p>'
+  },
+  {
+    id: '6',
+    title: 'API接口',
+    group: '技术文档',
+    content: '<h1>API接口</h1><p>系统提供的API接口...</p>'
+  },
 ]);
 
 const selectedArticle = ref(null);
@@ -96,16 +109,16 @@ const handleBack = () => {
   console.log('返回');
 };
 
-// 新建目录
+// 新建分组
 const handleAddDirectory = (directoryName: string) => {
-  console.log('新建目录:', directoryName);
-  // 这里可以添加目录到数据源
+  console.log('新建分组:', directoryName);
+  // 这里可以添加分组到数据源
 };
 
-// 删除目录
+// 删除分组
 const handleDeleteDirectory = (directoryId: string) => {
-  console.log('删除目录:', directoryId);
-  // 这里可以从数据源删除目录
+  console.log('删除分组:', directoryId);
+  // 这里可以从数据源删除分组
 };
 </script>
 

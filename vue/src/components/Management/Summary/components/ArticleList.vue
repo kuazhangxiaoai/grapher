@@ -2,13 +2,13 @@
   <div class="article-list">
     <!-- 顶部操作栏 -->
     <div class="flex justify-between items-center mb-4 px-2">
-      <h3 class="font-medium text-gray-700">目录与文章</h3>
-      <a-button type="primary" size="small" @click="showAddModal = true">新建目录</a-button>
+      <h3 class="font-medium text-gray-700">分组与文章</h3>
+      <a-button type="primary" size="small" @click="showAddModal = true">新建分组</a-button>
     </div>
     
-    <!-- 目录和文章列表 -->
-    <div class="space-y-2">
-      <!-- 目录项 -->
+    <!-- 分组和文章列表 -->
+    <div class="space-y-2 h-[85vh] overflow-y-auto">
+      <!-- 分组项 -->
       <div 
         v-for="directory in directories" 
         :key="directory.id"
@@ -42,7 +42,7 @@
           </div>
         </div>
         
-        <!-- 目录内文章列表 -->
+        <!-- 分组内文章列表 -->
         <div 
           v-if="directory.expanded"
           class="pl-8 pr-3 pb-3 space-y-2"
@@ -93,32 +93,32 @@
       </div>
     </div>
     
-    <!-- 新建目录弹框 -->
+    <!-- 新建分组弹框 -->
     <a-modal
       v-model:visible="showAddModal"
-      title="新建目录"
+      title="新建分组"
       @ok="handleAddDirectoryConfirm"
       @cancel="showAddModal = false"
     >
       <div class="p-2">
         <a-form layout="vertical">
-          <a-form-item label="目录名称">
-            <a-input v-model:value="newDirectoryName" placeholder="请输入目录名称" />
+          <a-form-item label="分组名称">
+            <a-input v-model:value="newDirectoryName" placeholder="请输入分组名称" />
           </a-form-item>
         </a-form>
       </div>
     </a-modal>
     
-    <!-- 删除目录弹框 -->
+    <!-- 删除分组弹框 -->
     <a-modal
       v-model:visible="showDeleteModal"
-      title="删除目录"
+      title="删除分组"
       type="warning"
       @ok="handleDeleteDirectoryConfirm"
       @cancel="showDeleteModal = false"
     >
       <div class="p-2">
-        <p>确定要删除这个目录吗？</p>
+        <p>确定要删除这个分组吗？</p>
       </div>
     </a-modal>
   </div>
@@ -156,7 +156,7 @@ const emit = defineEmits<{
 const selectedArticleId = ref<string | null>(null);
 const draggedArticleId = ref<string | null>(null);
 
-// 目录列表
+// 分组列表
 const directories = ref<Directory[]>([
   {
     id: 'dir1',
@@ -172,15 +172,15 @@ const directories = ref<Directory[]>([
   }
 ]);
 
-// 新建目录相关状态
+// 新建分组相关状态
 const showAddModal = ref(false);
 const newDirectoryName = ref('');
 
-// 删除目录相关状态
+// 删除分组相关状态
 const showDeleteModal = ref(false);
 const directoryToDelete = ref<string>('');
 
-// 计算根级文章（不在任何目录中的文章）
+// 计算根级文章（不在任何分组中的文章）
 const rootArticles = computed(() => {
   const articleIdsInDirectories = directories.value.flatMap(dir => dir.articles);
   return props.articles.filter(article => !articleIdsInDirectories.includes(article.id));
@@ -192,7 +192,7 @@ const selectArticle = (articleId: string) => {
   emit('select-article', articleId);
 };
 
-// 切换目录展开/收起状态
+// 切换分组展开/收起状态
 const toggleDirectory = (directoryId: string) => {
   const directory = directories.value.find(dir => dir.id === directoryId);
   if (directory) {
@@ -206,7 +206,7 @@ const handleDeleteClick = (directoryId: string) => {
   showDeleteModal.value = true;
 };
 
-// 新建目录确认
+// 新建分组确认
 const handleAddDirectoryConfirm = () => {
   if (newDirectoryName.value && newDirectoryName.value.trim()) {
     const directoryName = newDirectoryName.value.trim();
@@ -224,7 +224,7 @@ const handleAddDirectoryConfirm = () => {
   }
 };
 
-// 删除目录确认
+// 删除分组确认
 const handleDeleteDirectoryConfirm = () => {
   if (directoryToDelete.value) {
     const index = directories.value.findIndex(dir => dir.id === directoryToDelete.value);
@@ -251,14 +251,14 @@ const handleDrop = (directoryId: string, event: DragEvent) => {
     const directory = directories.value.find(dir => dir.id === directoryId);
     if (directory && !directory.articles.includes(draggedArticleId.value)) {
       directory.articles.push(draggedArticleId.value);
-      // 确保目录展开
+      // 确保分组展开
       directory.expanded = true;
     }
     draggedArticleId.value = null;
   }
 };
 
-// 从目录中移除文章
+// 从分组中移除文章
 const removeArticleFromDirectory = (directoryId: string, articleId: string) => {
   const directory = directories.value.find(dir => dir.id === directoryId);
   if (directory) {
@@ -281,7 +281,7 @@ const getArticleTitle = (articleId: string) => {
   font-size: 14px;
 }
 
-/* 目录项样式 */
+/* 分组项样式 */
 .article-list > div {
   transition: all 0.2s ease;
 }
