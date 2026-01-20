@@ -12,13 +12,17 @@
       <div 
         v-for="directory in directories" 
         :key="directory.id"
-        class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+        class="rounded-lg border overflow-hidden"
+        :class="{
+          'bg-blue-50 border-blue-200': selectedDirectoryId === directory.id,
+          'bg-white border-gray-200': selectedDirectoryId !== directory.id
+        }"
         @drop="handleDrop(directory.id, $event)"
         @dragover.prevent
         @dragenter.prevent
       >
         <div class="flex items-center justify-between p-3">
-          <div class="flex items-center space-x-2 cursor-pointer select-none" @click="toggleDirectory(directory.id)">
+          <div class="flex items-center space-x-2 cursor-pointer select-none" @click="selectDirectory(directory.id)">
             <IconFolder class="text-blue-500" />
             <span class="font-medium">{{ directory.name }}</span>
           </div>
@@ -27,7 +31,7 @@
               size="small" 
               type="text" 
               class="w-8 h-8 p-0 flex items-center justify-center"
-              @click="toggleDirectory(directory.id)"
+              @click.stop="toggleDirectory(directory.id)"
               :tooltip="directory.expanded ? '收起' : '展开'"
             >
                <template v-if="!directory.expanded" #icon><IconCaretRight /></template>
@@ -35,7 +39,7 @@
             </a-button>
             <a-button 
               size="small" 
-              @click="handleDeleteClick(directory.id)"
+              @click.stop="handleDeleteClick(directory.id)"
             >
               <template #icon><IconDelete /></template>
             </a-button>
@@ -50,12 +54,10 @@
           <div 
             v-for="articleId in directory.articles" 
             :key="articleId"
-            class="flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors"
+            class="flex items-center justify-between p-2 rounded-lg transition-colors border border-transparent cursor-not-allowed"
             :class="{
-              'bg-blue-50 text-blue-600 border border-blue-200': selectedArticleId === articleId,
-              'hover:bg-gray-100 border border-transparent': selectedArticleId !== articleId
+              'bg-gray-50 text-gray-500': true
             }"
-            @click="selectArticle(articleId)"
           >
             <div class="flex items-center space-x-2">
               <IconFile class="text-gray-400" />
@@ -101,7 +103,7 @@
       @cancel="showAddModal = false"
     >
       <div class="p-2">
-        <a-form layout="vertical">
+        <a-form layout="vertical" :model="{ name: newDirectoryName }">
           <a-form-item label="分组名称">
             <a-input v-model:value="newDirectoryName" placeholder="请输入分组名称" />
           </a-form-item>
@@ -149,11 +151,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'select-article', articleId: string): void;
+  (e: 'select-directory', directoryId: string): void;
   (e: 'add-directory', directoryName: string): void;
   (e: 'delete-directory', directoryId: string): void;
 }>();
 
 const selectedArticleId = ref<string | null>(null);
+const selectedDirectoryId = ref<string | null>(null);
 const draggedArticleId = ref<string | null>(null);
 
 // 分组列表
@@ -189,7 +193,15 @@ const rootArticles = computed(() => {
 // 选择文章
 const selectArticle = (articleId: string) => {
   selectedArticleId.value = articleId;
+  selectedDirectoryId.value = null;
   emit('select-article', articleId);
+};
+
+// 选择目录
+const selectDirectory = (directoryId: string) => {
+  selectedDirectoryId.value = directoryId;
+  selectedArticleId.value = null;
+  emit('select-directory', directoryId);
 };
 
 // 切换分组展开/收起状态

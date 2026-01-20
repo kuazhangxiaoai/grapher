@@ -8,6 +8,7 @@
         <ArticleList 
           :articles="articles" 
           @select-article="selectArticle"
+          @select-directory="selectDirectory"
           @add-directory="handleAddDirectory"
           @delete-directory="handleDeleteDirectory"
         />
@@ -91,6 +92,14 @@ const selectArticle = (articleId: string) => {
   } else {
     currentContent.value = '';
   }
+};
+
+// 选择目录
+const selectDirectory = (directoryId: string) => {
+  selectedArticle.value = null;
+  // 这里可以根据目录ID生成或获取对应的目录内容
+  // 暂时显示目录信息作为示例
+  currentContent.value = `<h1>目录内容</h1><p>您选择了目录: ${directoryId}</p>`;
 };
 
 // 保存文章

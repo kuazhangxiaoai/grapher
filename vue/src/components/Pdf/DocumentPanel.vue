@@ -111,7 +111,7 @@
     width="500px"
   >
     <a-form-item label="当前页:">
-      <a-input v-model="currentPDFPage" disabled></a-input>
+      <a-input :value="String(currentPDFPage)" disabled></a-input>
     </a-form-item>
     <a-form-item label="跳页至:">
       <a-select
@@ -181,7 +181,6 @@ const {
   pdfContainer,
   showNodeModal,
   nodeForm,
-  handleCopyToOpenModal,
   handleNodeModalOk: handleNodeModalOkHook,
   handleNodeModalCancel,
   resetNodeForm,
