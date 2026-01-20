@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from app.api.config.host import Host_Config
 from app.api.utils.logger import LOGGER
 from app.api.config.db_config import key
@@ -8,7 +7,7 @@ from app.api.config.graph_config import Graph_Config
 from app.api.db.postgre_helper import PostgreHelper
 from app.api.db.neo4j_helper import Neo4jHelper
 from app.api.utils.general import get_project_info
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 import os
 from pydantic import BaseModel
@@ -258,4 +257,18 @@ async def update_project(project: Project):
         LOGGER.error(str(e))
         raise HTTPException(500, detail=str(e))
 
-
+@router.post("/Reset")
+async def reset():
+    """
+        重置
+    """
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        _db.delete_one('''TRUNCATE TABLE t_node, t_predicate, t_sequence, t_node_summary, t_predicate_summary, t_group_summary, t_article''' )
+        _db.updateById('''UPDATE t_graph_db SET project_name=NULL, project_id=NULL WHERE project_name NOTNULL ''')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

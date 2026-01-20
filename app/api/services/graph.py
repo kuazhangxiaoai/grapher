@@ -1,3 +1,4 @@
+from idlelib.query import Query
 
 from app.api.utils.logger import LOGGER
 from app.api.config.db_config import DB_Config
@@ -5,10 +6,10 @@ from app.api.config.graph_config import Graph_Config
 from app.api.db.postgre_helper import PostgreHelper
 from app.api.db.neo4j_helper import Neo4jHelper
 from app.api.utils.general import get_project_info
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from  datetime import datetime
 
 router = APIRouter()
@@ -17,42 +18,47 @@ class Node(BaseModel):
     """
         节点类
     """
-    name: str
-    label: str
-    sequence: str
-    article: str
-    project: str
+    name: str= Field(..., description="节点名称")
+    label: str = Field(..., description="节点标签")
+    sequence: str = Field(..., description="语句")
+    article: str = Field(..., description="文章标题")
+    project: str = Field(..., description="项目名称")
 
 class Edge(BaseModel):
     """
         边类
-        :param:
     """
-    name: str
-    from_node_label: str
-    from_node_name: str
-    to_node_label: str
-    to_node_name: str
-    sequence: str
-    article: str
-    project: str
+    name: str = Field(..., description="关系名称")
+    from_node_label: str = Field(..., description="源节点标签")
+    from_node_name: str = Field(..., description="源节点名称")
+    to_node_label: str = Field(..., description="目的节点标签")
+    to_node_name: str = Field(..., description="目的节点标签")
+    sequence: str = Field(..., description="语句")
+    article: str = Field(..., description="文章标题")
+    project: str = Field(..., description="项目名称")
 
 class NodeType(BaseModel):
-    name: str
-    color: str
-    project: str
+    """
+        节点类型类
+    """
+    name: str = Field(..., description="节点类型名称")
+    color: str = Field(..., description="节点类型颜色")
+    project: str = Field(..., description="项目名称")
 
 class Commity(BaseModel):
-    sequence: str
-    nodes: List[Node]
-    edges: List[Edge]
+    """
+        提交类
+    """
+    sequence: str = Field(..., description="语句")
+    nodes: List[Node] = Field(..., description="节点列表")
+    edges: List[Edge] = Field(..., description="关系列表")
 
-@router.get("/test")
-async def test():
-    return "hello"
 
 @router.get("/getGraphFromSeq")
-async def get_graph_by_seq(sequence: str, project: str):
+async def get_graph_by_seq(sequence: str=Query(..., description="语句"), project: str=Query(..., description="项目名称")):
+    """
+        获取语句对应的图谱
+    """
     try:
         graph_db_config = Graph_Config()
         _db = PostgreHelper(DB_Config().host,
@@ -114,7 +120,10 @@ async def get_graph_by_seq(sequence: str, project: str):
         return e
 
 @router.get("/getGraphFromArticle")
-async def get_graph_from_article(article: str, project: str):
+async def get_graph_from_article(article: str=Query(..., description="文章标题"), project: str=Query(...,description="项目名称")):
+    """
+        获取文章对应的图谱
+    """
     try:
         graph_db_config = Graph_Config()
         _db = PostgreHelper(DB_Config().host,
@@ -176,6 +185,9 @@ async def get_graph_from_article(article: str, project: str):
 
 @router.get("/getAllNodes")
 async def get_all_nodes():
+    """
+        获取全部节点
+    """
     try:
         _gdb = Neo4jHelper(Graph_Config().host,
                            Graph_Config().user,
@@ -205,7 +217,10 @@ async def get_all_nodes():
         return e
 
 @router.get("/getGlobalGraph")
-async def get_global_graph(project: str):
+async def get_global_graph(project: str=Query(...,description="项目名称")):
+    """
+        获取项目的全局图谱
+    """
     try:
         graph_db_config = Graph_Config()
         _db = PostgreHelper(DB_Config().host,
@@ -268,6 +283,9 @@ async def get_global_graph(project: str):
 
 @router.get("/getAllNodeType")
 async def get_all_node_type():
+    """
+        获取全部节点类型
+    """
     try:
         query = '''
             SELECT * FROM t_node_type
@@ -316,7 +334,10 @@ async def get_node_type_by_project(project: str):
         raise HTTPException(500, detail=str(e))
 
 @router.get("/getNodeType")
-async def get_node_type(node_type_name: str, project: str):
+async def get_node_type(node_type_name: str=Query(...,description="节点类型名称"), project: str=Query(...,description="项目名称")):
+    """
+        获取节点信息
+    """
     try:
         query = '''
             SELECT * FROM t_node_type WHERE node_type_name='%s' AND project_name='%s'
@@ -341,6 +362,9 @@ async def get_node_type(node_type_name: str, project: str):
 
 @router.post("/addNodeType")
 async def add_node_type(node_type: NodeType):
+    """
+        添加节点类型
+    """
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -359,6 +383,9 @@ async def add_node_type(node_type: NodeType):
 
 @router.post("/updateNodeType")
 async def update_node_type(node_type: NodeType):
+    """
+        更新节点类型
+    """
     try:
         query = '''
             UPDATE t_node_type SET node_type_color=%s WHERE project_name=%s AND node_type_name=%s
@@ -376,6 +403,9 @@ async def update_node_type(node_type: NodeType):
 
 @router.post("/deleteNodeType")
 async def delete_node_type(node_type: NodeType):
+    """
+        删除节点类型
+    """
     try:
         #检验该节点是否存在，若存在，则不允许删除
         _db = PostgreHelper(DB_Config().host,
@@ -401,6 +431,9 @@ async def delete_node_type(node_type: NodeType):
 
 @router.post("/commit")
 async def commit(commit: Commity):
+    """
+        提交
+    """
     try:
         sequence = commit.sequence
         nodes = commit.nodes
@@ -498,12 +531,18 @@ async def commit(commit: Commity):
             tnn = edge.to_node_name
             tnl = edge.to_node_label
 
+
             existed_edges_context_df = _db.df_query_sql(
                 '''SELECT * FROM t_predicate WHERE predicate_name='%s' AND from_node_name='%s' AND to_node_name='%s' AND project_name='%s' ''' % (name, fnn, tnn, project))
+
+            # 判断是否为重复边=>跳过
+            if len(existed_edges_context_df) >= 1:
+                continue
 
             existed_edges_seq_df = _db.df_query_sql(
                 '''SELECT * FROM t_predicate WHERE predicate_name='%s' AND sequence='%s' AND from_node_name='%s' AND to_node_name='%s' AND project_name='%s' ''' % (
                 name, sequence, fnn, tnn, project))
+
             if len(existed_edges_seq_df) == 0:
                 query = '''INSERT INTO t_predicate (predicate_name, sequence, from_node_name, from_node_label, to_node_name, to_node_label, article, project_name, project_id, create_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
                 _db.create_one(query,
