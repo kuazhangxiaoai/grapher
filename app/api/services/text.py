@@ -1,11 +1,12 @@
 import shutil
 import os
-from fastapi import APIRouter, File, UploadFile, HTTPException
+
+from fastapi import APIRouter, File, UploadFile, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 from pathlib import Path
 from app.api.config.db_config import DB_Config
@@ -18,27 +19,30 @@ from app.api.utils.logger import LOGGER
 router = APIRouter()
 
 class FileUpload(BaseModel):
-    title: str
-    publishtime: str
-    filename: str
-    project: str
+    title: str = Field(..., description="文章标题")
+    publishtime: str = Field(..., description="发表时间")
+    filename: str = Field(..., description="文件名")
+    project: str= Field(..., description="项目名称")
 
 class Sentence(BaseModel):
-    text: str
-    x0: float
-    y0: float
-    x1: float
-    y1: float
-    article: str
-    page: int
-    project: str
+    text: str = Field(..., description="语句文本")
+    x0: float = Field(..., description="语句左上角x坐标")
+    y0: float = Field(..., description="语句左上角y坐标")
+    x1: float = Field(..., description="语句右下角x坐标")
+    y1: float = Field(..., description="语句右下角y坐标")
+    article: str = Field(..., description="文章标题")
+    page: int = Field(..., description="页码")
+    project: str = Field(..., description="项目名称")
 
 class Article(BaseModel):
-    title: str
-    project: str
+    title: str=Field(..., description="文章标题")
+    project: str=Field(..., description="项目名称")
 
 @router.get("/test")
 async def test():
+    """
+        测试
+    """
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -61,7 +65,10 @@ async def test():
 
 
 @router.get("/getPDFPreviewUrl")
-async def getPDFPreviewUrl(title: str, project: str):
+async def getPDFPreviewUrl(title: str=Query(..., description="文章标题"), project: str=Query(..., description="项目名称")):
+    """
+        获取文章PDF的URL
+    """
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -78,6 +85,9 @@ async def getPDFPreviewUrl(title: str, project: str):
 
 @router.post("/upload")
 async def upload(fileUpload: FileUpload):
+    """
+        文件信息上传
+    """
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -111,6 +121,9 @@ async def upload(fileUpload: FileUpload):
 #将文件上传至后端
 @router.post("/uploadfile")
 async def uploadfile(file: UploadFile=File(...)):
+    """
+        文件上传
+    """
     UploadDir = Path(os.environ.get('upload'))
     UploadDir.mkdir(exist_ok=True)
     filename = file.filename
@@ -124,6 +137,9 @@ async def uploadfile(file: UploadFile=File(...)):
 
 @router.post("/uploadSentence")
 async def write_sentence(sentence: Sentence):
+    """
+        单语句上传
+    """
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -151,6 +167,9 @@ async def write_sentence(sentence: Sentence):
 
 @router.post("/uploadSentences")
 async def write_sentences(sentences: List[Sentence]):
+    """
+        批量语句上传
+    """
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -186,7 +205,10 @@ async def write_sentences(sentences: List[Sentence]):
         raise  HTTPException(status_code=500, detail=str(e))
 
 @router.get("/querySentences")
-async def query_sentences(article: str, page: int, project: str):
+async def query_sentences(article: str=Query(..., description="文章标题"), page: int=Query(..., description="页码"), project: str=Query(..., description="项目名称")):
+    """
+        查询语句信息
+    """
     try:
         _db = PostgreHelper(DB_Config().host,
                             DB_Config().user,
@@ -214,7 +236,10 @@ async def query_sentences(article: str, page: int, project: str):
 
 
 @router.get("/articletitles")
-async def get_article_titles(project: str):
+async def get_article_titles(project: str=Query(..., description="项目名称")):
+    """
+        获取项目下的所有文章标题
+    """
     try:
         query = '''
             SELECT title, publish_time FROM t_article WHERE project_name='%s'
@@ -238,7 +263,10 @@ async def get_article_titles(project: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/getSequenceByNode")
-async def get_seq_by_node(name: str, project: str):
+async def get_seq_by_node(name: str=Query(...,description="节点名称"), project: str=Query(..., description="项目名称")):
+    """
+        获取对应节点下的所有语句
+    """
     try:
         query = '''
             SELECT node_name, node_label, sequence, article FROM t_node WHERE node_name='%s' AND project_name='%s'
@@ -269,6 +297,9 @@ async def get_seq_by_node(name: str, project: str):
 
 @router.post("/deleteArticle")
 async def delete_article(article: Article):
+    """
+        删除文章
+    """
     try:
         graph_db_config = Graph_Config()
         _db = PostgreHelper(DB_Config().host,
@@ -328,6 +359,9 @@ async def delete_article(article: Article):
 
 @router.post("/deleteSequence")
 async def delete_sequence(sequence: Sentence):
+    """
+        删除语句
+    """
     try:
         graph_db_config = Graph_Config()
         _db = PostgreHelper(DB_Config().host,
