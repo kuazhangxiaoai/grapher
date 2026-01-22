@@ -243,12 +243,12 @@ const getNodeSequence = async (nodeName) => {
   const project = localStorage.getItem("grapher-project")
   loading.value = true;
   try {
-    const response = await apiClient.get("/text/getSequenceByNode", {
+    const response = await apiClient.get("/api/text/getSequenceByNode", {
       params: { name: nodeName , project: project },
     });
     
     // 转换数据格式为表格所需
-    const { node_names, node_labels, sequences, articles } = response;
+    const { node_names, node_labels, sequences, articles } = response.data;
     const formattedData = [];
     for (let i = 0; i < node_names.length; i++) {
       formattedData.push({

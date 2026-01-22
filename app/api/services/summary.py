@@ -79,11 +79,54 @@ async def create_group(group: Group):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/getArticlesFromGroup")
+async def get_articles_from_group(group:str=Query(..., description="组名称"), project: str=Query(..., description="项目名称")):
+    """
+        获取文章组对应的文章标题列表
+    """
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_group_summary WHERE group_name='%s' AND project_name='%s' ''' % (group, project)
+        group_df = _db.df_query_sql(query)
+        articles = []
+        for i, row in group_df.iterrows():
+            articles.append(row.get("article"))
+
+        return articles
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/getGroupsFromArticle")
+async def get_articles_from_group(article: str = Query(..., description="文章标题"),
+                                  project: str = Query(..., description="项目名称")):
+    """
+        获取文章对应的组名称列表
+    """
+    try:
+        _db = PostgreHelper(DB_Config().host,
+                            DB_Config().user,
+                            DB_Config().password,
+                            DB_Config().databasename,
+                            DB_Config().port)
+        query = '''SELECT * FROM t_group_summary WHERE article='%s' AND project_name='%s' ''' % (article, project)
+        aritcle_df = _db.df_query_sql(query)
+        groups = []
+        for i, row in aritcle_df.iterrows():
+            groups.append(row.get("group_name"))
+
+        return groups
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/getGraphFromGroup")
 async def get_graph_from_group(group: str=Query(..., description="组名称"), project: str=Query(..., description="项目名称")):
     """
-    获取文章组对应的图谱
+        获取文章组对应的图谱
     """
     try:
         _db = PostgreHelper(DB_Config().host,
