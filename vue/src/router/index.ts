@@ -3,6 +3,14 @@ import { useUserStore } from '@/stores/user';
 
 const routes = [
   {
+    path: '/',
+    redirect: (to) => {
+      const userStore = useUserStore();
+      userStore.initUser();
+      return userStore.isLoggedIn ? '/home' : '/auth';
+    }
+  },
+  {
     path: '/home',
     name: 'Home',
     component: () => import('@/components/Home.vue'),

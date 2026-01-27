@@ -53,9 +53,7 @@
           </template>
           <div class="edit-button cursor-pointer">管理</div>
         </a-dropdown>
-        <div class="refresh-button" @click="handleRefresh">
-          刷新
-        </div>
+        <div class="refresh-button" @click="handleRefresh">刷新</div>
       </div>
     </div>
 
@@ -140,7 +138,7 @@ const uploadContainerRef = ref<HTMLElement | null>(null);
 
 onMounted(() => {
   if (uploadContainerRef.value) {
-    uploadContainerRef.value.addEventListener('wheel', (event) => {
+    uploadContainerRef.value.addEventListener("wheel", (event) => {
       event.preventDefault();
       uploadContainerRef.value!.scrollLeft += event.deltaY;
     });

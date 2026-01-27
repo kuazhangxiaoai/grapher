@@ -105,7 +105,7 @@
       <div class="p-2">
         <a-form layout="vertical" :model="{ name: newDirectoryName }">
           <a-form-item label="分组名称">
-            <a-input v-model:value="newDirectoryName" placeholder="请输入分组名称" />
+            <a-input v-model="newDirectoryName" placeholder="请输入分组名称" />
           </a-form-item>
         </a-form>
       </div>
@@ -130,6 +130,8 @@
 import { ref, computed } from 'vue';
 import { IconFolder, IconFile, IconDelete, IconClose, IconCaretRight, IconCaretDown, IconCaretUp } from '@arco-design/web-vue/es/icon';
 import { Modal, Form, Input } from '@arco-design/web-vue';
+import message from '@arco-design/web-vue/es/message';
+import summaryApi from '@/services/summaryApi';
 
 interface Article {
   id: string;
@@ -147,6 +149,8 @@ interface Directory {
 
 const props = defineProps<{
   articles: Article[];
+  articleName?: string;
+  projectName?: string;
 }>();
 
 const emit = defineEmits<{
@@ -219,20 +223,39 @@ const handleDeleteClick = (directoryId: string) => {
 };
 
 // 新建分组确认
-const handleAddDirectoryConfirm = () => {
+const handleAddDirectoryConfirm = async () => {
   if (newDirectoryName.value && newDirectoryName.value.trim()) {
     const directoryName = newDirectoryName.value.trim();
-    const newDirectory: Directory = {
-      id: `dir${Date.now()}`,
-      name: directoryName,
-      expanded: false,
-      articles: []
-    };
-    directories.value.push(newDirectory);
-    emit('add-directory', directoryName);
-    // 重置表单
-    newDirectoryName.value = '';
-    showAddModal.value = false;
+    try {
+      console.log(directoryName, props);
+      // return
+      // 调用创建分组API
+      await summaryApi.createGroup({
+        name: directoryName,
+        articles: '',
+        project: props.projectName
+      });
+      
+      // API调用成功后更新UI
+      const newDirectory: Directory = {
+        id: `dir${Date.now()}`,
+        name: directoryName,
+        expanded: false,
+        articles: []
+      };
+      directories.value.push(newDirectory);
+      emit('add-directory', directoryName);
+      
+      // 重置表单
+      newDirectoryName.value = '';
+      showAddModal.value = false;
+      
+      // 显示成功提示
+      message.success('分组创建成功');
+    } catch (error) {
+      // 显示错误提示
+      message.error('分组创建失败，请重试');
+    }
   }
 };
 

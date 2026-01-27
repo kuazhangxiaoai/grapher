@@ -54,6 +54,19 @@ apiClient.interceptors.response.use(
   (error) => {
     console.error('API响应错误:', error);
     
+    // 处理取消请求错误，不显示错误提示
+    if (axios.isCancel(error)) {
+      // 记录被取消的请求信息，包括URL和参数，便于调试
+      let requestInfo = error.message;
+      if (error.config) {
+        const requestUrl = `${error.config.baseURL || ''}${error.config.url}`;
+        const requestParams = error.config.params ? JSON.stringify(error.config.params) : '';
+        requestInfo = `${error.message} | URL: ${requestUrl} | 参数: ${requestParams}`;
+      }
+      console.log('请求被取消:', requestInfo);
+      return Promise.reject(error);
+    }
+    
     // 1. 处理网络错误/超时（无response的情况）
     if (!error.response) {
       showErrorMessage('服务器连接失败，请检查网络或服务器状态');

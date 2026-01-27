@@ -216,22 +216,14 @@ const handleSubmit = () => {
   } else {
     emit('add', item);
     const username = JSON.parse(localStorage.getItem('grapher-user')).username;
-    const project_info = {
+    const project_info:any = {
       id: formData.value.name,
       name: formData.value.name,
       descript: formData.value.description,
       graph_db: formData.value.graph_db,
       create_time: formData.value.createTime.toISOString()
-    } as Project
+    }
     userStore.createProject(project_info, username.toString())
-    //axios.post("/api/user/createProject", {
-    //  project_name: project_name,
-    //  graph_db: graph_db,
-    //  username: username
-    //}).then(res => {
-    //  Message.success('项目创建成功');
-    //})
-
   }
 
   resetForm();

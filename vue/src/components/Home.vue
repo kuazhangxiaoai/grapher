@@ -76,7 +76,7 @@ import {storeToRefs} from "pinia";
 import {useEditStore} from "@/stores/edit.ts";
 import {useUserStore} from "@/stores/user.ts";
 import FileList from "./FileList.vue";
-import axios from "axios";
+import apiClient from "@/services/apiClient";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
 
 const route = useRoute();
@@ -96,7 +96,7 @@ const handleBack = () => {
 // 图数据
 const graphData: any = ref({ nodes: [], edges: [], combos: [] });
 const graphG6 = ref(null);
-let graphInstance = null;
+let graphInstance:any = null;
 
 const enableObj = ref({
   zoomOut: true,
@@ -173,13 +173,6 @@ const handleUpdateElementInfo = async (updatedData) => {
   // 优先修改画布信息
   const updateMethod = elementTargetType.value === 'node' ? 'updateNodeData' : 'updateEdgeData';
   try {
-    // 调用API更新到后端
-    // if (elementTargetType.value === 'node') {
-    //   await updateNode(updatedData.id, updatedData);
-    // } else {
-    //   await updateEdge(updatedData.id, updatedData);
-    // }
-
     graphInstance[updateMethod]([updatedData]);
     Message.success('更新成功');
     // 更新最新的elementInfo
@@ -233,13 +226,13 @@ const getGraphDetail = async (project) => {
     console.log(article)
     console.log(project)
     if (article === null && sequence === null){
-      axios.get("/api/graph/getGlobalGraph", {params: {project: project}}).then((res) => {
-        let graph_data = {
+      apiClient.get("/api/graph/getGlobalGraph", {params: {project: project}}).then((res:any) => {
+        let graph_data:any = {
           nodes: [],
           edges: [],
           combos:[]
         }
-        res.data.nodes.forEach((node) => {
+        res.data.nodes.forEach((node:any) => {
           graph_data.nodes.push({
             id: node.name,
             data: {
@@ -319,17 +312,9 @@ const allNodeList: any = ref([]);
 const newGraphData: any = ref({});
 // 获取所有节点列表
 const getAllNodeList = async (graphId?: string) => {
-  // try {
-  //   const data = await getGraphData(graphId);
-  //   allNodeList.value = data.nodes || [];
-  //   newGraphData.value = data;
-  // } catch (error) {
-  //   Message.error(error.message);
-    // 出错时使用模拟数据兜底
     const mockData = generateMockData();
     allNodeList.value = mockData.nodes || [];
     newGraphData.value = mockData;
-  // }
 };
 
 // 监听路由变化，更新图谱数据
@@ -344,7 +329,7 @@ watch(() => route.params.id || route.query.graphId, (newGraphId) => {
 watch([committing, deleting], async ([committed, deleted]) => {
   const article = useEditStore().article
   console.log("grapher update", article)
-  const graph_data = await useEditStore().queryGraphByArticle(article);
+  const graph_data:any = await useEditStore().queryGraphByArticle(article);
   graphData.value.nodes = graph_data.nodes;
   graphData.value.edges = graph_data.edges;
   useEditStore().setCommiting(false);
@@ -353,7 +338,7 @@ watch([committing, deleting], async ([committed, deleted]) => {
 
 watch(article, async (newVal) => {
   if(newVal) {
-    const graph_data = await useEditStore().queryGraphByArticle(newVal);
+    const graph_data:any = await useEditStore().queryGraphByArticle(newVal);
     graphData.value.nodes = graph_data.nodes;
     graphData.value.edges = graph_data.edges;
   }else{

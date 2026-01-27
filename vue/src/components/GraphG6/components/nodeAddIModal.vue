@@ -12,7 +12,7 @@
   >
     <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
       <a-form-item label="节点名称" field="name">
-        <a-input v-model="form.name" placeholder="请输入节点名称" />
+        <a-input v-model="form.name" placeholder="请输入节点名称（必须以中文或英文字母开头，可包含中文、英文、数字和下划线）" />
       </a-form-item>
       <a-form-item label="节点类型" field="nodeType">
         <div class="flex items-center"  style="width: 250px;">
@@ -27,7 +27,17 @@
               :key="type.name"
               :value="type.name"
             >
-              {{ type.name }}
+            <div style="display: flex; align-items: center;justify-content: space-between;">
+              <span class="mr-2">{{ type.name }}</span>
+              <span v-if="type.color" :style="{ 
+                display: 'inline-block', 
+                width: '12px', 
+                height: '12px', 
+                borderRadius: '50%', 
+                backgroundColor: type.color 
+              }"></span>
+            </div>
+              
             </a-option>
           </a-select>
           <a-button
@@ -40,13 +50,6 @@
           </a-button>
         </div>
       </a-form-item>
-      <!--<a-form-item label="节点描述" field="description">
-        <a-textarea
-          v-model="form.description"
-          placeholder="请输入节点描述"
-          :auto-size="{ minRows: 3, maxRows: 5 }"
-        />
-      </a-form-item>-->
     </a-form>
 
     <!-- 节点类型管理组件 -->
@@ -60,10 +63,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { storeToRefs } from 'pinia';
-//import { useNodeTypesStore } from '@/stores/nodeTypes';
 import {useEditStore} from "@/stores/edit.ts";
 import NodeTypeManager from './nodeTypeManager.vue';
-import axios from "axios";
 import type Node from "@/types/node.ts"
 
 const props = defineProps({});
@@ -83,7 +84,10 @@ const form = ref({
 });
 
 const rules = ref({
-  name: [{ required: true, message: "请输入节点名称" }],
+  name: [
+    { required: true, message: "请输入节点名称" },
+    { pattern: /^[\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_]*$/, message: "节点名称必须以中文或英文字母开头，可包含中文、英文、数字和下划线" }
+  ],
   nodeType: [{ required: true, message: "请选择节点类型" }]
   // description字段已被注释，移除必填规则
 });

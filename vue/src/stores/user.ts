@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiClient';
-import type {User} from "@/types/user.ts"
+import type { User} from "@/types/user.ts"
 import type {Project} from "@/types/project.ts"
 
 export const useUserStore = defineStore('userStore', {
   state: () => ({
-    user: null as User,
-    project: null as Project,
+    user: {} as User,
+    project: {} as Project,
     projects: [] as Project[],
   }),
   getters: {
@@ -37,16 +37,16 @@ export const useUserStore = defineStore('userStore', {
     },
 
     logout() {
-      this.user = null;
+      this.user = {} as User;
       localStorage.removeItem('grapher-user');
     },
 
     getProjectList(username: string) {
       apiClient.get("/api/user/getProjectList", {
         params: {username: username}
-      }).then(res => {
-        let project_list = []
-        res.data.forEach(project => {
+      }).then((res:any) => {
+        let project_list:Project[] = []
+        res.data.forEach((project:any) => {
           project_list.push({
             id: project.id,
             name: project.project_name,
@@ -66,7 +66,7 @@ export const useUserStore = defineStore('userStore', {
         username: username,
         graph_db: project.graph_db,
         descript: project.descript,
-      }).then(res => {
+      }).then((res:any) => {
         this.getProjectList(username)
       })
     },
@@ -78,7 +78,7 @@ export const useUserStore = defineStore('userStore', {
         username: username,
         graph_db: project.graph_db,
         descript: project.descript,
-      }).then(res => {
+      }).then((res:any) => {
         this.getProjectList(username)
       })
     },

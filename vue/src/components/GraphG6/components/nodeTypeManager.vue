@@ -143,8 +143,20 @@ const handleEditType = (type: any) => {
 // 删除节点类型
 const handleDeleteType = async (id: string) => {
   try {
-    // 调用删除节点类型的API
-    await apiClient.post("/api/graph/deleteNodeType", { id });
+    // 根据id找到对应的节点类型
+    const nodeType = nodeTypes.value.find(type => type.id === id);
+    if (!nodeType) {
+      Message.error('节点类型不存在');
+      return;
+    }
+    // 获取project信息
+    const project = localStorage.getItem("grapher-project");
+    // 调用删除节点类型的API，传递完整的参数
+    await apiClient.post("/api/graph/deleteNodeType", { 
+      name: nodeType.name, 
+      color: nodeType.color, 
+      project 
+    });
     Message.success('节点类型删除成功');
     // 删除成功后重新加载节点类型数据
     editStore.getAllNodeTypes();

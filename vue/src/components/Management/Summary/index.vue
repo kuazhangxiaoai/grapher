@@ -7,6 +7,8 @@
         <!-- 分组和文章列表组件 -->
         <ArticleList 
           :articles="articles" 
+          :articleName="selectedArticle ? articles.find(a => a.id === selectedArticle)?.title : undefined"
+          :projectName="editStore.project" 
           @select-article="selectArticle"
           @select-directory="selectDirectory"
           @add-directory="handleAddDirectory"
@@ -39,6 +41,9 @@ import { ref } from 'vue';
 import ArticleList from './components/ArticleList.vue';
 import RichEditor from './components/RichEditor.vue';
 import { useRouter } from 'vue-router';
+import { useEditStore } from '@/stores/edit';
+
+const editStore = useEditStore();
 const router = useRouter();
 // 模拟文章数据
 const articles = ref([
@@ -59,25 +64,6 @@ const articles = ref([
     title: '技术架构',
     group: '技术文档',
     content: '<h1>技术架构</h1><p>系统采用的技术架构...</p>'
-  },
-  {
-    id: '4',
-    title: 'API接口',
-    group: '技术文档',
-    content: '<h1>API接口</h1><p>系统提供的API接口...</p>'
-  }
-  ,
-  {
-    id: '5',
-    title: '技术架构',
-    group: '技术文档',
-    content: '<h1>技术架构</h1><p>系统采用的技术架构...</p>'
-  },
-  {
-    id: '6',
-    title: 'API接口',
-    group: '技术文档',
-    content: '<h1>API接口</h1><p>系统提供的API接口...</p>'
   },
 ]);
 

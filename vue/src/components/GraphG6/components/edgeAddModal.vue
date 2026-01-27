@@ -12,7 +12,7 @@
   >
     <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
       <a-form-item label="连线名称" field="name">
-        <a-input v-model="form.name" placeholder="请输入连线名称" />
+        <a-input v-model="form.name" placeholder="请输入连线名称（必须以中文或英文字母开头，可包含中文、英文、数字和下划线）" />
       </a-form-item>
       <!--<a-form-item label="连线描述" field="description">
         <a-input v-model="form.description" placeholder="请输入连线描述" />
@@ -35,7 +35,10 @@ const form = ref({
   weight: 1
 });
 const rules = ref({
-  name: [{ required: true, message: "请输入连线名称" }],
+  name: [
+    { required: true, message: "请输入连线名称" },
+    { pattern: /^[\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_]*$/, message: "连线名称必须以中文或英文字母开头，可包含中文、英文、数字和下划线" }
+  ],
   description: [{ required: true, message: "请输入连线描述" }],
   weight: [{ required: false, message: "请输入权重" }]
 });

@@ -2,41 +2,42 @@ import { defineStore } from 'pinia'
 import axios from "axios";
 import type {Node} from "@/types/node.ts"
 import type { FileInfo } from "@/types/text.ts";
-import type { Rectangle } from "@/types/rect.ts";
+import type { Rectangle } from "@/types/recdt.ts";
 import type { NodeType } from "./nodeTypes.ts";
 import type {Edge} from "@/types/edges.ts";
 import { Message, Modal } from "@arco-design/web-vue";
 import { RectangleType } from "@/types/rect.ts";
 import {RectangleColorType} from "../types/rect.ts";
-
+import apiClient from '@/services/apiClient';
 export const useEditStore = defineStore('editStore', {
     state: () => ({
-        article: null as string,
+        article: null as unknown as string,
         currentPDFPage: 1 as number,
         totalPages: 1 as number,
-        sequence: null as string,
-        nodes: [] as Node,
+        sequence: null as unknown as string,
+        nodes: [] as Node[],
         nodeTypes: [] as NodeType[],
-        edges: [] as Edge,
-        rects: [] as Rectangle,
+        edges: [] as Edge[],
+        rects: [] as Rectangle[],
         editGraph: false,
         fileList: false,
         fileinfos: [] as FileInfo[],
-        pdfPreviewUrl: null as string,
+        pdfPreviewUrl: null as unknown as string,
         server: "http://localhost:8088",
         graphRequestCancelToken: null as any,
-        project: null as string,
+        project: null as unknown as string,
         committing: false,
         deleting: false,
         refreshing: false,
+        loadingNodeTypes: false,
     }),
     getters: {
         getCurrentPage: (state) => { },
         getCurrentPageItem: (state) => { },
     },
     actions: {
-        getServer(){
-            this.server = axios.get("/api/user/server").then(res => {
+        async getServer(){
+            this.server = await apiClient.get("/api/user/server").then((res:any) => {
                 this.server = res.data;
                 return this.server;
             });
@@ -66,7 +67,7 @@ export const useEditStore = defineStore('editStore', {
         getArticleTitle() {
             return this.article
         },
-        setArticleTitle(article) {
+        setArticleTitle(article: string) {
             this.article = article
         },
         openGraphEditor() {
@@ -91,7 +92,7 @@ export const useEditStore = defineStore('editStore', {
             this.sequence = sequence
         },
         getAllFileInfoList(project: string) {
-            axios.get("/api/text/articletitles", {params: {project: project}}).then(res => {
+            apiClient.get("/api/text/articletitles", {params: {project: project}}).then(res => {
                 this.fileinfos = res.data
             })
         },
@@ -121,7 +122,7 @@ export const useEditStore = defineStore('editStore', {
         },
         getRects(queryEnable=false) {
             if (queryEnable) {
-                axios.get("/api/text/querySentences",
+                apiClient.get("/api/text/querySentences",
                     {
                         params: {
                             article: this.article,
@@ -166,7 +167,7 @@ export const useEditStore = defineStore('editStore', {
                     return;
                 }
                 
-                axios.get("/api/text/querySentences",
+                apiClient.get("/api/text/querySentences",
                     {
                         params: {
                             article: this.article,
@@ -203,22 +204,42 @@ export const useEditStore = defineStore('editStore', {
                     });
             });
         },
-        getAllNodeTypes() {
-            localStorage.removeItem('nodeTypes');
+        async getAllNodeTypes() {
+            // 检查是否正在加载，避免重复请求
+            if (this.loadingNodeTypes) {
+                return this.nodeTypes;
+            }
+            
+            this.loadingNodeTypes = true;
             const project = localStorage.getItem("grapher-project");
-            const node_types: NodeType[] = [];
-            axios.get("/api/graph/getNodeTypeByProject", {params: {project: project}}).then((res) => {
-                res.data.forEach(item => {
-                    node_types.push({ id: item.id, name: item.name, color: item.color } as NodeType);
-                })
+            
+            try {
+                const res = await apiClient.get("/api/graph/getNodeTypeByProject", {params: {project: project}});
+                const node_types: NodeType[] = res.data.map((item: any) => ({
+                    id: item.id, 
+                    name: item.name, 
+                    color: item.color 
+                } as NodeType));
+                
                 this.nodeTypes = node_types;
                 localStorage.setItem('nodeTypes', JSON.stringify(node_types));
                 return node_types;
-            })
+            } catch (error) {
+                console.error("获取节点类型失败:", error);
+                // 可以考虑从本地存储恢复数据
+                const storedTypes = localStorage.getItem('nodeTypes');
+                if (storedTypes) {
+                    this.nodeTypes = JSON.parse(storedTypes);
+                    return this.nodeTypes;
+                }
+                return [];
+            } finally {
+                this.loadingNodeTypes = false;
+            }
         },
         addNodeType(type: NodeType) {
             const project = localStorage.getItem("grapher-project");
-            axios.post("/api/graph/addNodeType",
+            apiClient.post("/api/graph/addNodeType",
                 { name: type.name, color: type.color, project })
                 .then((res) => {
                     return res.data;
@@ -226,7 +247,7 @@ export const useEditStore = defineStore('editStore', {
         },
         updateNodeType(type: NodeType) {
             const project = localStorage.getItem("grapher-project");
-            axios.post("/api/graph/updateNodeType",
+            apiClient.post("/api/graph/updateNodeType",
                 { id: type.id, name: type.name, color: type.color, project })
                 .then((res) => {
                     return res.data;
@@ -251,25 +272,25 @@ export const useEditStore = defineStore('editStore', {
             this.article = article;
             this.sequence = null;
             return new Promise((resolve, reject)=>{
-                axios.get("/api/graph/getGraphFromArticle", {
+                apiClient.get("/api/graph/getGraphFromArticle", {
                     params:{
                         article: article,
                         project: localStorage.getItem("grapher-project")
                     }
-                }).then((res) => {
-                    const nodes = []
-                    const edges = []
+                }).then((res:any) => {
+                    const nodes:any = []
+                    const edges:any = []
 
                     // for render
-                    let graph_data = {
+                    let graph_data:any = {
                         nodes: [],
                         edges: [],
                     }
                     // 创建节点映射，方便快速查找
                     const nodeMap = new Map();
                     
-                    res.data.nodes.forEach((node) => {
-                        const nodeItem = {
+                    res.data.nodes.forEach((node:any) => {
+                        const nodeItem:any = {
                             id: node.name,
                             data: {
                                 name: node.name,
@@ -285,7 +306,7 @@ export const useEditStore = defineStore('editStore', {
                         nodeMap.set(node.name, nodeItem);
                     })
                     
-                    res.data.edges.forEach((edge, index) => {
+                    res.data.edges.forEach((edge:any, index:any) => {
                         // 只添加有效的边，即源节点和目标节点都存在的边
                         if (nodeMap.has(edge.from_node_name) && nodeMap.has(edge.to_node_name)) {
                             graph_data.edges.push({
@@ -300,8 +321,8 @@ export const useEditStore = defineStore('editStore', {
                     })
 
                     //for restore
-                    res.data.nodes.forEach(node => {
-                        const n: Node = {
+                    res.data.nodes.forEach((node:any) => {
+                        const n: any = {
                             label: node.label,
                             name: node.name,
                             sequence: node.sequence,
@@ -311,8 +332,8 @@ export const useEditStore = defineStore('editStore', {
                         nodes.push(n);
                     })
 
-                    res.data.edges.forEach(edge => {
-                        const e: Edge = {
+                    res.data.edges.forEach((edge:any) => {
+                        const e: any = {
                             name: edge.name,
                             from_node_name: edge.from_node_name,
                             from_node_label: edge.from_node_label,
@@ -337,25 +358,28 @@ export const useEditStore = defineStore('editStore', {
             
             // 取消之前的请求
             if (this.graphRequestCancelToken) {
+                console.log(`[queryGraphBySeq] 取消之前的请求，当前新请求的sequence: ${seq}`);
                 this.graphRequestCancelToken.cancel('Operation canceled due to new request.');
             }
             
             // 创建新的取消令牌
             this.graphRequestCancelToken = axios.CancelToken.source();
             
-            axios.get("/api/graph/getGraphFromSeq", {
+            console.log(`[queryGraphBySeq] 发起新请求，sequence: ${seq}`);
+            
+            apiClient.get("/api/graph/getGraphFromSeq", {
                 params: {
                     sequence: seq,
                     project: localStorage.getItem("grapher-project") as string,
                 },
                 cancelToken: this.graphRequestCancelToken.token
-            }).then((res) => {
+            }).then((res:any) => {
                 console.log(res.data);
-                let nodes = [] as Node[];
-                let edges = [] as Edge[];
+                let nodes:any = [] as Node[];
+                let edges:any = [] as Edge[];
 
-                res.data.nodes.forEach(node => {
-                    const n: Node = {
+                res.data.nodes.forEach((node:any) => {
+                    const n: any = {
                         label: node.label,
                         name: node.name,
                         sequence: node.sequence,
@@ -365,8 +389,8 @@ export const useEditStore = defineStore('editStore', {
                     nodes.push(n);
                 })
 
-                res.data.edges.forEach(edge => {
-                    const e: Edge = {
+                res.data.edges.forEach((edge:any) => {
+                    const e: any = {
                         name: edge.name,
                         from_node_name: edge.from_node_name,
                         from_node_label: edge.from_node_label,
@@ -379,7 +403,7 @@ export const useEditStore = defineStore('editStore', {
                 })
                 this.nodes = nodes;
                 this.edges = edges;
-            }).catch((error) => {
+            }).catch((error:any) => {
                 if (axios.isCancel(error)) {
                     console.log('Request canceled:', error.message);
                 } else {
@@ -411,17 +435,17 @@ export const useEditStore = defineStore('editStore', {
             // 设置committing状态为true，触发Home.vue中的watcher更新画布
             this.committing = true;
             
-            let nodeObjs = []
-            let rectObjs = [];
-            let edgeObjs = [];
-            this.nodes.forEach(node => {
+            let nodeObjs:any = []
+            let rectObjs:any = [];
+            let edgeObjs:any = [];
+            this.nodes.forEach((node:any) => {
                 let node_str = JSON.stringify(node);
                 let node_obj = JSON.parse(node_str);
                 node_obj.project = this.project;
                 nodeObjs.push(node_obj);
             })
-            this.rects.forEach(rectangle => {
-                let seq_obj: object = {
+            this.rects.forEach((rectangle:any) => {
+                let seq_obj: any = {
                     text: this.sequence,
                     x0: rectangle.left,
                     y0: rectangle.top,
@@ -433,8 +457,8 @@ export const useEditStore = defineStore('editStore', {
                 }
                 rectObjs.push(seq_obj)
             })
-            this.edges.forEach(edge => {
-                let seq_obj: object = {
+            this.edges.forEach((edge:any) => {
+                let seq_obj: any = {
                     name: edge.name,
                     from_node_label: edge.from_node_label,
                     from_node_name: edge.from_node_name,
@@ -446,24 +470,24 @@ export const useEditStore = defineStore('editStore', {
                 }
                 edgeObjs.push(seq_obj);
             })
-            axios.post("/api/graph/commit", {
+            apiClient.post("/api/graph/commit", {
                 sequence: this.sequence,
                 nodes: nodeObjs,
                 edges: edgeObjs,
-            }).then((res) => {
+            }).then((res:any) => {
                 Message.success("上传数据成功")
-            }).catch((error) => {
+            }).catch((error:any) => {
                 Message.error(error);
             })
 
-            axios.post("/api/text/uploadSentences", rectObjs).then((res) => {
+            apiClient.post("/api/text/uploadSentences", rectObjs).then((res:any) => {
                 this.deleteEditingRect()
                 this.queryRects()
                 Message.success("上传标记成功")
             })
         },
         setCommitting(flag: boolean) {
-            this.commiting = flag;
+            this.committing = flag;
         },
 
         setDeleting(flag: boolean) {
@@ -503,7 +527,7 @@ export const useEditStore = defineStore('editStore', {
                     status: 'danger',
                 },
                 onOk: () => {
-                    axios.post("/api/text/deleteSequence", {
+                    apiClient.post("/api/text/deleteSequence", {
                         text: sequence,
                         x0,
                         y0,
@@ -512,13 +536,13 @@ export const useEditStore = defineStore('editStore', {
                         article: this.article,
                         page,
                         project: localStorage.getItem("grapher-project") as string,
-                    }).then((res) => {
+                    }).then((res:any) => {
                         Message.success("删除成功");
                         // 删除成功后，关闭编辑器并重新加载PDF信息
                         this.closeGraphEditor();
                         this.queryRects();
                     })
-                    this.rects = this.rects.filter(rectangle => rectangle.text != sequence);
+                    this.rects = this.rects.filter((rectangle:any) => rectangle.text != sequence);
                 },
             });
         },
@@ -534,10 +558,10 @@ export const useEditStore = defineStore('editStore', {
                     status: 'danger',
                 },
                 onOk: () => {
-                    axios.post("/api/text/deleteArticle", {
+                    apiClient.post("/api/text/deleteArticle", {
                         title: article,
                         project: localStorage.getItem("grapher-project") as string,
-                    }).then(res => {
+                    }).then((res:any) => {
                         Message.success("删除成功")
                         // 删除成功后重新获取文件列表
                         this.getAllFileInfoList(localStorage.getItem("grapher-project") as string);
