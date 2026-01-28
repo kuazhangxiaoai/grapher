@@ -91,6 +91,9 @@ export const useEditStore = defineStore('editStore', {
         setSequence(sequence) {
             this.sequence = sequence
         },
+        addSequence(sequence) {
+            this.sequence += sequence
+        },
         getAllFileInfoList(project: string) {
             apiClient.get("/api/text/articletitles", {params: {project: project}}).then(res => {
                 this.fileinfos = res.data

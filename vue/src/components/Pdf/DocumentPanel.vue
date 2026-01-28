@@ -54,6 +54,7 @@
           <div class="edit-button cursor-pointer">管理</div>
         </a-dropdown>
         <div class="refresh-button" @click="handleRefresh">刷新</div>
+        <div class="edit-button">编辑</div>
       </div>
     </div>
 

@@ -8,6 +8,7 @@ import { RectangleType } from '@/types/rect.ts';
 export function useTextSelection() {
   const pdfContainer = ref<HTMLDivElement | null>(null);
   let textSelectionHandler: (e: MouseEvent) => void;
+  let textPlusHandler: (e: MouseEvent) => void;
 
   // 节点模态框相关
   const showNodeModal = ref(false);
@@ -54,8 +55,8 @@ export function useTextSelection() {
       const x = r.left - box.left;
       const y = r.top - box.top + r.height - 3;
       return {
-        x,
-        y,
+        x: x,
+        y: y,
         width: r.width,
         height: 3,
         left: x,
@@ -71,9 +72,7 @@ export function useTextSelection() {
     if (!rects.length) return;
 
     // 设置高亮框
-    rects.forEach((rect: Rectangle) => {
-      useEditStore().addRect(rect);
-    })
+    rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect);})
 
     // 设置知识图谱内容
     useEditStore().setSequence(selectedText);
@@ -83,6 +82,59 @@ export function useTextSelection() {
     // 打开弹窗
     showNodeModal.value = true;
   };
+
+  // Ctrl + 选中文字 选区和语句叠加
+  const handlePlusBySelection = () => {
+    let old_rects = useEditStore().getRects(false)
+    useEditStore().deleteEditingRect();
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const selectedText = selection.toString().trim();
+    if (!selectedText) return;
+
+    const range = selection.getRangeAt(selection.rangeCount - 1);
+    const pageNum = getSelectionPageNum(selection);
+
+    const pageContainer = document.getElementById('pageContainer');
+    if (!pageContainer) return;
+
+    const canvas = pageContainer.getElementsByTagName('canvas')[0];
+    if (!canvas) return;
+
+    const box = canvas.getBoundingClientRect();
+    const rects = Array.from(range.getClientRects()).map((r: any) => {
+      const x = r.left - box.left;
+      const y = r.top - box.top + r.height - 3;
+      return {
+        x: x,
+        y: y,
+        width: r.width,
+        height: 3,
+        left: x,
+        top: y,
+        right: r.right - box.left,
+        bottom: r.bottom - box.top,
+        color: RectangleColorType.EDITING,
+        type: RectangleType.EDITING,
+        page: pageNum,
+      } as Rectangle;
+    });
+    if (!rects.length) return;
+
+    //设置高亮框
+    rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect)})
+    old_rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect)})
+    useEditStore().addSequence(selectedText);
+    nodeForm.value.originalText += selectedText;
+    nodeForm.value.name = selectedText.substring(0, 20);
+
+    //打开弹窗
+    showNodeModal.value = true;
+    useEditStore().openGraphEditor();
+    console.log("editing sequence: " + useEditStore().getSequence())
+  }
 
   // 鼠标松开自动触发选区监听
   const setupTextSelectionListener = () => {
@@ -111,7 +163,13 @@ export function useTextSelection() {
       }
 
       nodeForm.value.originalText = text;
-      handleOpenBySelection();
+      if (e.ctrlKey){
+        handlePlusBySelection()
+      }
+      else {
+        handleOpenBySelection();
+      }
+
     };
 
     document.addEventListener('mouseup', textSelectionHandler);
