@@ -11,6 +11,7 @@ class Host_Config:
         """
             initial function to define database link parameter
         """
+
         self.port = os.environ.get('PUBLIC_PORT')
         self.host = os.environ.get('PUBLIC_HOST')
 
