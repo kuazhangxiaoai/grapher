@@ -325,7 +325,7 @@ onMounted(async () => {
 
     renderPage(page, 1);
 
-    editStore.clearAllRects();
+    //editStore.clearAllRects();
     await editStore.queryRects();
 
     setTimeout(() => {
@@ -350,9 +350,13 @@ watch([pdfPreviewUrl, currentPDFPage], async ([newA, newB]) => {
   const pageNum = await pdfInstance.numPages;
   editStore.setTotalPages(pageNum);
 
+  let r = editStore.getEditingRects()
+  editStore.cacheEditingRects(r)
+
   editStore.clearAllRects();
   await editStore.queryRects();
-
+  editStore.popCacheRects();
+  editStore.clearCacheRects();
   setTimeout(() => {
     const currentPage = editStore.currentPDFPage;
     updateHightLightLayer(currentPage, rects.value);

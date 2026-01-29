@@ -19,6 +19,7 @@ export const useEditStore = defineStore('editStore', {
         nodeTypes: [] as NodeType[],
         edges: [] as Edge[],
         rects: [] as Rectangle[],
+        cacheRects: [] as Rectangle[],
         editGraph: false,
         fileList: false,
         fileinfos: [] as FileInfo[],
@@ -58,7 +59,6 @@ export const useEditStore = defineStore('editStore', {
         deleteNodeByName(name: string) {
             this.edges = this.edges.filter(edge => edge.from_node_name != name && edge.to_node_name != name);
             this.nodes = this.nodes.filter(node => node.name != name);
-
         },
         updateNode(old_node: Node, new_node: Node) {
             const ind = this.nodes.findIndex(x => old_node.name === x.name)
@@ -256,13 +256,25 @@ export const useEditStore = defineStore('editStore', {
                     return res.data;
                 })
         },
+        getEditingRects(){
+            return this.rects.filter(r => r.type == RectangleType.EDITING);
+        },
+        cacheEditingRects(r: Rectangle[]) {
+            this.cacheRects = [...this.cacheRects, ...r];
+        },
+        popCacheRects() {
+            this.rects = [...this.rects, ...this.cacheRects];
+        },
+        clearCacheRects() {
+            this.cacheRects = [];
+        },
         nextPDFPage() {
             this.currentPDFPage++;
-            this.clearAllRects();  
+            //this.clearAllRects();
         },
         lastPDFPage() {
             this.currentPDFPage--;
-            this.clearAllRects();   
+            //this.clearAllRects();
         },
         setTotalPages(page: number) {
             this.totalPages = page;
