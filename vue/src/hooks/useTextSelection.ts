@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted,watch } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import { useEditStore } from '@/stores/edit.ts';
 import type { Rectangle } from '@/types/rect.ts';
@@ -259,9 +259,20 @@ export function useTextSelection() {
   };
 
   // 生命周期
-  onMounted(() => {
+   onMounted(() => {
     setupTextSelectionListener(); // ✅ 初始化时就启用
     setupIframeMessageListener();
+
+    // 监听编辑器关闭状态，重置表单
+    watch(
+      () => useEditStore().editGraph,
+      (newValue) => {
+        if (!newValue) {
+          // 编辑器关闭时重置表单
+          resetNodeForm();
+        }
+      },
+    );
   });
 
   onUnmounted(() => {
