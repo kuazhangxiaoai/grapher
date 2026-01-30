@@ -41,7 +41,7 @@ class Article(BaseModel):
 @router.get("/test")
 async def test():
     """
-        测试
+        测试测试
     """
     try:
         _db = PostgreHelper(DB_Config().host,
