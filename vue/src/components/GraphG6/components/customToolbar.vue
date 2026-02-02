@@ -379,6 +379,7 @@ const customToolbarData = ref([
         useEditStore().setCommiting(false)
         useEditStore().commit()
         useEditStore().closeGraphEditor()
+        useEditStore().closeGraphEditorPanel()
         emit("commit")
       }
     }
@@ -413,6 +414,7 @@ const customToolbarData = ref([
                 editStore.queryRects();
                 editStore.deleteEditingRect();
                 editStore.closeGraphEditor();
+                editStore.closeGraphEditorPanel();
                 editStore.setCommitting(true);
               }, 500); // 延迟关闭，确保提交完成
             },
@@ -421,6 +423,7 @@ const customToolbarData = ref([
               editStore.queryRects();
               editStore.deleteEditingRect();
               editStore.closeGraphEditor();
+              editStore.closeGraphEditorPanel();
               editStore.setCommitting(true);
             }
           });
@@ -429,6 +432,7 @@ const customToolbarData = ref([
           editStore.queryRects();
           editStore.deleteEditingRect();
           editStore.closeGraphEditor();
+          editStore.closeGraphEditorPanel();
           editStore.setCommitting(true);
         }
       }

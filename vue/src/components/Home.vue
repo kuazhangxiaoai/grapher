@@ -90,6 +90,8 @@ const {editGraph, fileList, article, committing, deleting, refreshing} = storeTo
 // 返回列表页面
 const handleBack = () => {
   editStore.closeFileList() //关闭文件列表
+  editStore.closeGraphEditor() //关闭Home.vue中的Editor弹窗
+  editStore.closeGraphEditorPanel() //关闭DocumentPanel.vue中的EditPanel弹窗
   editStore.resetState() // 重置store状态，确保下次进入画布页面显示新项目内容
   router.push('/list');
 };
@@ -223,9 +225,9 @@ const getGraphDetail = async (project) => {
      //graphData.value = await getGraphData(graphId);
     const article = editStore.getArticleTitle()
     const sequence = editStore.getSequence()
-    console.log(article)
     console.log(project)
-    if (article === null && sequence === null){
+    console.log(article,sequence)
+    if (article&& sequence){
       apiClient.get("/api/graph/getGlobalGraph", {params: {project: project}}).then((res:any) => {
         let graph_data:any = {
           nodes: [],

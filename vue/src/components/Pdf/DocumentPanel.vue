@@ -54,7 +54,9 @@
           <div class="edit-button cursor-pointer">管理</div>
         </a-dropdown>
         <div class="refresh-button" @click="handleRefresh">刷新</div>
-        <div class="edit-button">编辑</div>
+        <div class="edit-button cursor-pointer" @click="handleEditClick">
+          编辑
+        </div>
       </div>
     </div>
 
@@ -122,6 +124,11 @@
       </a-select>
     </a-form-item>
   </a-modal>
+
+  <!-- 编辑区域 -->
+  <div v-if="editGraphPanel" class="graph-editor2">
+    <EditPanel></EditPanel>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -133,6 +140,7 @@ import { useEditStore } from "@/stores/edit.ts";
 import { usePdfUpload } from "@/hooks/usePdfUpload.ts";
 import { usePdfNavigation } from "@/hooks/usePdfNavigation.ts";
 import { useTextSelection } from "@/hooks/useTextSelection.ts";
+import EditPanel from "../EditPanel.vue";
 
 // 处理水平滚动
 const uploadContainerRef = ref<HTMLElement | null>(null);
@@ -150,7 +158,8 @@ onMounted(() => {
 const emit = defineEmits(["addNode"]);
 
 // 获取store状态
-const { pdfPreviewUrl } = storeToRefs(useEditStore());
+const editStore = useEditStore();
+const { pdfPreviewUrl, editGraphPanel } = storeToRefs(editStore);
 const pageOptions = ref([]);
 
 // 使用hooks
@@ -221,8 +230,28 @@ const handleRefresh = () => {
   //手动刷新按钮
   useEditStore().setRefreshing(true);
 };
+
+// 处理编辑按钮点击
+const handleEditClick = () => {
+  if (editGraphPanel.value) {
+    editStore.closeGraphEditorPanel();
+  } else {
+    editStore.openGraphEditorPanel();
+  }
+};
 </script>
 
 <style scoped>
 @import url("./assets/documentPanel.css");
+
+.graph-editor2 {
+  position: absolute;
+  left: 42%;
+  top: 7%;
+  width: 55%;
+  height: 85%;
+  border: 2px solid #2d3748;
+  border-radius: 2px;
+  z-index: 99;
+}
 </style>

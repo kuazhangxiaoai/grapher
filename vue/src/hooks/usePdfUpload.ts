@@ -65,6 +65,8 @@ export function usePdfUpload() {
         const url = res.data.url;
         const server = useEditStore().server;
         useEditStore().setPDFPreviewUrl(server + url);
+        // 设置article状态为当前上传的文档标题
+        useEditStore().setArticleTitle(title);
         const project = localStorage.getItem("grapher-project");
         useEditStore().getAllFileInfoList(project);
         
