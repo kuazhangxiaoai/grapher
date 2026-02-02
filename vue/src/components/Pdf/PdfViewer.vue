@@ -178,7 +178,7 @@ function installGlobalMouseHandlers() {
           // 设置选中的文字内容
           editStore.setSequence(item.text);
           // 删除之前的编辑态矩形
-          editStore.deleteEditingRect();
+          //editStore.deleteEditingRect();
           // 重新添加当前点击的矩形作为编辑态
           const rectToEdit = {
             ...item,
@@ -351,24 +351,25 @@ watch([pdfPreviewUrl, currentPDFPage], async ([newA, newB]) => {
   editStore.setTotalPages(pageNum);
 
   let r = editStore.getEditingRects()
-  editStore.cacheEditingRects(r)
 
-  editStore.clearAllRects();
+  //editStore.clearAllRects();
   await editStore.queryRects();
-  editStore.popCacheRects();
-  editStore.clearCacheRects();
+  r.forEach(rect => {editStore.addRect(rect);});
+  //editStore.popCacheRects();
+  //editStore.clearCacheRects();
   setTimeout(() => {
     const currentPage = editStore.currentPDFPage;
     updateHightLightLayer(currentPage, rects.value);
+    console.log("editing rects now" + editStore.getRects(false))
   }, 100);
-});
+}, {deep: true});
 
 watch(rects, async (newVal) => {
   if (pdfInstance) {
     const currentPage = editStore.currentPDFPage;
     updateHightLightLayer(currentPage, newVal);
   }
-});
+}, {deep: true});
 
 onBeforeUnmount(() => {
   if (mouseUpHandler) document.removeEventListener("mouseup", mouseUpHandler);

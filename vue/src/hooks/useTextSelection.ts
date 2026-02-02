@@ -72,7 +72,7 @@ export function useTextSelection() {
     if (!rects.length) return;
 
     // 设置高亮框
-    rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect);})
+    useEditStore().setRects(rects);
 
     // 设置知识图谱内容
     useEditStore().setSequence(selectedText);
@@ -81,13 +81,16 @@ export function useTextSelection() {
 
     // 打开弹窗
     showNodeModal.value = true;
+    console.log("editing rect: " + useEditStore().getRects(false));
+    useEditStore().saveRectToLocalStorage()
   };
 
   // Ctrl + 选中文字 选区和语句叠加
   const handlePlusBySelection = () => {
-    let old_rects = useEditStore().getRects(false)
-    useEditStore().deleteEditingRect();
-
+    //let old_rects = useEditStore().getRects(false)
+    //useEditStore().deleteEditingRect();
+    console.log("editing rect: " + useEditStore().getRectFromLocalStorage());
+    const saved_rects = useEditStore().getRectFromLocalStorage();
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
@@ -124,9 +127,12 @@ export function useTextSelection() {
     if (!rects.length) return;
 
     //设置高亮框
-    rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect)})
-    old_rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect)})
+    //rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect)})
+    //old_rects.forEach((rect: Rectangle) => {useEditStore().addRect(rect)})
+    useEditStore().setRects(saved_rects);
+    useEditStore().addRects(rects);
     useEditStore().addSequence(selectedText);
+
     nodeForm.value.originalText += selectedText;
     nodeForm.value.name = selectedText.substring(0, 20);
 
@@ -153,7 +159,7 @@ export function useTextSelection() {
 
       if (!text) {
         // 没选中内容时清除编辑态下划线
-        useEditStore().deleteEditingRect();
+        //useEditStore().deleteEditingRect();
         return;
       }
 

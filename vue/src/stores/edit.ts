@@ -19,7 +19,6 @@ export const useEditStore = defineStore("editStore", {
     nodeTypes: [] as NodeType[],
     edges: [] as Edge[],
     rects: [] as Rectangle[],
-    cacheRects: [] as Rectangle[],
     editGraph: false,
     editGraphPanel: false,
     fileList: false,
@@ -129,8 +128,19 @@ export const useEditStore = defineStore("editStore", {
     addRect(rect: Rectangle) {
       this.rects.push(rect);
     },
+    addRects(rects: Rectangle[]) {
+      this.rects = [...this.rects, ...rects];
+    },
     addEdge(edge: Edge) {
       this.edges.push(edge);
+    },
+    saveRectToLocalStorage() {
+      localStorage.setItem("editingRect", JSON.stringify(this.rects));
+    },
+    getRectFromLocalStorage() {
+      const rect_str = localStorage.getItem("editingRect");
+      const saved_rects = JSON.parse(rect_str);
+      return saved_rects;
     },
     deleteEdge(edge: Edge) {
       this.edges.splice(this.edges.indexOf(edge), 1);
@@ -294,29 +304,19 @@ export const useEditStore = defineStore("editStore", {
     getEditingRects() {
       return this.rects.filter((r) => r.type == RectangleType.EDITING);
     },
-    cacheEditingRects(r: Rectangle[]) {
-      this.cacheRects = [...this.cacheRects, ...r];
-    },
-    popCacheRects() {
-      this.rects = [...this.rects, ...this.cacheRects];
-    },
-    clearCacheRects() {
-      this.cacheRects = [];
-    },
     nextPDFPage() {
+      this.saveRectToLocalStorage()
       this.currentPDFPage++;
-      //this.clearAllRects();
     },
     lastPDFPage() {
+      this.saveRectToLocalStorage()
       this.currentPDFPage--;
-      //this.clearAllRects();
     },
     setTotalPages(page: number) {
       this.totalPages = page;
     },
     jumpPDFPage(page: number) {
       this.currentPDFPage = page;
-      this.clearAllRects();
     },
     queryGraphByArticle(article: string) {
       this.article = article;
@@ -514,7 +514,7 @@ export const useEditStore = defineStore("editStore", {
           x1: rectangle.left + rectangle.width,
           y1: rectangle.top + rectangle.height,
           article: this.article,
-          page: this.currentPDFPage,
+          page: rectangle.page,
           project: this.project,
         };
         rectObjs.push(seq_obj);
