@@ -78,7 +78,7 @@ export class CanvasMenuPlugin extends BasePlugin<RemoteDataSourceOptions> {
     this.menuContainer = document.createElement("div");
     const style = this.menuContainer.style;
     style.position = "absolute";
-    style.zIndex = "10";
+    style.zIndex = "1000";
     style.display = "none";
     style.padding = "4px 0";
     style.borderRadius = "4px";
