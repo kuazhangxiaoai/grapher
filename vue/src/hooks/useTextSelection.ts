@@ -72,7 +72,7 @@ export function useTextSelection() {
     if (!rects.length) return;
 
     // 设置高亮框
-    useEditStore().setRects(rects);
+    useEditStore().addRects(rects);
 
     // 设置知识图谱内容
     useEditStore().setSequence(selectedText);
