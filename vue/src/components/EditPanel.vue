@@ -27,9 +27,9 @@ import { useEditStore } from "../stores/edit.ts";
 import GraphG6 from "@/components/GraphG6/index.vue";
 import { Message } from "@arco-design/web-vue";
 import { v4 as uuidv4 } from "uuid";
-import apiClient from '@/services/apiClient';
+import apiClient from "@/services/apiClient";
 const editStore = useEditStore();
-const { sequence, nodes, edges,pdfPreviewUrl } = storeToRefs(editStore);
+const { sequence, nodes, edges, pdfPreviewUrl } = storeToRefs(editStore);
 const graphData: any = ref({ nodes: [], edges: [], combos: [] }); //图数据，初始化为空数组，防止节点提前显示
 const layoutConfig = ref(); // 布局类型配置
 let graphInstance: any = null; //图实例
@@ -240,67 +240,15 @@ const handleDeleteNode = async (nodeName) => {
 
 // 获取全局图谱数据
 const getGlobalGraph = async () => {
-  const project = localStorage.getItem("grapher-project");
-  try {
-    const res = await apiClient.get("/api/graph/getGlobalGraph", {params: {project: project}});
-    let graph_data:any = {
-      nodes: [],
-      edges: [],
-      combos:[]
-    }
-    res.data.nodes.forEach((node:any) => {
-      graph_data.nodes.push({
-        id: node.name,
-        data: {
-          name: node.name,
-          description: "",
-          entityType: node.label || "默认",
-        },
-        style: {
-          labelText: node.name,
-          fill: node.color,
-        },
-      });
-    })
-    res.data.edges.forEach((edge, index) => {
-      graph_data.edges.push({
-        id: "edge-" + index.toString(),
-        data: {name: edge.name},
-        target: edge.to_node_name,
-        source: edge.from_node_name,
-      })
-    })
-    graphData.value.edges = graph_data.edges;
-    graphData.value.nodes = graph_data.nodes;
-    graphData.value.combos = [];
-    
-    // 同时更新store中的nodes和edges，确保数据一致性
-    editStore.nodes = res.data.nodes.map((node:any) => ({
-      label: node.label,
-      name: node.name,
-      sequence: node.sequence,
-      article: node.article,
-      color: node.color
-    }));
-    
-    editStore.edges = res.data.edges.map((edge:any) => ({
-      name: edge.name,
-      from_node_name: edge.from_node_name,
-      from_node_label: edge.from_node_label,
-      to_node_name: edge.to_node_name,
-      to_node_label: edge.to_node_label,
-      sequence: edge.sequence,
-      article: edge.article
-    }));
-  } catch (error) {
-    console.error('获取全局图谱数据失败:', error);
-    Message.error('获取全局图谱数据失败');
-  }
+  const article = editStore.getArticleTitle();
+  const graph_data: any = await useEditStore().queryGraphByArticle(article);
+  graphData.value.nodes = graph_data.nodes;
+  graphData.value.edges = graph_data.edges;
 };
 
 onMounted(() => {
   // 组件挂载时，获取全局图谱数据
-  console.log("PDF预览URL:", pdfPreviewUrl.value)
+  console.log("PDF预览URL:", pdfPreviewUrl.value);
   if (pdfPreviewUrl.value) {
     // PDF已加载，直接获取数据
     getGlobalGraph();
