@@ -25,7 +25,9 @@
                 :style="{ backgroundColor: type.color }"
               ></div>
               <span class="type-name font-medium">{{ type.name }}</span>
-              <span class="type-color-code text-sm text-gray-500 ml-2">{{ type.color }}</span>
+              <span class="type-color-code text-sm text-gray-500 ml-2">{{
+                type.color
+              }}</span>
             </div>
             <div class="flex items-center">
               <a-button
@@ -35,6 +37,14 @@
                 class="mr-2"
               >
                 编辑
+              </a-button>
+              <a-button
+                type="text"
+                size="small"
+                @click="handleManageProperties(type)"
+                class="mr-2"
+              >
+                管理属性
               </a-button>
               <a-button
                 type="text"
@@ -52,7 +62,7 @@
       <!-- 新增/编辑节点类型表单 -->
       <div class="node-type-form">
         <h4 class="text-lg font-semibold mb-4">
-          {{ editingType ? '编辑节点类型' : '新增节点类型' }}
+          {{ editingType ? "编辑节点类型" : "新增节点类型" }}
         </h4>
         <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
           <a-space direction="vertical" :size="16" class="w-full">
@@ -67,6 +77,14 @@
                   size="medium"
                   placeholder="请选择颜色值"
                 />
+                <a-button
+                  type="text"
+                  size="small"
+                  @click="handleOpenPropertyManager"
+                  class="ml-2"
+                >
+                  管理属性
+                </a-button>
               </div>
             </a-form-item>
           </a-space>
@@ -83,30 +101,37 @@
           </div>
         </a-form>
       </div>
+
+      <!-- 节点类型属性管理组件 -->
+      <node-type-property-manager
+        v-model:visible="showPropertyManager"
+        @refresh="handlePropertyManagerRefresh"
+      />
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-import apiClient from '@/services/apiClient';
-import {useEditStore} from "@/stores/edit.ts";
-import { Message } from '@arco-design/web-vue';
-import type {NodeType} from "@/stores/nodeTypes.ts";
+import { ref, computed, onMounted } from "vue";
+import { storeToRefs } from "pinia";
+import apiClient from "@/services/apiClient";
+import { useEditStore } from "@/stores/edit.ts";
+import { Message } from "@arco-design/web-vue";
+import type { NodeType } from "@/stores/nodeTypes.ts";
+import NodeTypePropertyManager from "./nodeTypePropertyManager.vue";
 
 const props = defineProps<{
   visible: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-  (e: 'refresh'): void;
+  (e: "update:visible", value: boolean): void;
+  (e: "refresh"): void;
 }>();
 
 const visible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value),
+  set: (value) => emit("update:visible", value),
 });
 
 // 初始化store并获取响应式状态
@@ -117,15 +142,16 @@ const { nodeTypes } = storeToRefs(editStore);
 const formRef = ref();
 const saving = ref(false);
 const editingType = ref<any>(null);
+const showPropertyManager = ref(false);
 
 const form = ref({
-  name: '',
-  color: '#1783FF',
+  name: "",
+  color: "#1783FF",
 });
 
 const rules = ref({
-  name: [{ required: true, message: '请输入节点类型名称' }],
-  color: [{ required: true, message: '请输入颜色值' }],
+  name: [{ required: true, message: "请输入节点类型名称" }],
+  color: [{ required: true, message: "请输入颜色值" }],
 });
 
 // 重置表单
@@ -140,37 +166,53 @@ const handleEditType = (type: any) => {
   form.value = { ...type };
 };
 
+// 管理节点类型属性
+const handleManageProperties = (type: any) => {
+  editingType.value = type;
+  showPropertyManager.value = true;
+};
+
+// 打开节点类型属性管理
+const handleOpenPropertyManager = () => {
+  showPropertyManager.value = true;
+};
+
+// 节点类型属性管理刷新
+const handlePropertyManagerRefresh = () => {
+  console.log("刷新节点类型属性列表");
+};
+
 // 删除节点类型
 const handleDeleteType = async (id: string) => {
   try {
     // 根据id找到对应的节点类型
-    const nodeType = nodeTypes.value.find(type => type.id === id);
+    const nodeType = nodeTypes.value.find((type) => type.id === id);
     if (!nodeType) {
-      Message.error('节点类型不存在');
+      Message.error("节点类型不存在");
       return;
     }
     // 获取project信息
     const project = localStorage.getItem("grapher-project");
     // 调用删除节点类型的API，传递完整的参数
-    await apiClient.post("/api/graph/deleteNodeType", { 
-      name: nodeType.name, 
-      color: nodeType.color, 
-      project 
+    await apiClient.post("/api/graph/deleteNodeType", {
+      name: nodeType.name,
+      color: nodeType.color,
+      project,
     });
-    Message.success('节点类型删除成功');
+    Message.success("节点类型删除成功");
     // 删除成功后重新加载节点类型数据
     editStore.getAllNodeTypes();
-    emit('refresh');
+    emit("refresh");
   } catch (error) {
-    Message.error('删除节点类型失败');
+    Message.error("删除节点类型失败");
   }
 };
 
 // 保存节点类型
 const handleSaveType = async () => {
   // const valid = await formRef.value.validate();
-  if(!form.value.name){
-    Message.error('请输入节点类型名称');
+  if (!form.value.name) {
+    Message.error("请输入节点类型名称");
     return;
   }
   // if (!valid) return;
@@ -182,26 +224,26 @@ const handleSaveType = async () => {
       const nodeType: NodeType = {
         id: editingType.value.id,
         name: form.value.name,
-        color: form.value.color
-      }
+        color: form.value.color,
+      };
       await editStore.updateNodeType(nodeType);
-      Message.success('节点类型更新成功');
+      Message.success("节点类型更新成功");
     } else {
       // 使用form.value代替this.form
       const nodeType: NodeType = {
         name: form.value.name,
-        color: form.value.color
-      }
+        color: form.value.color,
+      };
       await editStore.addNodeType(nodeType);
-      Message.success('节点类型添加成功');
+      Message.success("节点类型添加成功");
     }
     // 保存成功后重新加载节点类型数据
     editStore.getAllNodeTypes();
     handleResetForm();
-    emit('refresh');
+    emit("refresh");
   } catch (error) {
-    Message.error('操作失败，请重试');
-    console.error('保存节点类型失败:', error);
+    Message.error("操作失败，请重试");
+    console.error("保存节点类型失败:", error);
   } finally {
     saving.value = false;
   }
@@ -222,9 +264,8 @@ const handleOk = () => {
 
 // 组件挂载时初始化
 onMounted(() => {
-  useEditStore().getAllNodeTypes()
+  useEditStore().getAllNodeTypes();
 });
-
 </script>
 
 <style scoped lang="scss">
@@ -235,7 +276,7 @@ onMounted(() => {
       background-color: #f0f0f0;
     }
   }
-  
+
   .color-preview {
     cursor: pointer;
     transition: all 0.3s;
@@ -243,11 +284,9 @@ onMounted(() => {
       transform: scale(1.1);
     }
   }
-
- 
 }
- .scroll-y{
-    height: 250px;
-    overflow-y: auto;
-  }
+.scroll-y {
+  height: 250px;
+  overflow-y: auto;
+}
 </style>

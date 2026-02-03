@@ -95,9 +95,64 @@
           <span>{{ elementShowInfo.labelFontSize }}</span>
         </div>
       </div>
+
+      <!-- 节点属性 -->
+      <div
+        class="mt-4"
+        v-if="
+          elementTargetType === 'node' &&
+          elementShowInfo.properties &&
+          elementShowInfo.properties.length > 0
+        "
+      >
+        <div class="pb-4 text-[#1D2129] font-medium text-[14px]">节点属性</div>
+        <div class="space-y-3">
+          <div
+            v-for="(property, index) in elementShowInfo.properties"
+            :key="index"
+            class="flex items-start gap-2"
+          >
+            <div class="text-[#4E5969] text-[14px] w-[64px] flex-shrink-0">
+              {{ property.name }}
+            </div>
+            <div class="text-[#1D2129] text-[14px] w-full">
+              <a-input v-model="property.value" @blur="handleUserEdit" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 连线属性 -->
+      <div
+        class="mt-4"
+        v-if="
+          elementTargetType === 'edge' &&
+          elementShowInfo.edgeProperties &&
+          elementShowInfo.edgeProperties.length > 0
+        "
+      >
+        <div class="pb-4 text-[#1D2129] font-medium text-[14px]">连线属性</div>
+        <div class="space-y-3">
+          <div
+            v-for="(property, index) in elementShowInfo.edgeProperties"
+            :key="index"
+            class="flex items-start gap-2"
+          >
+            <div class="text-[#4E5969] text-[14px] w-[64px] flex-shrink-0">
+              {{ property.name }}
+            </div>
+            <div class="text-[#1D2129] text-[14px] w-full">
+              <a-input v-model="property.value" @blur="handleUserEdit" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 表格 -->
       <div class="mt-4">
-        <div class="pb-4 text-[#1D2129] font-medium text-[14px]">节点序列信息</div>
+        <div class="pb-4 text-[#1D2129] font-medium text-[14px]">
+          节点序列信息
+        </div>
         <div>
           <a-table
             :columns="columns"
@@ -133,34 +188,34 @@ const props = defineProps({
 });
 // 定义列配置（优化宽度/ellipsis 配置）
 const columns = ref([
-  { 
-    title: '名字', 
-    dataIndex: 'nodeName', 
-    key: 'nodeName', 
+  {
+    title: "名字",
+    dataIndex: "nodeName",
+    key: "nodeName",
     ellipsis: true,
     tooltip: true,
     width: 80,
   },
-  { 
-    title: '段落', 
-    dataIndex: 'nodeParagraph', 
-    key: 'nodeParagraph', 
+  {
+    title: "段落",
+    dataIndex: "nodeParagraph",
+    key: "nodeParagraph",
     ellipsis: true,
     tooltip: true,
     width: 100,
   },
-  { 
-    title: '文档', 
-    dataIndex: 'documentName', 
-    key: 'documentName', 
+  {
+    title: "文档",
+    dataIndex: "documentName",
+    key: "documentName",
     ellipsis: true,
     tooltip: true,
     width: 100,
   },
-  { 
-    title: '标签',
-    dataIndex: 'nodeRelation', 
-    key: 'nodeRelation',
+  {
+    title: "标签",
+    dataIndex: "nodeRelation",
+    key: "nodeRelation",
     ellipsis: true,
     tooltip: true,
     width: 60,
@@ -181,10 +236,12 @@ const elementShowInfo = ref({
   size: 10,
   labelFill: "",
   labelFontSize: 10,
+  properties: [],
+  edgeProperties: [],
 });
 
 // 表格数据
-const tableData:any = ref([]);
+const tableData: any = ref([]);
 // 加载状态
 const loading = ref(false);
 
@@ -212,6 +269,8 @@ watch(
           size: newVal.style?.size || 10,
           labelFill: newVal.style?.labelFill || "#1D2129",
           labelFontSize: newVal.style?.labelFontSize || 10,
+          properties: newVal.data?.properties || [],
+          edgeProperties: newVal.data?.edgeProperties || [],
         };
         // 使用setTimeout确保在表单更新完成后再重置初始化标记
         nextTick(() => {
@@ -224,7 +283,7 @@ watch(
       }
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 );
 
 // 处理用户编辑
@@ -240,13 +299,13 @@ const handleUserEdit = () => {
 // 获取节点序列数据
 const getNodeSequence = async (nodeName) => {
   if (!nodeName) return;
-  const project = localStorage.getItem("grapher-project")
+  const project = localStorage.getItem("grapher-project");
   loading.value = true;
   try {
     const response = await apiClient.get("/api/text/getSequenceByNode", {
-      params: { name: nodeName , project: project },
+      params: { name: nodeName, project: project },
     });
-    
+
     // 转换数据格式为表格所需
     const { node_names, node_labels, sequences, articles } = response.data;
     const formattedData = [];
@@ -255,7 +314,7 @@ const getNodeSequence = async (nodeName) => {
         nodeName: node_names[i],
         nodeRelation: node_labels[i],
         nodeParagraph: sequences[i],
-        documentName: articles[i]
+        documentName: articles[i],
       });
     }
     tableData.value = formattedData;
@@ -270,11 +329,25 @@ const getNodeSequence = async (nodeName) => {
 
 // 将扁平结构转换回G6需要的嵌套结构
 const convertToG6Format = () => {
-  const { id, name, iconSrc, fill, size, labelFill, labelFontSize } = elementShowInfo.value;
+  const {
+    id,
+    name,
+    iconSrc,
+    fill,
+    size,
+    labelFill,
+    labelFontSize,
+    properties,
+    edgeProperties,
+  } = elementShowInfo.value;
 
   return {
     id,
-    data: { name },
+    data: {
+      name,
+      properties,
+      edgeProperties,
+    },
     style: { fill, size, labelFill, labelFontSize, iconSrc, iconRadius: 50 },
   };
 };
