@@ -12,32 +12,44 @@
   >
     <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
       <a-form-item label="节点名称" field="name">
-        <a-input v-model="form.name" placeholder="请输入节点名称（必须以中文或英文字母开头，可包含中文、英文、数字和下划线）" />
+        <a-input
+          v-model="form.name"
+          placeholder="请输入节点名称（必须以中文或英文字母开头，可包含中文、英文、数字和下划线）"
+        />
       </a-form-item>
       <a-form-item label="节点类型" field="nodeType">
-        <div class="flex items-center"  style="width: 250px;">
+        <div class="flex items-center" style="width: 250px">
           <a-select
             v-model="form.nodeType"
             placeholder="请选择节点类型"
             class="w-full"
             style="width: 120px"
+            @change="handleTypeChange"
           >
             <a-option
               v-for="type in nodeTypes"
               :key="type.name"
               :value="type.name"
             >
-            <div style="display: flex; align-items: center;justify-content: space-between;">
-              <span class="mr-2">{{ type.name }}</span>
-              <span v-if="type.color" :style="{ 
-                display: 'inline-block', 
-                width: '12px', 
-                height: '12px', 
-                borderRadius: '50%', 
-                backgroundColor: type.color 
-              }"></span>
-            </div>
-              
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <span class="mr-2">{{ type.name }}</span>
+                <span
+                  v-if="type.color"
+                  :style="{
+                    display: 'inline-block',
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    backgroundColor: type.color,
+                  }"
+                ></span>
+              </div>
             </a-option>
           </a-select>
           <a-button
@@ -55,6 +67,7 @@
     <!-- 节点类型管理组件 -->
     <node-type-manager
       v-model:visible="showTypeManager"
+      :oldnodeType="oldnodeType"
       @refresh="handleTypeManagerRefresh"
     />
   </a-modal>
@@ -62,16 +75,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { storeToRefs } from 'pinia';
-import {useEditStore} from "@/stores/edit.ts";
-import NodeTypeManager from './nodeTypeManager.vue';
-import type Node from "@/types/node.ts"
+import { storeToRefs } from "pinia";
+import { useEditStore } from "@/stores/edit.ts";
+import NodeTypeManager from "./nodeTypeManager.vue";
+import type Node from "@/types/node.ts";
 
 const props = defineProps({});
 const openNodeAddModal = defineModel();
 const formRef = ref();
 const showTypeManager = ref(false);
-
+const oldnodeType = ref({});
 // 初始化store并获取响应式状态
 const editStore = useEditStore();
 // 使用storeToRefs获取响应式的nodeTypes
@@ -80,28 +93,39 @@ const { nodeTypes } = storeToRefs(editStore);
 const form = ref({
   name: "",
   description: "",
-  nodeType: "默认" // 默认使用"默认"类型
+  nodeType: "默认", // 默认使用"默认"类型
 });
 
 const rules = ref({
   name: [
     { required: true, message: "请输入节点名称" },
-    { pattern: /^[\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_]*$/, message: "节点名称必须以中文或英文字母开头，可包含中文、英文、数字和下划线" }
+    {
+      pattern: /^[\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_]*$/,
+      message:
+        "节点名称必须以中文或英文字母开头，可包含中文、英文、数字和下划线",
+    },
   ],
-  nodeType: [{ required: true, message: "请选择节点类型" }]
+  nodeType: [{ required: true, message: "请选择节点类型" }],
   // description字段已被注释，移除必填规则
 });
 
 const emit = defineEmits(["confirm", "cancel"]);
-
+const handleTypeChange = (typeName: string) => {
+  console.log(typeName, nodeTypes.value);
+  nodeTypes.value.forEach((type) => {
+    if (type.name === typeName) {
+      oldnodeType.value = type;
+    }
+  });
+};
 //确认创建节点
 const handleOk = async () => {
   try {
-    console.log('开始验证表单...');
+    console.log("开始验证表单...");
     // 使用validate的正确调用方式
     await formRef.value.validate();
-    console.log('表单验证通过！');
-    
+    console.log("表单验证通过！");
+
     // 使用已初始化的editStore
     const sequence = editStore.getSequence();
     const article = editStore.getArticleTitle();
@@ -110,11 +134,11 @@ const handleOk = async () => {
 
     // 检查是否已存在同名节点
     const existingNodes = editStore.nodes;
-    const isDuplicate = existingNodes.some(node => node.name === node_name);
+    const isDuplicate = existingNodes.some((node) => node.name === node_name);
     if (isDuplicate) {
       // 使用Ant Design Vue的Message组件提示错误
-      const { Message } = await import('@arco-design/web-vue');
-      Message.error('节点名称已存在，请输入不同的名称');
+      const { Message } = await import("@arco-design/web-vue");
+      Message.error("节点名称已存在，请输入不同的名称");
       return false;
     }
 
@@ -122,24 +146,24 @@ const handleOk = async () => {
       label: node_label,
       name: node_name,
       sequence: sequence,
-      article: article
+      article: article,
     };
 
-    console.log('准备添加节点:', node);
+    console.log("准备添加节点:", node);
     // 添加节点到store
     editStore.addNode(node);
-    
+
     // 发送确认事件
     emit("confirm", { ...form.value });
-    
+
     // 重置表单
     formRef.value.resetFields();
-    
-    console.log('节点添加成功！');
+
+    console.log("节点添加成功！");
     // 不需要手动关闭模态框，返回true后a-modal会自动关闭
     return true;
   } catch (error) {
-    console.error('表单验证失败:', error);
+    console.error("表单验证失败:", error);
     return false;
   }
 };
@@ -152,17 +176,34 @@ const handleCancel = () => {
 
 // 打开节点类型管理
 const handleOpenTypeManager = () => {
+  if (form.value.nodeType == "默认") {
+    oldnodeType.value = {
+      id: "",
+      name: "",
+      color: "#1783FF",
+    };
+  } else {
+    // 根据选择的类型名称找到对应的节点类型
+    const selectedType = nodeTypes.value.find(
+      (type) => type.name === form.value.nodeType,
+    );
+    if (selectedType) {
+      oldnodeType.value = selectedType;
+    }
+  }
+
   showTypeManager.value = true;
 };
 
 // 节点类型管理刷新，重新加载节点类型数据
-const handleTypeManagerRefresh = () => {
-  editStore.getAllNodeTypes();
+const handleTypeManagerRefresh = async () => {
+  console.log("节点类型管理刷新，重新加载节点类型数据");
+  await editStore.getAllNodeTypes();
 };
 
 // 组件挂载时初始化
 onMounted(() => {
-  editStore.getAllNodeTypes()
+  editStore.getAllNodeTypes();
 });
 </script>
 <style scoped lang="scss">

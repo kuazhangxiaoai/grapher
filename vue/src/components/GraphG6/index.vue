@@ -25,6 +25,7 @@
     v-model="openEdgeNameModal"
     @confirm="handleEdgeOk"
     @cancel="handleEdgeCancel"
+    :editPanel="editPanel"
   />
 </template>
 
@@ -53,9 +54,9 @@ import NodeAddModal from "./components/nodeAddIModal.vue";
 import EdgeAddModal from "./components/edgeAddModal.vue";
 import { CanvasMenuPlugin } from "./customPlugins/canvasMenu";
 import { canCreateEdge } from "./utils";
-import type {Edge} from "@/types/edges.ts";
+import type { Edge } from "@/types/edges.ts";
 import { Message, Modal } from "@arco-design/web-vue";
-import {useEditStore} from "../../stores/edit.ts";
+import { useEditStore } from "../../stores/edit.ts";
 
 // 注册交互;
 register(ExtensionCategory.BEHAVIOR, "click-add-node", ClickAddNode);
@@ -76,7 +77,7 @@ const props = defineProps({
   // 图数据
   data: {
     type: Object as () => GraphData,
-    default: () => ({ nodes: [], edges: [],  combos:[] }),
+    default: () => ({ nodes: [], edges: [], combos: [] }),
   },
   // 是否自适应视图
   fitView: {
@@ -96,7 +97,7 @@ const props = defineProps({
   },
 
   //选择功能
-  enableObject:{
+  enableObject: {
     type: Object,
     default: () => ({
       zoomOut: true,
@@ -122,7 +123,11 @@ const props = defineProps({
   showContextMenu: {
     type: Boolean,
     default: false,
-  }
+  },
+  editPanel: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // G6实例引用
@@ -172,7 +177,7 @@ const initGraph = () => {
     container: container.value,
     data: {
       ...props.data,
-      combos: props.data.combos || []
+      combos: props.data.combos || [],
     },
     padding: 20,
     // animation: true,
@@ -207,10 +212,10 @@ const initGraph = () => {
         // 根据节点类型动态设置颜色
         fill: (d) => {
           try {
-            const stored = localStorage.getItem('nodeTypes');
+            const stored = localStorage.getItem("nodeTypes");
             if (stored) {
               const nodeTypes = JSON.parse(stored);
-              const entityType = d.data.entityType || '默认';
+              const entityType = d.data.entityType || "默认";
               const type = nodeTypes.find((t: any) => t.name === entityType);
               if (type) {
                 return type.color;
@@ -218,16 +223,16 @@ const initGraph = () => {
             }
             // 默认颜色映射
             const defaultColors: Record<string, string> = {
-              '默认': '#1783FF',
-              '人物': '#F53F3F',
-              '组织': '#722ED1',
-              '概念': '#52C41A',
-              '事件': '#FAAD14'
+              默认: "#1783FF",
+              人物: "#F53F3F",
+              组织: "#722ED1",
+              概念: "#52C41A",
+              事件: "#FAAD14",
             };
-            return defaultColors[d.data.entityType || '默认'] || '#1783FF';
+            return defaultColors[d.data.entityType || "默认"] || "#1783FF";
           } catch (error) {
-            console.error('获取节点颜色失败:', error);
-            return '#1783FF';
+            console.error("获取节点颜色失败:", error);
+            return "#1783FF";
           }
         },
       },
@@ -252,6 +257,7 @@ const initGraph = () => {
         labelBackgroundStroke: "#000",
         labelBackgroundStrokeWidth: 1,
         labelBackgroundOpacity: 0.8,
+        lineDash: (edge) => edge.style?.lineDash || undefined,
       },
     },
     layout:
@@ -298,24 +304,26 @@ const initGraph = () => {
         enable: !props.readOnly,
       },
       // 只有非只读模式下才包含其他编辑相关行为
-      ...(props.readOnly ? [] : [
-        {
-          type: "brush-select",
-          key: "brush-select",
-          immediately: true, // 可以看到框框笼罩过去时，元素立即被框选了
-          trigger: [], // 配合多种按键进行框选, // 不需要配合其他按键，点击鼠标拖动即可框选
-          enable: false,
-        },
-        {
-          type: "create-edge",
-          key: "create-edge",
-          trigger: "click",
-          enable: false,
-          style: {
-            lineWidth: 1,
-          },
-        },
-      ]),
+      ...(props.readOnly
+        ? []
+        : [
+            {
+              type: "brush-select",
+              key: "brush-select",
+              immediately: true, // 可以看到框框笼罩过去时，元素立即被框选了
+              trigger: [], // 配合多种按键进行框选, // 不需要配合其他按键，点击鼠标拖动即可框选
+              enable: false,
+            },
+            {
+              type: "create-edge",
+              key: "create-edge",
+              trigger: "click",
+              enable: false,
+              style: {
+                lineWidth: 1,
+              },
+            },
+          ]),
       // {
       //   type: "auto-adapt-label",
       //   throttle: 200, // 节流时间
@@ -330,92 +338,97 @@ const initGraph = () => {
         key: "fullscreen",
       },
       // 只有非只读模式下才包含编辑相关插件
-      ...(props.readOnly ? [] : [
-        {
-          type: "history",
-          key: "history",
-        },
-        // 根据属性决定是否显示右键菜单
-        ...(props.showContextMenu ? [
-          // 画布右键菜单插件
-          {
-            type: "canvas-menu",
-            key: "canvas-menu",
-            nodeFill: "#1783FF",
-            menuBackground: "#FFFFFF",
-            menuTextColor: "#333333",
-            menuHoverBackground: "#F5F5F5",
-            onShowNodeModal: (nodeId) => {
-              // 保存当前节点ID并显示模态框
-              currentNodeId.value = nodeId;
-              openNodeAddModal.value = true;
+      ...(props.readOnly
+        ? []
+        : [
+            {
+              type: "history",
+              key: "history",
             },
-          },
-          // 右键菜单
-          {
-            type: "contextmenu",
-            trigger: "contextmenu", // 'click' or 'contextmenu'
-            onClick: (value, target, current) => {
-              if (value == "deleteNode") {
-                handleDeleteNode(current);
-              }
-              if(current == null) {
-                return;
-              }
-              if (value == "addEdge" && current.type == "node") {
-                graph.value.updateBehavior({
-                  key: "create-edge",
-                  enable: (event) => {
-                    //console.log(event);
-                    return event.targetType == "node"; // 在节点上启用连接
+            // 根据属性决定是否显示右键菜单
+            ...(props.showContextMenu
+              ? [
+                  // 画布右键菜单插件
+                  {
+                    type: "canvas-menu",
+                    key: "canvas-menu",
+                    nodeFill: "#1783FF",
+                    menuBackground: "#FFFFFF",
+                    menuTextColor: "#333333",
+                    menuHoverBackground: "#F5F5F5",
+                    onShowNodeModal: (nodeId) => {
+                      // 保存当前节点ID并显示模态框
+                      currentNodeId.value = nodeId;
+                      openNodeAddModal.value = true;
+                    },
                   },
-                  onFinish: (edge) => {
-                    const canCreate = canCreateEdge(
-                      graph.value,
-                      edge.source,
-                      edge.target
-                    );
-                    if (!canCreate) {
-                      // 如果验证不通过,删除已创建的边
-                      graph.value.removeEdgeData([edge.id]);
-                      if (edge.source === edge.target) {
-                        Message.warning("节点不能连接自己");
-                      } else {
-                        Message.warning("已存在连线,不能重复创建");
+                  // 右键菜单
+                  {
+                    type: "contextmenu",
+                    trigger: "contextmenu", // 'click' or 'contextmenu'
+                    onClick: (value, target, current) => {
+                      if (value == "deleteNode") {
+                        handleDeleteNode(current);
                       }
-                      return;
-                    }
-                    openEdgeNameModal.value = true;
-                    currentEdge.value = edge;
+                      if (current == null) {
+                        return;
+                      }
+                      if (value == "addEdge" && current.type == "node") {
+                        graph.value.updateBehavior({
+                          key: "create-edge",
+                          enable: (event) => {
+                            //console.log(event);
+                            return event.targetType == "node"; // 在节点上启用连接
+                          },
+                          onFinish: (edge) => {
+                            const canCreate = canCreateEdge(
+                              graph.value,
+                              edge.source,
+                              edge.target,
+                            );
+                            if (!canCreate) {
+                              // 如果验证不通过,删除已创建的边
+                              graph.value.removeEdgeData([edge.id]);
+                              if (edge.source === edge.target) {
+                                Message.warning("节点不能连接自己");
+                              } else {
+                                Message.warning("已存在连线,不能重复创建");
+                              }
+                              return;
+                            }
+                            openEdgeNameModal.value = true;
+                            currentEdge.value = edge;
+                          },
+                        });
+                        nextTick(() => {
+                          // 触发 node:click 事件
+                          graph.value.emit("node:click", {
+                            target: current,
+                            targetType: "node",
+                            item: current,
+                            itemType: "node",
+                          });
+                        });
+                      }
+                    },
+                    getItems: () => {
+                      return [
+                        {
+                          name: `<i class="iconfont icon-lujing text-[14px] mr-2 pointer-events-none"></i>添加连线`,
+                          value: "addEdge",
+                        },
+                        {
+                          name: "<i class='iconfont icon-delete1 text-[14px] mr-2 pointer-events-none'></i>删除",
+                          value: "deleteNode",
+                        },
+                      ];
+                    },
+                    enable: (e) =>
+                      e.targetType === "node" || e.targetType === "edge",
                   },
-                });
-                nextTick(() => {
-                  // 触发 node:click 事件
-                  graph.value.emit("node:click", {
-                    target: current,
-                    targetType: "node",
-                    item: current,
-                    itemType: "node",
-                  });
-                });
-              }
-            },
-            getItems: () => {
-              return [
-                {
-                  name: `<i class="iconfont icon-lujing text-[14px] mr-2 pointer-events-none"></i>添加连线`,
-                  value: "addEdge",
-                },
-                {
-                  name: "<i class='iconfont icon-delete1 text-[14px] mr-2 pointer-events-none'></i>删除",
-                  value: "deleteNode",
-                },
-              ];
-            },
-            enable: (e) => e.targetType === "node" || e.targetType === "edge",
-          },
-        ] : []),
-      ]),
+                ]
+              : []),
+          ]),
     ],
     transforms: ["process-parallel-edges"],
   });
@@ -434,14 +447,14 @@ const initGraph = () => {
 // ** 节点相关 **
 
 const delay = (ms: number) => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 //处理提交
 const handleCommit = () => {
   console.log("handleCommit");
   emit("updateGraph", "commit");
-}
+};
 
 // 节点添加模态框的确认和取消处理
 const handleNodeOk = async (nodeData) => {
@@ -473,10 +486,13 @@ const handleNodeCancel = () => {
 
 // 删除节点
 const handleDeleteNode = async (target) => {
-  if(!target){return;}
+  if (!target) {
+    return;
+  }
 
   // 根据元素类型使用不同的方法获取数据
-  const getElementMethod = target.type === "node" ? "getNodeData" : "getEdgeData";
+  const getElementMethod =
+    target.type === "node" ? "getNodeData" : "getEdgeData";
   const elementData = graph.value[getElementMethod](target.id);
 
   try {
@@ -498,7 +514,7 @@ const handleDeleteNode = async (target) => {
 
       onBeforeOk: (done) => {
         if (target.type == "node") {
-          useEditStore().deleteNodeByName(elementData.id)
+          useEditStore().deleteNodeByName(elementData.id);
           graph.value.removeNodeData([elementData.id]);
         } else {
           // 删除边时也需要从store中删除
@@ -506,10 +522,11 @@ const handleDeleteNode = async (target) => {
           if (edgeData) {
             const editStore = useEditStore();
             // 找到对应的边并删除
-            const edgeToDelete = editStore.edges.find(edge => 
-              edge.name === elementData.data.name &&
-              edge.from_node_name === edgeData.source &&
-              edge.to_node_name === edgeData.target
+            const edgeToDelete = editStore.edges.find(
+              (edge) =>
+                edge.name === elementData.data.name &&
+                edge.from_node_name === edgeData.source &&
+                edge.to_node_name === edgeData.target,
             );
             if (edgeToDelete) {
               editStore.deleteEdge(edgeToDelete);
@@ -521,7 +538,7 @@ const handleDeleteNode = async (target) => {
         done(true);
         emit("deleteElementSuccess", elementData.id, target.type);
         graph.value.render();
-        emit("deleteNode")
+        emit("deleteNode");
         //useEditStore().closeGraphEditor()
       },
     });
@@ -538,7 +555,7 @@ const handleEdgeOk = async (value) => {
   // 删除旧的连线,因id不一致
   graph.value.removeEdgeData([currentEdge.value.id]);
   // 添加新的连线
-  const eid = "edge_" + new Date().getTime()
+  const eid = "edge_" + new Date().getTime();
   graph.value.addEdgeData([
     {
       ...currentEdge.value,
@@ -546,7 +563,7 @@ const handleEdgeOk = async (value) => {
       data: { name: value.name },
     },
   ]);
-  const edgeData = graph.value.getEdgeData(eid)
+  const edgeData = graph.value.getEdgeData(eid);
   const sourceNode = graph.value.getNodeData(edgeData.source);
   const targetNode = graph.value.getNodeData(edgeData.target);
   const edge: Edge = {
@@ -556,9 +573,10 @@ const handleEdgeOk = async (value) => {
     to_node_name: targetNode.data.name,
     to_node_label: targetNode.data.entityType,
     sequence: useEditStore().sequence,
-    article: useEditStore().getArticleTitle()
-  }
-  useEditStore().addEdge(edge)
+    article: useEditStore().getArticleTitle(),
+    lineStyle: props.editPanel ? "dashed" : "",
+  };
+  useEditStore().addEdge(edge);
   Message.success("添加连线成功");
 
   graph.value.render();
@@ -600,7 +618,7 @@ watch(
       // 确保newData包含combos属性
       const dataWithCombos = {
         ...newData,
-        combos: newData.combos || []
+        combos: newData.combos || [],
       };
       graph.value.setData(dataWithCombos); // 使用setData替代data方法
       graph.value.render();
@@ -610,17 +628,17 @@ watch(
       });
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 // 组件挂载时初始化图
 onMounted(() => {
-  useEditStore().getAllNodeTypes()
+  useEditStore().getAllNodeTypes();
   nextTick(() => {
     initGraph();
     setTimeout(() => {
-      useEditStore().initProject()
-      let project_name = useEditStore().project
+      useEditStore().initProject();
+      let project_name = useEditStore().project;
       if (!project_name) {
         project_name = localStorage.getItem("grapher-project");
         useEditStore().setProjectName(project_name);
@@ -632,8 +650,7 @@ onMounted(() => {
 
       graph.value.layout();
       graph.value.render();
-    },100)
-
+    }, 100);
   });
 });
 

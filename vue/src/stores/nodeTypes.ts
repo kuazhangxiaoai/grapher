@@ -6,6 +6,8 @@ export interface NodeType {
   id: string;
   name: string;
   color: string;
+  key?: string[];
+  value?: string[];
 }
 
 // 节点类型管理组合式函数

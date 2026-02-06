@@ -278,11 +278,15 @@ export const useEditStore = defineStore("editStore", {
     },
     addNodeType(type: NodeType) {
       const project = localStorage.getItem("grapher-project");
-      apiClient
-        .post("/api/graph/addNodeType", {
+      return apiClient
+        .post("/api/graph/addNodeTypeProperty", {
+          projectId: localStorage.getItem("projectId"),
           name: type.name,
           color: type.color,
+          key: type.key,
+          value: type.value,
           project,
+          //   nodeTypeId: type.id,
         })
         .then((res) => {
           return res.data;
@@ -290,12 +294,16 @@ export const useEditStore = defineStore("editStore", {
     },
     updateNodeType(type: NodeType) {
       const project = localStorage.getItem("grapher-project");
-      apiClient
-        .post("/api/graph/updateNodeType", {
-          id: type.id,
+      return apiClient
+        .post("/api/graph/updateNodeTypeProperty", {
+          projectId: localStorage.getItem("projectId"),
+          //   id: type.id,
           name: type.name,
           color: type.color,
+          key: type.key,
+          value: type.value,
           project,
+          nodeTypeId: type.id,
         })
         .then((res) => {
           return res.data;
@@ -305,11 +313,11 @@ export const useEditStore = defineStore("editStore", {
       return this.rects.filter((r) => r.type == RectangleType.EDITING);
     },
     nextPDFPage() {
-      this.saveRectToLocalStorage()
+      this.saveRectToLocalStorage();
       this.currentPDFPage++;
     },
     lastPDFPage() {
-      this.saveRectToLocalStorage()
+      this.saveRectToLocalStorage();
       this.currentPDFPage--;
     },
     setTotalPages(page: number) {
@@ -368,6 +376,7 @@ export const useEditStore = defineStore("editStore", {
                   data: { name: edge.name },
                   target: edge.to_node_name,
                   source: edge.from_node_name,
+                  lineStyle: edge.lineStyle,
                 });
               } else {
                 console.warn(
@@ -397,6 +406,7 @@ export const useEditStore = defineStore("editStore", {
                 to_node_label: edge.to_node_label,
                 sequence: edge.sequence || "",
                 article: edge.article,
+                lineStyle: edge.lineStyle,
               };
               edges.push(e);
             });
@@ -459,6 +469,7 @@ export const useEditStore = defineStore("editStore", {
               to_node_label: edge.to_node_label,
               sequence: edge.sequence || "",
               article: edge.article,
+              lineStyle: edge.lineStyle,
             };
             edges.push(e);
           });
@@ -529,6 +540,7 @@ export const useEditStore = defineStore("editStore", {
           sequence: edge.sequence || "",
           article: this.article,
           project: this.project,
+          lineStyle: edge.lineStyle || "",
         };
         edgeObjs.push(seq_obj);
       });

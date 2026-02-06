@@ -106,13 +106,17 @@
         "
       >
         <div class="pb-4 text-[#1D2129] font-medium text-[14px]">节点属性</div>
-        <div class="space-y-3">
+        <div class="space-y-3" style="max-height: 160px; overflow-y: auto">
           <div
             v-for="(property, index) in elementShowInfo.properties"
             :key="index"
             class="flex items-start gap-2"
+            style="align-items: center"
           >
-            <div class="text-[#4E5969] text-[14px] w-[64px] flex-shrink-0">
+            <div
+              class="text-[#4E5969] text-[14px] flex-shrink-0"
+              style="max-width: 150px; min-width: 60px"
+            >
               {{ property.name }}
             </div>
             <div class="text-[#1D2129] text-[14px] w-full">
@@ -132,7 +136,7 @@
         "
       >
         <div class="pb-4 text-[#1D2129] font-medium text-[14px]">连线属性</div>
-        <div class="space-y-3">
+        <div class="space-y-3" style="max-height: 160px; overflow-y: auto">
           <div
             v-for="(property, index) in elementShowInfo.edgeProperties"
             :key="index"
@@ -171,10 +175,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, onMounted } from "vue";
 import { throttle, debounce } from "lodash-es";
 import apiClient from "../../../services/apiClient";
 import message from "@arco-design/web-vue/es/message";
+import { useEditStore } from "../../../stores/edit.ts";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   elementInfo: {
@@ -186,6 +192,11 @@ const props = defineProps({
     default: () => "",
   },
 });
+
+// 初始化store并获取响应式状态
+const editStore = useEditStore();
+// 使用storeToRefs获取响应式的nodeTypes
+const { nodeTypes } = storeToRefs(editStore);
 // 定义列配置（优化宽度/ellipsis 配置）
 const columns = ref([
   {
@@ -244,6 +255,50 @@ const elementShowInfo = ref({
 const tableData: any = ref([]);
 // 加载状态
 const loading = ref(false);
+// 节点属性加载状态
+const loadingProperties = ref(false);
+
+// 获取节点属性
+const fetchNodeProperties = async (nodeTypeName: string) => {
+  if (!nodeTypeName) {
+    elementShowInfo.value.properties = [];
+    return;
+  }
+
+  try {
+    loadingProperties.value = true;
+    // 根据节点类型名称找到对应的节点类型
+    const nodeType = nodeTypes.value.find((type) => type.name === nodeTypeName);
+    if (!nodeType || !nodeType.id) {
+      elementShowInfo.value.properties = [];
+      return;
+    }
+
+    const response = await apiClient.get("/api/graph/getNodeProperty", {
+      params: {
+        node_type_id: nodeType.id,
+      },
+    });
+
+    if (response.data.data && Array.isArray(response.data.data)) {
+      // 转换数据格式为properties数组
+      elementShowInfo.value.properties = response.data.data.map(
+        (item: any) => ({
+          name: item.nodePropertyKey,
+          value: item.nodePropertyValue,
+        }),
+      );
+    } else {
+      elementShowInfo.value.properties = [];
+    }
+  } catch (error) {
+    console.error("获取节点属性失败:", error);
+    message.error("获取节点属性失败，请重试");
+    elementShowInfo.value.properties = [];
+  } finally {
+    loadingProperties.value = false;
+  }
+};
 
 // 监听整个对象变化，但只关注ID
 watch(
@@ -260,8 +315,15 @@ watch(
         // 设置为初始化状态，阻止change事件触发更新
         isInitializing.value = true;
 
+        // 根据节点类型名称找到对应的节点类型
+        const nodeTypeName = newVal.data?.entityType || "";
+        const nodeType = nodeTypes.value.find(
+          (type) => type.name === nodeTypeName,
+        );
+
         // 更新表单数据
         elementShowInfo.value = {
+          // id: nodeType?.id || newVal.id || "",
           id: newVal.id || "",
           name: newVal.data?.name || "",
           iconSrc: newVal.style?.iconSrc || "",
@@ -278,6 +340,8 @@ watch(
             isInitializing.value = false;
             // 获取节点序列数据
             getNodeSequence(newVal.data?.name || newVal.id);
+            // 获取节点属性
+            fetchNodeProperties(newVal.data?.entityType || "");
           }, 100);
         });
       }
@@ -285,6 +349,11 @@ watch(
   },
   { immediate: true, deep: true },
 );
+
+// 组件挂载时加载节点类型数据
+onMounted(() => {
+  editStore.getAllNodeTypes();
+});
 
 // 处理用户编辑
 const handleUserEdit = () => {

@@ -9,6 +9,7 @@
       @before-ok="handleOk"
       :mask-closable="false"
       :footer="false"
+      :mask="false"
     >
       <!-- 节点类型列表 -->
       <div class="node-type-list mb-6">
@@ -38,14 +39,14 @@
               >
                 编辑
               </a-button>
-              <a-button
+              <!-- <a-button
                 type="text"
                 size="small"
                 @click="handleManageProperties(type)"
                 class="mr-2"
               >
                 管理属性
-              </a-button>
+              </a-button> -->
               <a-button
                 type="text"
                 size="small"
@@ -62,7 +63,7 @@
       <!-- 新增/编辑节点类型表单 -->
       <div class="node-type-form">
         <h4 class="text-lg font-semibold mb-4">
-          {{ editingType ? "编辑节点类型" : "新增节点类型" }}
+          {{ form.id ? "编辑节点类型" : "新增节点类型" }}
         </h4>
         <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
           <a-space direction="vertical" :size="16" class="w-full">
@@ -105,6 +106,9 @@
       <!-- 节点类型属性管理组件 -->
       <node-type-property-manager
         v-model:visible="showPropertyManager"
+        :id="form.id || ''"
+        :name="form.name"
+        :color="form.color"
         @refresh="handlePropertyManagerRefresh"
       />
     </a-modal>
@@ -112,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import apiClient from "@/services/apiClient";
 import { useEditStore } from "@/stores/edit.ts";
@@ -122,6 +126,7 @@ import NodeTypePropertyManager from "./nodeTypePropertyManager.vue";
 
 const props = defineProps<{
   visible: boolean;
+  oldnodeType: object;
 }>();
 
 const emit = defineEmits<{
@@ -141,10 +146,10 @@ const { nodeTypes } = storeToRefs(editStore);
 
 const formRef = ref();
 const saving = ref(false);
-const editingType = ref<any>(null);
 const showPropertyManager = ref(false);
 
 const form = ref({
+  id: "",
   name: "",
   color: "#1783FF",
 });
@@ -157,18 +162,15 @@ const rules = ref({
 // 重置表单
 const handleResetForm = () => {
   formRef.value.resetFields();
-  editingType.value = null;
 };
 
 // 编辑节点类型
 const handleEditType = (type: any) => {
-  editingType.value = type;
   form.value = { ...type };
 };
 
 // 管理节点类型属性
 const handleManageProperties = (type: any) => {
-  editingType.value = type;
   showPropertyManager.value = true;
 };
 
@@ -180,6 +182,11 @@ const handleOpenPropertyManager = () => {
 // 节点类型属性管理刷新
 const handlePropertyManagerRefresh = () => {
   console.log("刷新节点类型属性列表");
+  // 重新加载节点类型数据
+  editStore.getAllNodeTypes();
+  // 重置表单，使类型名称和颜色回到初始状态
+  handleResetForm();
+  emit("refresh");
 };
 
 // 删除节点类型
@@ -219,20 +226,36 @@ const handleSaveType = async () => {
 
   saving.value = true;
   try {
-    if (editingType.value) {
+    // 检查类型名称是否存在于节点类型列表中
+    const isDuplicate = nodeTypes.value.some(
+      (type) => type.name === form.value.name && type.id !== form.value.id,
+    );
+    console.log(444444444, form.value.id);
+    if (form.value.id) {
       // 更新现有类型，使用表单中的最新数据
       const nodeType: NodeType = {
-        id: editingType.value.id,
+        id: form.value.id,
         name: form.value.name,
         color: form.value.color,
+        key: [],
+        value: [],
       };
       await editStore.updateNodeType(nodeType);
       Message.success("节点类型更新成功");
     } else {
+      if (isDuplicate) {
+        Message.error("节点类型名称已存在，不能重复保存");
+        // 重置类型名称和颜色
+        form.value.name = "";
+        form.value.color = "#1783FF";
+        return;
+      }
       // 使用form.value代替this.form
       const nodeType: NodeType = {
         name: form.value.name,
         color: form.value.color,
+        key: [],
+        value: [],
       };
       await editStore.addNodeType(nodeType);
       Message.success("节点类型添加成功");
@@ -262,9 +285,29 @@ const handleOk = () => {
   return true;
 };
 
+// 监听visible属性变化，当弹窗打开时执行初始化逻辑
+watch(
+  () => props.visible,
+  (newVisible) => {
+    if (newVisible) {
+      if (props.oldnodeType && props.oldnodeType.name) {
+        form.value.id = props.oldnodeType.id || "";
+        form.value.name = props.oldnodeType.name || "";
+        form.value.color = props.oldnodeType.color || "";
+      } else {
+        // 重置表单
+        form.value.id = "";
+        form.value.name = "";
+        form.value.color = "#1783FF";
+      }
+      useEditStore().getAllNodeTypes();
+    }
+  },
+);
+
 // 组件挂载时初始化
 onMounted(() => {
-  useEditStore().getAllNodeTypes();
+  console.log("组件挂载");
 });
 </script>
 

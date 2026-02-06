@@ -53,7 +53,7 @@
       <Editor></Editor>
     </div>
     <!-- <div v-if="fileList" class="file-list"> -->
-      <!-- 文件列表 -->
+    <!-- 文件列表 -->
     <FileList></FileList>
     <!-- </div> -->
   </div>
@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick, watch, onMounted } from "vue";
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from "vue-router";
 import GraphG6 from "@/components/GraphG6/index.vue";
 import {
   generateMockData,
@@ -72,9 +72,9 @@ import GraphShortestPath from "@/components/GraphG6/components/graphShortestPath
 import DocumentPanel from "./Pdf/DocumentPanel.vue";
 import { Message } from "@arco-design/web-vue";
 import Editor from "./Editor.vue";
-import {storeToRefs} from "pinia";
-import {useEditStore} from "@/stores/edit.ts";
-import {useUserStore} from "@/stores/user.ts";
+import { storeToRefs } from "pinia";
+import { useEditStore } from "@/stores/edit.ts";
+import { useUserStore } from "@/stores/user.ts";
 import FileList from "./FileList.vue";
 import apiClient from "@/services/apiClient";
 // import { getGraphData, updateNode, updateEdge, deleteElement, createNode, createEdge } from '@/services/graphApi';
@@ -85,20 +85,21 @@ const editStore = useEditStore();
 const userStore = useUserStore();
 const project = localStorage.getItem("grapher-project");
 useEditStore().getAllFileInfoList(project);
-const {editGraph, fileList, article, committing, deleting, refreshing} = storeToRefs(editStore);
+const { editGraph, fileList, article, committing, deleting, refreshing } =
+  storeToRefs(editStore);
 
 // 返回列表页面
 const handleBack = () => {
-  editStore.closeFileList() //关闭文件列表
-  editStore.closeGraphEditor() //关闭Home.vue中的Editor弹窗
-  editStore.closeGraphEditorPanel() //关闭DocumentPanel.vue中的EditPanel弹窗
-  editStore.resetState() // 重置store状态，确保下次进入画布页面显示新项目内容
-  router.push('/list');
+  editStore.closeFileList(); //关闭文件列表
+  editStore.closeGraphEditor(); //关闭Home.vue中的Editor弹窗
+  editStore.closeGraphEditorPanel(); //关闭DocumentPanel.vue中的EditPanel弹窗
+  editStore.resetState(); // 重置store状态，确保下次进入画布页面显示新项目内容
+  router.push("/list");
 };
 // 图数据
 const graphData: any = ref({ nodes: [], edges: [], combos: [] });
 const graphG6 = ref(null);
-let graphInstance:any = null;
+let graphInstance: any = null;
 
 const enableObj = ref({
   zoomOut: true,
@@ -114,7 +115,7 @@ const enableObj = ref({
   delete: false,
   commit: false,
   close: false,
-})
+});
 
 // 图实例初始化完成后的回调
 const handleGraphReady = (graph) => {
@@ -137,7 +138,8 @@ const handleElementClick = (element, targetType) => {
   elementTargetType.value = targetType;
   if (targetType === "node" || targetType === "edge") {
     // 根据元素类型使用不同的方法获取数据
-    const getElementMethod = targetType === "node" ? "getNodeData" : "getEdgeData";
+    const getElementMethod =
+      targetType === "node" ? "getNodeData" : "getEdgeData";
     elementInfo.value = {
       ...graphInstance[getElementMethod](element.id),
       // G6 V5 中不需要手动获取样式，样式会自动从数据中提取
@@ -173,10 +175,11 @@ const handleUpdateElementInfo = async (updatedData) => {
   };
 
   // 优先修改画布信息
-  const updateMethod = elementTargetType.value === 'node' ? 'updateNodeData' : 'updateEdgeData';
+  const updateMethod =
+    elementTargetType.value === "node" ? "updateNodeData" : "updateEdgeData";
   try {
     graphInstance[updateMethod]([updatedData]);
-    Message.success('更新成功');
+    Message.success("更新成功");
     // 更新最新的elementInfo
     elementInfo.value = {
       ...updatedData,
@@ -189,7 +192,7 @@ const handleUpdateElementInfo = async (updatedData) => {
     };
     // 回滚画布信息
     graphInstance[updateMethod]([reverseObj]);
-    Message.error(error.message || '更新数据失败');
+    Message.error(error.message || "更新数据失败");
   }
 };
 
@@ -222,50 +225,52 @@ watch(showShortestPath, (newValue) => {
 // 获取数据详情
 const getGraphDetail = async (project) => {
   try {
-     //graphData.value = await getGraphData(graphId);
-    const article = editStore.getArticleTitle()
-    const sequence = editStore.getSequence()
-    console.log(project)
-    console.log(article,sequence)
-    if (article&& sequence){
-      apiClient.get("/api/graph/getGlobalGraph", {params: {project: project}}).then((res:any) => {
-        let graph_data:any = {
-          nodes: [],
-          edges: [],
-          combos:[]
-        }
-        res.data.nodes.forEach((node:any) => {
-          graph_data.nodes.push({
-            id: node.name,
-            data: {
-              name: node.name,
-              description: "",
-              entityType: node.label || "默认",
-            },
-            style: {
-              labelText: node.name,
-              fill: node.color,
-            },
+    //graphData.value = await getGraphData(graphId);
+    const article = editStore.getArticleTitle();
+    const sequence = editStore.getSequence();
+    console.log(project);
+    console.log(article, sequence);
+    if (article && sequence) {
+      apiClient
+        .get("/api/graph/getGlobalGraph", { params: { project: project } })
+        .then((res: any) => {
+          let graph_data: any = {
+            nodes: [],
+            edges: [],
+            combos: [],
+          };
+          res.data.nodes.forEach((node: any) => {
+            graph_data.nodes.push({
+              id: node.name,
+              data: {
+                name: node.name,
+                description: "",
+                entityType: node.label || "默认",
+              },
+              style: {
+                labelText: node.name,
+                fill: node.color,
+              },
+            });
           });
-        })
-        res.data.edges.forEach((edge, index) => {
-          graph_data.edges.push({
-            id: "edge-" + index.toString(),
-            data: {name: edge.name},
-            target: edge.to_node_name,
-            source: edge.from_node_name,
-          })
-        })
-        graphData.value.edges = graph_data.edges;
-        graphData.value.nodes = graph_data.nodes;
-        graphData.value.combos = []
-      })
+          res.data.edges.forEach((edge, index) => {
+            graph_data.edges.push({
+              id: "edge-" + index.toString(),
+              data: { name: edge.name },
+              target: edge.to_node_name,
+              source: edge.from_node_name,
+            });
+          });
+          graphData.value.edges = graph_data.edges;
+          graphData.value.nodes = graph_data.nodes;
+          graphData.value.combos = [];
+        });
     }
-   } catch (error) {
-     Message.error(error.message);
+  } catch (error) {
+    Message.error(error.message);
     // 出错时使用模拟数据兜底
     //graphData.value = generateMockData();
-   }
+  }
 };
 
 // 处理搜索节点
@@ -314,40 +319,61 @@ const allNodeList: any = ref([]);
 const newGraphData: any = ref({});
 // 获取所有节点列表
 const getAllNodeList = async (graphId?: string) => {
-    const mockData = generateMockData();
-    allNodeList.value = mockData.nodes || [];
-    newGraphData.value = mockData;
+  const mockData = generateMockData();
+  allNodeList.value = mockData.nodes || [];
+  newGraphData.value = mockData;
 };
 
 // 监听路由变化，更新图谱数据
-watch(() => route.params.id || route.query.graphId, (newGraphId) => {
-  const project = localStorage.getItem("grapher-project");
-  // 重置graphData状态，确保每次进入画布页面都显示当前项目的初始状态
-  graphData.value = { nodes: [], edges: [] };
-  getGraphDetail(project as string);
-  getAllNodeList(newGraphId as string);
-});
+watch(
+  () => route.params.id || route.query.graphId,
+  (newGraphId) => {
+    const project = localStorage.getItem("grapher-project");
+    // 重置graphData状态，确保每次进入画布页面都显示当前项目的初始状态
+    graphData.value = { nodes: [], edges: [] };
+    getGraphDetail(project as string);
+    getAllNodeList(newGraphId as string);
+  },
+);
 
 watch([committing, deleting], async ([committed, deleted]) => {
-  const article = useEditStore().article
-  console.log("grapher update", article)
-  const graph_data:any = await useEditStore().queryGraphByArticle(article);
+  const article = useEditStore().article;
+  console.log("grapher update", article);
+  const graph_data: any = await useEditStore().queryGraphByArticle(article);
+  // 处理 edges 数据，转换 lineStyle 为 lineDash
+  const processedEdges = graph_data.edges.map((edge, index) => {
+    return {
+      ...edge,
+      style: {
+        lineDash: edge.lineStyle === "dashed" ? [5, 5] : undefined,
+      },
+    };
+  });
+  graphData.value.edges = processedEdges;
   graphData.value.nodes = graph_data.nodes;
-  graphData.value.edges = graph_data.edges;
   useEditStore().setCommiting(false);
   useEditStore().setDeleting(false);
-})
+});
 
 watch(article, async (newVal) => {
-  if(newVal) {
-    const graph_data:any = await useEditStore().queryGraphByArticle(newVal);
+  if (newVal) {
+    const graph_data: any = await useEditStore().queryGraphByArticle(newVal);
+    // 处理 edges 数据，转换 lineStyle 为 lineDash
+    const processedEdges = graph_data.edges.map((edge, index) => {
+      return {
+        ...edge,
+        style: {
+          lineDash: edge.lineStyle === "dashed" ? [5, 5] : undefined,
+        },
+      };
+    });
+    graphData.value.edges = processedEdges;
     graphData.value.nodes = graph_data.nodes;
-    graphData.value.edges = graph_data.edges;
-  }else{
+  } else {
     // 重置为初始状态，确保始终有 nodes 和 edges 属性
     graphData.value = { nodes: [], edges: [], combos: [] };
   }
-})
+});
 
 onMounted(() => {
   const graphId = route.params.id || route.query.graphId;
@@ -358,7 +384,7 @@ onMounted(() => {
 const handleAddNode = async (nodeData) => {
   try {
     // await createNode(nodeData);
-    Message.success('节点创建成功');
+    Message.success("节点创建成功");
     getAllNodeList();
   } catch (error) {
     Message.error(error.message);
@@ -367,7 +393,7 @@ const handleAddNode = async (nodeData) => {
 const handleAddEdge = async (edgeData) => {
   try {
     // await createEdge(edgeData);
-    Message.success('边创建成功');
+    Message.success("边创建成功");
     getAllNodeList();
   } catch (error) {
     Message.error(error.message);
@@ -379,15 +405,19 @@ const handleDeleteElement = async (elementId, type) => {
     // await deleteElement(elementId, type);
 
     // 更新本地数据，确保视图及时刷新
-    if (type === 'node') {
+    if (type === "node") {
       // 删除节点及其关联边
-      graphData.value.nodes = graphData.value.nodes.filter(node => node.id !== elementId);
-      graphData.value.edges = graphData.value.edges.filter(edge =>
-        edge.source !== elementId && edge.target !== elementId
+      graphData.value.nodes = graphData.value.nodes.filter(
+        (node) => node.id !== elementId,
       );
-    } else if (type === 'edge') {
+      graphData.value.edges = graphData.value.edges.filter(
+        (edge) => edge.source !== elementId && edge.target !== elementId,
+      );
+    } else if (type === "edge") {
       // 删除边
-      graphData.value.edges = graphData.value.edges.filter(edge => edge.id !== elementId);
+      graphData.value.edges = graphData.value.edges.filter(
+        (edge) => edge.id !== elementId,
+      );
     }
 
     // 更新节点列表
@@ -398,7 +428,7 @@ const handleDeleteElement = async (elementId, type) => {
       graphInstance.render();
     }
 
-    Message.success(`${type === 'node' ? '节点' : '边'}删除成功`);
+    Message.success(`${type === "node" ? "节点" : "边"}删除成功`);
   } catch (error) {
     Message.error(error.message);
   }
@@ -413,22 +443,22 @@ const handleAddNodeFromDocument = (nodeData) => {
   if (!graphData.value.edges) {
     graphData.value.edges = [];
   }
-  
+
   // 添加新节点
   graphData.value.nodes.push(nodeData);
-  
+
   // 更新节点列表
   allNodeList.value.push(nodeData);
-  
+
   // 如果是第一个节点，初始化图谱数据
   if (graphData.value.nodes.length === 1) {
     newGraphData.value = { ...graphData.value };
   }
-  
+
   // 更新图谱数据
   newGraphData.value = { ...graphData.value };
-  
-  console.log('从文档添加节点到图谱:', nodeData);
+
+  console.log("从文档添加节点到图谱:", nodeData);
 };
 
 const hanleGraphUpdate = async () => {
@@ -436,20 +466,28 @@ const hanleGraphUpdate = async () => {
   if (graphInstance) {
     graphInstance.render();
   }
-}
+};
 
 watch(refreshing, async (newVal) => {
   if (newVal) {
     console.log("refreshing", newVal);
-    const article = useEditStore().article
-    console.log("grapher update", article)
-    const graph_data = await useEditStore().queryGraphByArticle(article);
+    const article = useEditStore().article;
+    console.log("grapher update", article);
+    const graph_data: any = await useEditStore().queryGraphByArticle(article);
+    // 处理 edges 数据，转换 lineStyle 为 lineDash
+    const processedEdges = graph_data.edges.map((edge, index) => {
+      return {
+        ...edge,
+        style: {
+          lineDash: edge.lineStyle === "dashed" ? [5, 5] : undefined,
+        },
+      };
+    });
+    graphData.value.edges = processedEdges;
     graphData.value.nodes = graph_data.nodes;
-    graphData.value.edges = graph_data.edges;
     useEditStore().setRefreshing(false);
   }
-})
-
+});
 </script>
 
 <style scoped>
@@ -465,7 +503,7 @@ watch(refreshing, async (newVal) => {
 .home-header {
   position: absolute;
   top: 0px;
-  right:53%;
+  right: 53%;
   z-index: 100;
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.9);
@@ -473,7 +511,7 @@ watch(refreshing, async (newVal) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.graph-editor{
+.graph-editor {
   position: absolute;
   left: 42%;
   top: 15%;
@@ -481,7 +519,7 @@ watch(refreshing, async (newVal) => {
   height: 50%;
   border-color: #2d3748;
   border-width: 2px;
-  border-radius: 2px
+  border-radius: 2px;
 }
 
 .graph-container {
@@ -490,6 +528,4 @@ watch(refreshing, async (newVal) => {
   position: relative;
   overflow: hidden;
 }
-
-
 </style>

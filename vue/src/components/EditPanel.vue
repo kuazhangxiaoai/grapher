@@ -7,6 +7,7 @@
       :layout-config="layoutConfig"
       :enableObject="enableObj"
       :showContextMenu="true"
+      :editPanel="true"
       @elementClick="handleElementClick"
       @ready="handleGraphReady"
       @shortestPath="handleShortestPath"
@@ -75,7 +76,6 @@ watch(
       node_data.push(nodeItem);
       nodeMap.set(node.name, nodeItem);
     });
-
     newEdges.forEach((edge, index) => {
       // 只添加有效的边，即源节点和目标节点都存在的边
       if (nodeMap.has(edge.from_node_name) && nodeMap.has(edge.to_node_name)) {
@@ -85,6 +85,9 @@ watch(
           data: { name: edge.name },
           target: edge.to_node_name,
           source: edge.from_node_name,
+          style: {
+            lineDash: edge.lineStyle === "dashed" ? [5, 5] : undefined,
+          },
         });
       } else {
         console.warn(
@@ -92,7 +95,6 @@ watch(
         );
       }
     });
-
     graphData.value.nodes = node_data;
     graphData.value.edges = edges_data;
     graphData.value.combos = [];
@@ -241,9 +243,12 @@ const handleDeleteNode = async (nodeName) => {
 // 获取全局图谱数据
 const getGlobalGraph = async () => {
   const article = editStore.getArticleTitle();
-  const graph_data: any = await useEditStore().queryGraphByArticle(article);
-  graphData.value.nodes = graph_data.nodes;
-  graphData.value.edges = graph_data.edges;
+  await useEditStore().queryGraphByArticle(article);
+  // 不需要直接使用返回的graph_data，因为watch会自动处理nodes和edges的变化
+  // 触发一次重新渲染确保数据更新
+  if (graphInstance) {
+    graphInstance.render();
+  }
 };
 
 onMounted(() => {
